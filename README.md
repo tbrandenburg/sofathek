@@ -1,0 +1,2 @@
+# sofathek
+Self-hosted mediathek
