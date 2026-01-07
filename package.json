@@ -17,6 +17,7 @@
     "test:integration": "cd backend && npm run test:integration",
     "test:e2e": "cd frontend && npm run test:e2e",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "lint-staged": "lint-staged",
     "format": "prettier --write .",
     "type-check": "npm run type-check:frontend && npm run type-check:backend",
     "type-check:frontend": "cd frontend && npm run type-check",
