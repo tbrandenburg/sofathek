@@ -34,10 +34,10 @@ A complete media center application featuring:
 - Netflix-like paginated video grid interface
 - 10-theme system (6 children + 4 adult themes) with dark/light modes
 - YouTube download integration using yt-dlp
-- HTML5 video player with resume functionality
-- Profile system with theme preferences (no authentication required)
-- Admin interface for file management and download queue
-- Comprehensive Playwright MCP testing for all phases
+- HTML5 video player with advanced features (chapters, subtitles, quality selection)
+- Profile system with analytics and usage tracking (no authentication required)
+- Admin interface with user analytics and basic logging
+- Comprehensive unit testing for all business logic
 - Mobile-optimized responsive design
 - File system-based storage with JSON metadata
 
@@ -982,88 +982,14 @@ npm run ceo:final-validation
 - ✅ Zero TypeScript compilation errors
 - ✅ CEO-level code quality standards maintained
 
-### Phase 5 Implementation Roadmap
+### Phase 5 Implementation Roadmap (4 Focus Areas)
 
-### 5.1 Progressive Web App (PWA) Implementation
-
-**Priority: HIGH | Estimated Time: 2-3 hours**
-
-```yaml
-Task 5.1.1: PWA Manifest Creation
-FILES TO CREATE:
-  - frontend/public/manifest.json
-  - frontend/src/assets/icons/ (PWA icons 192x192, 512x512)
-  - frontend/src/utils/pwaUtils.ts
-
-IMPLEMENTATION:
-  - Create web app manifest with proper theme colors from current theme system
-  - Generate app icons with Sofathek branding for all required sizes
-  - Configure display modes, orientations, and scope
-  - Add manifest link to index.html with theme-color meta tags
-
-PATTERN:
-{
-  "name": "Sofathek Media Center",
-  "short_name": "Sofathek",
-  "display": "standalone",
-  "start_url": "/library",
-  "background_color": "var(--background-color)",
-  "theme_color": "var(--primary-color)",
-  "icons": [...]
-}
-
-Task 5.1.2: Service Worker Implementation
-FILES TO CREATE:
-  - frontend/public/sw.js
-  - frontend/src/hooks/useOffline.ts
-  - frontend/src/components/PWAInstall.tsx
-
-IMPLEMENTATION:
-  - Basic service worker for static asset caching
-  - Offline fallback pages for network failures
-  - Cache strategy for video thumbnails and metadata
-  - Background sync for download queue when online
-  - Push notifications for download completion
-
-PATTERN:
-// Cache video thumbnails and UI assets
-self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('/thumbnails/')) {
-    event.respondWith(cacheFirstStrategy(event.request));
-  }
-});
-
-Task 5.1.3: Offline Functionality
-FILES TO MODIFY:
-  - frontend/src/components/VideoGrid.tsx
-  - frontend/src/pages/Library/LibraryPage.tsx
-  - backend/src/routes/videos.js
-
-IMPLEMENTATION:
-  - Offline indicator in UI when network unavailable
-  - Cached video metadata for offline browsing
-  - "Download for Offline" option for favorite videos
-  - Resume interrupted downloads when connection restored
-  - Offline-first approach for app shell and navigation
-
-Task 5.1.4: Install Prompt Integration
-FILES TO CREATE:
-  - frontend/src/components/PWAInstall.tsx
-  - frontend/src/hooks/usePWAInstall.ts
-
-IMPLEMENTATION:
-  - Native app install prompt for supported browsers
-  - Custom install banner with Sofathek branding
-  - Installation success tracking and analytics
-  - Integration with existing theme system
-```
-
-### 5.2 Advanced Video Player Features
+### 5.1 Advanced Video Player Features
 
 **Priority: HIGH | Estimated Time: 3-4 hours**
 
 ```yaml
-Task 5.2.1: Video Chapters & Navigation
+Task 5.1.1: Video Chapters & Navigation
 FILES TO CREATE:
   - frontend/src/components/VideoPlayer/VideoChapters.tsx
   - frontend/src/components/VideoPlayer/ChapterMarker.tsx
@@ -1085,7 +1011,7 @@ interface VideoChapter {
   thumbnail?: string;
 }
 
-Task 5.2.2: Subtitle Support
+Task 5.1.2: Subtitle Support
 FILES TO CREATE:
   - frontend/src/components/VideoPlayer/SubtitleTrack.tsx
   - frontend/src/components/VideoPlayer/SubtitleSelector.tsx
@@ -1098,7 +1024,7 @@ IMPLEMENTATION:
   - Subtitle styling with theme integration
   - Closed captions accessibility compliance
 
-Task 5.2.3: Quality Selection & Adaptive Streaming
+Task 5.1.3: Quality Selection & Adaptive Streaming
 FILES TO CREATE:
   - frontend/src/components/VideoPlayer/QualitySelector.tsx
   - backend/src/services/adaptiveStreaming.js
@@ -1111,7 +1037,7 @@ IMPLEMENTATION:
   - Progressive download and streaming optimization
   - Quality-based storage management in admin
 
-Task 5.2.4: Picture-in-Picture & Advanced Controls
+Task 5.1.4: Picture-in-Picture & Advanced Controls
 FILES TO CREATE:
   - frontend/src/components/VideoPlayer/PictureInPicture.tsx
   - frontend/src/components/VideoPlayer/AdvancedControls.tsx
@@ -1124,42 +1050,16 @@ IMPLEMENTATION:
   - Custom keyboard shortcuts (space, arrows, number keys)
 ```
 
-### 5.3 Enhanced Admin Dashboard
+### 5.2 User Analytics & Usage Statistics
 
 **Priority: MEDIUM | Estimated Time: 2-3 hours**
 
 ```yaml
-Task 5.3.1: Theme Management Interface
+Task 5.2.1: User Analytics Collection
 FILES TO CREATE:
-  - frontend/src/pages/Admin/ThemeManager.tsx
-  - frontend/src/components/Admin/ThemeEditor.tsx
-  - backend/src/routes/themeManagement.js
-
-IMPLEMENTATION:
-  - Visual theme editor with live preview
-  - Custom theme creation and modification
-  - Import/export theme configurations
-  - Theme usage analytics across profiles
-  - Bulk theme operations for family management
-
-Task 5.3.2: System Performance Monitoring
-FILES TO CREATE:
-  - frontend/src/pages/Admin/PerformanceMonitor.tsx
-  - frontend/src/components/Admin/MetricsChart.tsx
-  - backend/src/services/metricsCollector.js
-
-IMPLEMENTATION:
-  - Real-time system metrics (CPU, memory, disk usage)
-  - Video streaming performance analytics
-  - Download queue performance monitoring
-  - User engagement metrics and popular content
-  - Performance alerts and optimization suggestions
-
-Task 5.3.3: User Analytics & Usage Statistics
-FILES TO CREATE:
-  - frontend/src/pages/Admin/UserAnalytics.tsx
-  - frontend/src/components/Admin/AnalyticsDashboard.tsx
-  - backend/src/services/analyticsCollector.js
+  - frontend/src/services/analyticsCollector.js
+  - frontend/src/hooks/useAnalytics.ts
+  - backend/src/services/analyticsProcessor.js
 
 IMPLEMENTATION:
   - Profile-based viewing analytics (watch time, preferences)
@@ -1168,61 +1068,274 @@ IMPLEMENTATION:
   - Download patterns and storage optimization insights
   - Family-friendly content filtering analytics
 
-Task 5.3.4: Bulk Management Tools
+PATTERN:
+interface ViewingSession {
+  profileId: string;
+  videoId: string;
+  startTime: number;
+  endTime: number;
+  watchDuration: number;
+  completionRate: number;
+  quality: string;
+  theme: string;
+}
+
+Task 5.2.2: Analytics Dashboard
 FILES TO CREATE:
-  - frontend/src/components/Admin/BulkVideoManager.tsx
-  - frontend/src/components/Admin/FileOperations.tsx
-  - backend/src/services/bulkOperations.js
+  - frontend/src/pages/Admin/UserAnalytics.tsx
+  - frontend/src/components/Admin/AnalyticsDashboard.tsx
+  - frontend/src/components/Admin/UsageCharts.tsx
 
 IMPLEMENTATION:
-  - Bulk video categorization and metadata editing
-  - Mass thumbnail regeneration and quality conversion
-  - Storage cleanup and duplicate video detection
-  - Automated content organization rules
-  - Backup and restore functionality
+  - Real-time viewing statistics display
+  - Popular content rankings and trends
+  - Profile usage patterns visualization
+  - Theme preference analytics with charts
+  - Content recommendation insights
+
+Task 5.2.3: Privacy-Focused Data Collection
+FILES TO CREATE:
+  - backend/src/middleware/analyticsMiddleware.js
+  - backend/src/services/dataPrivacy.js
+
+IMPLEMENTATION:
+  - Anonymous analytics data collection
+  - Configurable data retention policies
+  - GDPR-compliant data handling
+  - Opt-out mechanisms for privacy-conscious users
+  - Data aggregation without personal identification
 ```
 
-### 5.4 Performance Monitoring & Analytics
+### 5.3 Basic Logging System
 
-**Priority: MEDIUM | Estimated Time: 2 hours**
+**Priority: MEDIUM | Estimated Time: 1-2 hours**
 
 ```yaml
-Task 5.4.1: Real-time Performance Metrics
+Task 5.3.1: Frontend Logging
 FILES TO CREATE:
-  - frontend/src/hooks/usePerformanceMonitoring.ts
-  - frontend/src/components/PerformanceIndicator.tsx
-  - backend/src/middleware/performanceTracking.js
+  - frontend/src/utils/logger.ts
+  - frontend/src/services/logCollector.js
 
 IMPLEMENTATION:
-  - Core Web Vitals tracking (LCP, FID, CLS)
-  - Theme switching performance measurement
-  - Video loading time analytics
-  - Memory usage monitoring and leak detection
-  - Real-time performance dashboard
+  - Console logging with different levels (info, warn, error)
+  - User action logging (theme switches, video plays, navigation)
+  - Error boundary integration with logging
+  - Performance milestone logging
+  - Local storage log buffer for debugging
 
-Task 5.4.2: Theme Analytics System
+PATTERN:
+const logger = {
+  info: (message: string, context?: any) => console.log(`[INFO]`, message, context),
+  warn: (message: string, context?: any) => console.warn(`[WARN]`, message, context),
+  error: (message: string, error?: Error) => console.error(`[ERROR]`, message, error),
+};
+
+Task 5.3.2: Backend Logging
 FILES TO CREATE:
-  - frontend/src/services/themeAnalytics.js
-  - backend/src/services/themeMetrics.js
+  - backend/src/utils/logger.js
+  - backend/src/middleware/requestLogger.js
 
 IMPLEMENTATION:
-  - Theme switching frequency tracking
-  - Performance impact per theme measurement
-  - User preference patterns analysis
-  - Theme-specific engagement metrics
-  - A/B testing framework for theme improvements
+  - Structured logging with Winston or similar
+  - Request/response logging middleware
+  - Error logging with stack traces
+  - Performance timing logs
+  - File-based log rotation
 
-Task 5.4.3: Error Tracking & Monitoring
+PATTERN:
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
+```
+
+### 5.4 Comprehensive Unit Testing Suite
+
+**Priority: HIGH | Estimated Time: 4-5 hours**
+
+```yaml
+Task 5.4.1: Theme System Unit Tests
 FILES TO CREATE:
-  - frontend/src/utils/errorTracking.ts
-  - backend/src/middleware/errorAnalytics.js
+  - frontend/src/themes/__tests__/ThemeProvider.test.tsx
+  - frontend/src/themes/__tests__/themeConfig.test.ts
+  - frontend/src/components/__tests__/ThemeSelector.test.tsx
 
 IMPLEMENTATION:
-  - Comprehensive error logging and categorization
-  - Video playback failure analysis
-  - Network interruption handling metrics
-  - User error reporting system
-  - Automated error recovery suggestions
+  - Theme switching logic validation
+  - CSS custom property application testing
+  - Theme persistence in localStorage testing
+  - Theme configuration validation
+  - Component theme integration testing
+
+PATTERN:
+describe('ThemeProvider', () => {
+  test('applies theme CSS custom properties correctly', () => {
+    const { getByTestId } = render(
+      <ThemeProvider initialTheme="netflix-dark">
+        <div data-testid="themed-component">Content</div>
+      </ThemeProvider>
+    );
+
+    const themedElement = getByTestId('themed-component');
+    expect(themedElement.style.getPropertyValue('--primary-color')).toBe('#E50914');
+  });
+
+  test('persists theme selection in localStorage', () => {
+    const { rerender } = render(<ThemeProvider initialTheme="youtube-light" />);
+    expect(localStorage.getItem('sofathek-theme')).toBe('youtube-light');
+  });
+});
+
+Task 5.4.2: Video Processing Unit Tests
+FILES TO CREATE:
+  - backend/src/services/__tests__/ytdlp.test.js
+  - backend/src/services/__tests__/ffmpeg.test.js
+  - backend/src/services/__tests__/scanner.test.js
+
+IMPLEMENTATION:
+  - YouTube download queue management testing
+  - Video processing pipeline validation
+  - File system scanning logic testing
+  - Metadata generation and extraction testing
+  - Error handling for corrupted files testing
+
+PATTERN:
+describe('YouTubeDownloader', () => {
+  test('queues download with correct format selection', async () => {
+    const downloader = new YouTubeDownloader();
+    const mockUrl = 'https://youtube.com/watch?v=test123';
+
+    const result = await downloader.queueDownload(mockUrl, {
+      quality: '720p',
+      category: 'youtube'
+    });
+
+    expect(result.jobId).toBeTruthy();
+    expect(result.status).toBe('queued');
+    expect(result.format).toContain('mp4');
+  });
+
+  test('handles invalid YouTube URL gracefully', async () => {
+    const downloader = new YouTubeDownloader();
+
+    await expect(
+      downloader.queueDownload('invalid-url', { category: 'youtube' })
+    ).rejects.toThrow('Invalid YouTube URL format');
+  });
+});
+
+Task 5.4.3: Video Player Logic Unit Tests
+FILES TO CREATE:
+  - frontend/src/components/__tests__/VideoPlayer.test.tsx
+  - frontend/src/hooks/__tests__/useVideoPlayer.test.ts
+  - frontend/src/services/__tests__/videoApi.test.ts
+
+IMPLEMENTATION:
+  - Video playback state management testing
+  - Progress tracking and resume functionality testing
+  - Error handling and retry logic testing
+  - Keyboard shortcut functionality testing
+  - Video streaming API integration testing
+
+PATTERN:
+describe('useVideoPlayer', () => {
+  test('tracks video progress correctly', () => {
+    const { result } = renderHook(() => useVideoPlayer('video-123'));
+
+    act(() => {
+      result.current.updateProgress(120); // 2 minutes
+    });
+
+    expect(result.current.currentTime).toBe(120);
+    expect(result.current.watchProgress).toBeDefined();
+  });
+
+  test('resumes from saved position', () => {
+    const savedProgress = { currentTime: 300, duration: 1800 };
+    localStorage.setItem('video-progress-123', JSON.stringify(savedProgress));
+
+    const { result } = renderHook(() => useVideoPlayer('video-123'));
+
+    expect(result.current.resumeTime).toBe(300);
+  });
+});
+
+Task 5.4.4: API Route Unit Tests
+FILES TO CREATE:
+  - backend/src/routes/__tests__/videos.test.js
+  - backend/src/routes/__tests__/downloads.test.js
+  - backend/src/routes/__tests__/admin.test.js
+
+IMPLEMENTATION:
+  - Video streaming endpoint testing
+  - HTTP range request handling testing
+  - Download management API testing
+  - Error response formatting testing
+  - Authentication and authorization testing
+
+PATTERN:
+describe('Video Routes', () => {
+  test('GET /api/videos/:id/stream returns video with correct headers', async () => {
+    const response = await request(app)
+      .get('/api/videos/test-video-id/stream')
+      .expect(200);
+
+    expect(response.headers['content-type']).toContain('video/');
+    expect(response.headers['accept-ranges']).toBe('bytes');
+    expect(response.headers['cache-control']).toBeDefined();
+  });
+
+  test('GET /api/videos/:id/stream handles range requests', async () => {
+    const response = await request(app)
+      .get('/api/videos/test-video-id/stream')
+      .set('Range', 'bytes=0-1023')
+      .expect(206);
+
+    expect(response.headers['content-range']).toBeDefined();
+    expect(response.headers['content-length']).toBe('1024');
+  });
+});
+
+Task 5.4.5: Business Logic Unit Tests
+FILES TO CREATE:
+  - backend/src/services/__tests__/videoLibrary.test.js
+  - frontend/src/services/__tests__/profileManager.test.ts
+  - backend/src/services/__tests__/downloadQueue.test.js
+
+IMPLEMENTATION:
+  - Video library management logic testing
+  - Profile creation and management testing
+  - Download queue priority and status testing
+  - Search and filtering logic testing
+  - Data validation and sanitization testing
+
+PATTERN:
+describe('VideoLibrary', () => {
+  test('indexes videos correctly with metadata', async () => {
+    const library = new VideoLibrary('/test/videos');
+    const mockVideos = [
+      { path: '/test/videos/movie1.mp4', title: 'Test Movie' },
+      { path: '/test/videos/show/episode1.mp4', title: 'Test Episode' }
+    ];
+
+    const result = await library.buildIndex(mockVideos);
+
+    expect(result.totalVideos).toBe(2);
+    expect(result.categories).toContain('movies');
+    expect(result.videos[0].metadata.title).toBe('Test Movie');
+  });
+
+  test('filters videos by category correctly', async () => {
+    const library = new VideoLibrary('/test/videos');
+    const filtered = await library.getVideosByCategory('movies');
+
+    expect(filtered.every(video => video.category === 'movies')).toBe(true);
+  });
+});
 ```
 
 ### 5.5 Comprehensive Testing Suite
@@ -1287,77 +1400,80 @@ IMPLEMENTATION:
 ```bash
 🎯 PHASE 5 EXECUTION PLAN (Recommended Order):
 
-WEEK 1: PWA Foundation (Tasks 5.1.1 - 5.1.4)
-├── Day 1: PWA Manifest & Icons (5.1.1)
-├── Day 2: Service Worker Implementation (5.1.2)
-├── Day 3: Offline Functionality (5.1.3)
-└── Day 4: Install Prompt Integration (5.1.4)
+WEEK 1: Advanced Video Player (Tasks 5.1.1 - 5.1.4)
+├── Day 1: Video Chapters & Navigation (5.1.1)
+├── Day 2: Subtitle Support (5.1.2)
+├── Day 3: Quality Selection & Adaptive Streaming (5.1.3)
+└── Day 4: Picture-in-Picture & Advanced Controls (5.1.4)
 
-WEEK 2: Advanced Player Features (Tasks 5.2.1 - 5.2.4)
-├── Day 1: Video Chapters & Navigation (5.2.1)
-├── Day 2: Subtitle Support (5.2.2)
-├── Day 3: Quality Selection & Adaptive Streaming (5.2.3)
-└── Day 4: Picture-in-Picture & Advanced Controls (5.2.4)
+WEEK 2: Analytics & Logging (Tasks 5.2.1 - 5.3.2)
+├── Day 1-2: User Analytics & Usage Statistics (5.2.1 - 5.2.3)
+└── Day 3-4: Basic Logging System (5.3.1 - 5.3.2)
 
-WEEK 3: Admin & Analytics (Tasks 5.3.1 - 5.4.3)
-├── Day 1-2: Enhanced Admin Dashboard (5.3.1 - 5.3.4)
-└── Day 3-4: Performance Monitoring & Analytics (5.4.1 - 5.4.3)
-
-WEEK 4: Comprehensive Testing (Tasks 5.5.1 - 5.5.4)
-├── Day 1: Playwright Theme Tests (5.5.1)
-├── Day 2: Performance Regression Tests (5.5.2)
-├── Day 3: Cross-browser Compatibility (5.5.3)
-└── Day 4: Mobile Device Testing (5.5.4)
+WEEK 3: Comprehensive Unit Testing (Tasks 5.4.1 - 5.4.5)
+├── Day 1: Theme System Unit Tests (5.4.1)
+├── Day 2: Video Processing Unit Tests (5.4.2)
+├── Day 3: Video Player Logic Unit Tests (5.4.3)
+├── Day 4: API Route Unit Tests (5.4.4)
+└── Day 5: Business Logic Unit Tests (5.4.5)
 ```
 
 ### Success Criteria for Phase 5
 
 ```yaml
-PWA Functionality:
-- [ ] App installs successfully on mobile and desktop
-- [ ] Offline browsing works with cached thumbnails
-- [ ] Service worker caches critical assets
-- [ ] Push notifications work for download completion
-- [ ] PWA passes all Lighthouse audit requirements
+Advanced Player Features:
+- [ ] Video chapters display and navigate correctly with thumbnail previews
+- [ ] Subtitles load and display properly in all supported formats (.srt, .vtt, .ass)
+- [ ] Quality selection works with smooth transitions between resolutions
+- [ ] Picture-in-Picture mode functions across all major browsers
+- [ ] Keyboard shortcuts and accessibility features work seamlessly
+- [ ] Advanced controls (speed, A/B repeat, frame navigation) function properly
 
-Advanced Player:
-- [ ] Video chapters display and navigate correctly
-- [ ] Subtitles load and display properly in all supported formats
-- [ ] Quality selection works with smooth transitions
-- [ ] Picture-in-Picture mode functions across browsers
-- [ ] Keyboard shortcuts and accessibility features work
+User Analytics & Statistics:
+- [ ] Profile-based viewing analytics accurately track watch time and preferences
+- [ ] Content popularity metrics provide actionable insights for recommendations
+- [ ] Theme switching analytics identify user preference patterns
+- [ ] Privacy-focused data collection complies with GDPR standards
+- [ ] Analytics dashboard displays real-time usage statistics clearly
 
-Admin Dashboard:
-- [ ] Theme management interface allows custom theme creation
-- [ ] Performance monitoring displays real-time metrics
-- [ ] User analytics provide actionable insights
-- [ ] Bulk operations handle large video collections efficiently
+Basic Logging System:
+- [ ] Frontend logging captures user actions and errors with appropriate levels
+- [ ] Backend logging provides structured logs with request/response tracking
+- [ ] Error logging includes full stack traces for debugging
+- [ ] Performance logging identifies bottlenecks and optimization opportunities
+- [ ] Log rotation and storage management prevents disk space issues
 
-Testing & Quality:
-- [ ] All 10 themes pass visual regression tests
-- [ ] Performance tests meet Core Web Vitals standards
-- [ ] Cross-browser testing passes on all major browsers
-- [ ] Mobile testing validates touch interactions and responsiveness
-- [ ] 100% test coverage maintained across all new features
+Comprehensive Unit Testing:
+- [ ] Theme system tests achieve 95%+ code coverage for theming logic
+- [ ] Video processing tests validate YouTube download and ffmpeg operations
+- [ ] Video player tests ensure playback state management works correctly
+- [ ] API route tests verify streaming endpoints and error handling
+- [ ] Business logic tests cover core functionality with edge cases
+- [ ] All tests run in under 30 seconds with 100% pass rate
 ```
 
 ### Risk Mitigation & Contingencies
 
 ```yaml
-PWA Implementation Risks:
-  - Risk: Browser compatibility issues with service workers
-  - Mitigation: Progressive enhancement with feature detection
-  - Fallback: Graceful degradation to standard web app
+Advanced Player Implementation Risks:
+  - Risk: Video codec compatibility across browsers for chapters and quality selection
+  - Mitigation: Multiple format support with automatic detection and fallbacks
+  - Fallback: Basic HTML5 video player with reduced feature set
 
-Advanced Player Risks:
-  - Risk: Video codec compatibility across browsers
-  - Mitigation: Multiple format support with automatic detection
-  - Fallback: Basic HTML5 video player with reduced features
+Analytics & Privacy Risks:
+  - Risk: Data privacy concerns with user analytics collection
+  - Mitigation: Anonymous data collection with clear opt-out mechanisms
+  - Fallback: Basic usage statistics without personal data tracking
 
-Performance Risks:
-  - Risk: Theme system performance impact with many themes
-  - Mitigation: CSS custom property caching and optimization
-  - Fallback: Static theme compilation as backup option
+Unit Testing Complexity Risks:
+  - Risk: Complex video processing logic difficult to test in isolation
+  - Mitigation: Mock services and dependency injection patterns
+  - Fallback: Integration tests to cover critical user journeys
+
+Performance Impact Risks:
+  - Risk: Advanced player features and analytics may impact video streaming performance
+  - Mitigation: Progressive enhancement and performance monitoring
+  - Fallback: Feature flags to disable advanced functionality if needed
 ```
 
 ### Files Modified vs Created Summary
@@ -1365,51 +1481,32 @@ Performance Risks:
 ```bash
 PHASE 5 FILE IMPACT SUMMARY:
 
-NEW FILES TO CREATE (~35 files):
-├── frontend/public/manifest.json
-├── frontend/public/sw.js
-├── frontend/src/components/PWAInstall.tsx
-├── frontend/src/components/VideoPlayer/VideoChapters.tsx
-├── frontend/src/components/VideoPlayer/SubtitleTrack.tsx
-├── frontend/src/components/VideoPlayer/QualitySelector.tsx
-├── frontend/src/components/VideoPlayer/PictureInPicture.tsx
-├── frontend/src/pages/Admin/ThemeManager.tsx
-├── frontend/src/pages/Admin/PerformanceMonitor.tsx
-├── frontend/src/pages/Admin/UserAnalytics.tsx
-├── backend/src/services/chapterExtraction.js
-├── backend/src/services/subtitleExtraction.js
-├── backend/src/services/adaptiveStreaming.js
-├── backend/src/services/metricsCollector.js
-├── backend/src/services/analyticsCollector.js
-├── backend/src/routes/themeManagement.js
-├── tests/playwright/themes/ (5+ test files)
-├── tests/playwright/performance/ (4+ test files)
-├── tests/playwright/cross-browser/ (3+ test files)
-└── tests/playwright/mobile/ (3+ test files)
+NEW FILES TO CREATE (~25 files):
+├── Advanced Player: VideoChapters.tsx, SubtitleTrack.tsx, QualitySelector.tsx, PictureInPicture.tsx
+├── Analytics: analyticsCollector.js, UserAnalytics.tsx, AnalyticsDashboard.tsx
+├── Logging: logger.ts (frontend), logger.js (backend), requestLogger.js
+├── Backend Services: chapterExtraction.js, subtitleExtraction.js, adaptiveStreaming.js
+├── Unit Tests: 15+ test files covering all major business logic components
+└── Support Components: AdvancedControls.tsx, UsageCharts.tsx, logCollector.js
 
-EXISTING FILES TO MODIFY (~15 files):
-├── frontend/src/App.tsx (PWA integration)
-├── frontend/src/components/VideoPlayer.tsx (advanced features)
-├── frontend/src/pages/Library/LibraryPage.tsx (PWA offline support)
-├── frontend/src/pages/Admin/AdminPage.tsx (enhanced dashboard)
-├── backend/src/app.ts (new routes)
-├── backend/src/routes/videos.js (quality selection)
-├── package.json (PWA dependencies)
-├── frontend/public/index.html (PWA manifest)
-└── Various test configuration files
+EXISTING FILES TO MODIFY (~10 files):
+├── Frontend: VideoPlayer.tsx (advanced features), App.tsx (analytics integration)
+├── Backend: app.ts (logging middleware), videos.js (quality selection)
+├── Admin: AdminPage.tsx (analytics dashboard)
+└── Configuration: package.json (test dependencies), jest.config.js (coverage)
 ```
 
 ### Expected Timeline & Effort Distribution
 
 ```bash
 PHASE 5 EFFORT BREAKDOWN:
-├── PWA Implementation: 40% (2-3 hours)
-├── Advanced Player Features: 35% (3-4 hours)
-├── Admin Dashboard Enhancement: 15% (2-3 hours)
-└── Comprehensive Testing: 10% (3-4 hours)
+├── Advanced Video Player Features: 50% (3-4 hours)
+├── User Analytics & Statistics: 25% (2-3 hours)
+├── Basic Logging System: 15% (1-2 hours)
+└── Comprehensive Unit Testing: 10% (4-5 hours)
 
 TOTAL ESTIMATED TIME: 10-14 hours
-RECOMMENDED TIMELINE: 2-3 weeks (2-3 hours per session)
+RECOMMENDED TIMELINE: 3 weeks (3-4 hours per week)
 ```
 
-**🎯 Phase 5 is ready for immediate implementation with the existing Phase 4 theme system providing the perfect foundation for advanced PWA and player features.**
+**🎯 Phase 5 focuses on advanced video features, essential analytics, basic logging, and comprehensive unit testing to ensure robust business logic validation while maintaining the CEO-level quality standards established in Phase 4.**
