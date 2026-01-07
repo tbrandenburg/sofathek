@@ -984,9 +984,9 @@ npm run ceo:final-validation
 
 ### Phase 5 Implementation Roadmap (4 Focus Areas)
 
-### 5.1 Advanced Video Player Features
+### 5.1 Essential Video Player Features
 
-**Priority: HIGH | Estimated Time: 3-4 hours**
+**Priority: HIGH | Estimated Time: 2-3 hours**
 
 ```yaml
 Task 5.1.1: Video Chapters & Navigation
@@ -1024,30 +1024,16 @@ IMPLEMENTATION:
   - Subtitle styling with theme integration
   - Closed captions accessibility compliance
 
-Task 5.1.3: Quality Selection & Adaptive Streaming
+Task 5.1.3: Playback Speed Controls
 FILES TO CREATE:
-  - frontend/src/components/VideoPlayer/QualitySelector.tsx
-  - backend/src/services/adaptiveStreaming.js
-  - backend/src/middleware/qualityNegotiation.js
+  - frontend/src/components/VideoPlayer/SpeedSelector.tsx
 
 IMPLEMENTATION:
-  - Multiple quality options (480p, 720p, 1080p, 4K)
-  - Automatic quality adjustment based on connection speed
-  - Manual quality selection with bandwidth display
-  - Progressive download and streaming optimization
-  - Quality-based storage management in admin
-
-Task 5.1.4: Picture-in-Picture & Advanced Controls
-FILES TO CREATE:
-  - frontend/src/components/VideoPlayer/PictureInPicture.tsx
-  - frontend/src/components/VideoPlayer/AdvancedControls.tsx
-
-IMPLEMENTATION:
-  - Native Picture-in-Picture API integration
-  - Playback speed controls (0.25x - 2x)
-  - A/B repeat functionality for learning content
-  - Frame-by-frame navigation with arrow keys
-  - Custom keyboard shortcuts (space, arrows, number keys)
+  - Playback speed options (0.25x, 0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x)
+  - Speed selection dropdown in video player controls
+  - Keyboard shortcuts for speed adjustment (< and > keys)
+  - Speed setting persistence per profile
+  - Smooth speed transitions without audio distortion
 ```
 
 ### 5.2 Simple Usage Statistics
@@ -1393,15 +1379,14 @@ IMPLEMENTATION:
 ```bash
 🎯 PHASE 5 EXECUTION PLAN (Recommended Order):
 
-WEEK 1: Advanced Video Player (Tasks 5.1.1 - 5.1.4)
+WEEK 1: Essential Video Player (Tasks 5.1.1 - 5.1.3)
 ├── Day 1: Video Chapters & Navigation (5.1.1)
 ├── Day 2: Subtitle Support (5.1.2)
-├── Day 3: Quality Selection & Adaptive Streaming (5.1.3)
-└── Day 4: Picture-in-Picture & Advanced Controls (5.1.4)
+└── Day 3: Playback Speed Controls (5.1.3)
 
 WEEK 2: Simple Usage & Logging (Tasks 5.2.1 - 5.3.2)
 ├── Day 1: Simple Usage Statistics (5.2.1 - 5.2.3) - 1 hour
-└── Day 2-3: Basic Logging System (5.3.1 - 5.3.2) - 1-2 hours
+└── Day 2: Basic Logging System (5.3.1 - 5.3.2) - 1-2 hours
 
 WEEK 3: Comprehensive Unit Testing (Tasks 5.4.1 - 5.4.5)
 ├── Day 1: Theme System Unit Tests (5.4.1)
@@ -1414,13 +1399,13 @@ WEEK 3: Comprehensive Unit Testing (Tasks 5.4.1 - 5.4.5)
 ### Success Criteria for Phase 5
 
 ```yaml
-Advanced Player Features:
+Essential Video Player Features:
 - [ ] Video chapters display and navigate correctly with thumbnail previews
 - [ ] Subtitles load and display properly in all supported formats (.srt, .vtt, .ass)
-- [ ] Quality selection works with smooth transitions between resolutions
-- [ ] Picture-in-Picture mode functions across all major browsers
-- [ ] Keyboard shortcuts and accessibility features work seamlessly
-- [ ] Advanced controls (speed, A/B repeat, frame navigation) function properly
+- [ ] Playback speed controls work smoothly (0.25x - 2x) without audio distortion
+- [ ] Speed settings persist per profile across browser sessions
+- [ ] Keyboard shortcuts for speed adjustment work (< and > keys)
+- [ ] Chapter markers integrate seamlessly with existing video player controls
 
 Simple Usage Statistics:
 - [ ] Watch history tracks who watched what video and when

@@ -1,0 +1,356 @@
+/* SubtitleTrack Component Styles */
+
+.subtitle-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Subtitle Display */
+.subtitle-display {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
+  max-width: 80%;
+  padding: 0 20px;
+}
+
+.subtitle-position-top {
+  top: 20px;
+}
+
+.subtitle-position-middle {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.subtitle-position-bottom {
+  bottom: 80px; /* Above controls */
+}
+
+.subtitle-text {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-align: center;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Subtitle Controls */
+.subtitle-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.subtitle-toggle {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius-sm, 4px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.subtitle-toggle:hover {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.2));
+}
+
+.subtitle-toggle:active {
+  transform: scale(0.95);
+}
+
+.subtitle-indicator {
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--accent-color);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 2px;
+  line-height: 1;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Subtitle Menu */
+.subtitle-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  width: 280px;
+  max-height: 400px;
+  background: var(--overlay-background, rgba(0, 0, 0, 0.95));
+  border: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--border-radius);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  animation: subtitleMenuSlideUp 0.2s ease;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-color) transparent;
+}
+
+.subtitle-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.subtitle-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.subtitle-menu::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 3px;
+}
+
+@keyframes subtitleMenuSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subtitle Menu Header */
+.subtitle-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.1));
+}
+
+.subtitle-menu-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.subtitle-menu-close {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--border-radius-sm, 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.subtitle-menu-close:hover {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.2));
+}
+
+/* Subtitle Sections */
+.subtitle-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.05));
+}
+
+.subtitle-section:last-child {
+  border-bottom: none;
+}
+
+.subtitle-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Language Selection */
+.subtitle-language-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subtitle-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius-sm, 4px);
+  transition: background-color 0.2s ease;
+}
+
+.subtitle-option:hover {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.subtitle-option input[type='radio'] {
+  margin: 0;
+  accent-color: var(--accent-color);
+}
+
+.subtitle-option span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.default-badge {
+  background: var(--accent-color);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  line-height: 1;
+}
+
+/* Subtitle Settings */
+.subtitle-select {
+  width: 100%;
+  background: var(--surface-color, #1a1a1a);
+  border: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.2));
+  border-radius: var(--border-radius-sm, 4px);
+  color: var(--color-text);
+  padding: 8px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.subtitle-select:focus {
+  border-color: var(--accent-color);
+}
+
+.subtitle-select option {
+  background: var(--surface-color, #1a1a1a);
+  color: var(--color-text);
+}
+
+/* Subtitle Preview */
+.subtitle-preview {
+  background: var(--surface-color, #1a1a1a);
+  border: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--border-radius-sm, 4px);
+  padding: 12px;
+  text-align: center;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .subtitle-menu {
+    width: 260px;
+    max-height: 350px;
+  }
+
+  .subtitle-display {
+    bottom: 60px;
+    max-width: 90%;
+    padding: 0 10px;
+  }
+
+  .subtitle-text {
+    font-size: 14px !important;
+  }
+
+  .subtitle-section {
+    padding: 12px;
+  }
+
+  .subtitle-menu-header {
+    padding: 12px;
+  }
+
+  .subtitle-menu-header h3 {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subtitle-menu {
+    width: 240px;
+    max-height: 300px;
+  }
+
+  .subtitle-display {
+    bottom: 50px;
+    max-width: 95%;
+    padding: 0 5px;
+  }
+
+  .subtitle-text {
+    font-size: 12px !important;
+    padding: 3px 8px;
+  }
+
+  .subtitle-section {
+    padding: 10px;
+  }
+
+  .subtitle-option {
+    padding: 6px;
+  }
+}
+
+/* Position adjustment for mobile */
+@media (max-width: 480px) {
+  .subtitle-menu {
+    right: -10px;
+  }
+}
+
+/* Fullscreen adjustments */
+.video-player.fullscreen .subtitle-display.subtitle-position-bottom {
+  bottom: 100px;
+}
+
+.video-player.fullscreen .subtitle-text {
+  font-size: 1.2em;
+  padding: 6px 16px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .subtitle-menu {
+    border: 2px solid var(--color-text);
+  }
+
+  .subtitle-option:hover {
+    background: var(--color-text);
+    color: var(--background-color);
+  }
+
+  .subtitle-text {
+    border: 1px solid var(--color-text);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .subtitle-menu {
+    animation: none;
+  }
+
+  .subtitle-toggle,
+  .subtitle-menu-close,
+  .subtitle-option,
+  .subtitle-select {
+    transition: none;
+  }
+}

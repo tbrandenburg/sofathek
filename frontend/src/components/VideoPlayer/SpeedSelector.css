@@ -1,0 +1,269 @@
+/* SpeedSelector Component Styles */
+
+.speed-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Speed Toggle Button */
+.speed-toggle {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius-sm, 4px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.speed-toggle:hover {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.2));
+}
+
+.speed-toggle:active {
+  transform: scale(0.95);
+}
+
+.speed-label {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Speed Menu */
+.speed-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  width: 200px;
+  max-height: 320px;
+  background: var(--overlay-background, rgba(0, 0, 0, 0.95));
+  border: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--border-radius);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  animation: speedMenuSlideUp 0.2s ease;
+  overflow: hidden;
+}
+
+@keyframes speedMenuSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Speed Menu Header */
+.speed-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.1));
+}
+
+.speed-menu-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.speed-menu-close {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--border-radius-sm, 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.speed-menu-close:hover {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.2));
+}
+
+/* Speed List */
+.speed-list {
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-color) transparent;
+}
+
+.speed-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.speed-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.speed-list::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 3px;
+}
+
+/* Speed Option */
+.speed-option {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  outline: none;
+  text-align: left;
+}
+
+.speed-option:hover {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.speed-option:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
+}
+
+.speed-option.active {
+  background: var(--accent-color-alpha, rgba(229, 9, 20, 0.2));
+  color: var(--accent-color);
+}
+
+.speed-option.active:hover {
+  background: var(--accent-color-alpha-hover, rgba(229, 9, 20, 0.3));
+}
+
+.speed-value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.speed-check {
+  color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+/* Speed Info */
+.speed-info {
+  padding: 8px 16px;
+  text-align: center;
+  border-top: 1px solid var(--overlay-border, rgba(255, 255, 255, 0.1));
+}
+
+.speed-info small {
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 11px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .speed-menu {
+    width: 180px;
+    max-height: 280px;
+  }
+
+  .speed-option {
+    padding: 10px 12px;
+  }
+
+  .speed-value {
+    font-size: 13px;
+  }
+
+  .speed-menu-header {
+    padding: 12px;
+  }
+
+  .speed-menu-header h3 {
+    font-size: 15px;
+  }
+
+  .speed-label {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .speed-menu {
+    width: 160px;
+    max-height: 240px;
+  }
+
+  .speed-option {
+    padding: 8px 10px;
+  }
+
+  .speed-value {
+    font-size: 12px;
+  }
+
+  .speed-info {
+    padding: 6px 10px;
+  }
+
+  .speed-label {
+    min-width: 28px;
+    font-size: 10px;
+  }
+}
+
+/* Position adjustment for mobile */
+@media (max-width: 480px) {
+  .speed-menu {
+    right: -10px;
+  }
+}
+
+/* Keyboard navigation states */
+.speed-option:focus {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.2));
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .speed-menu {
+    border: 2px solid var(--color-text);
+  }
+
+  .speed-option:hover,
+  .speed-option:focus {
+    background: var(--color-text);
+    color: var(--background-color);
+  }
+
+  .speed-option.active {
+    border-left: 3px solid var(--accent-color);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .speed-menu {
+    animation: none;
+  }
+
+  .speed-toggle,
+  .speed-menu-close,
+  .speed-option {
+    transition: none;
+  }
+}

@@ -44,3 +44,93 @@ export interface AppConfig {
   jwtSecret: string;
   jwtExpiresIn: string;
 }
+
+// Video and Media Types
+export interface Chapter {
+  id: string;
+  title: string;
+  startTime: number;
+  endTime: number;
+  thumbnail?: string;
+}
+
+export interface SubtitleTrack {
+  id: string;
+  language: string;
+  path: string;
+  default: boolean;
+}
+
+export interface VideoMetadata {
+  title: string;
+  duration: number;
+  chapters?: Chapter[];
+  subtitles?: SubtitleTrack[];
+  thumbnail?: string;
+  description?: string;
+  resolution?: string;
+  codec?: string;
+  bitrate?: number;
+  fileSize?: number;
+}
+
+export interface AccessibilityFeatures {
+  hasClosedCaptions: boolean;
+  hasAudioDescription: boolean;
+}
+
+export interface Video {
+  id: string;
+  title: string;
+  description?: string;
+  duration: number;
+  thumbnail?: string;
+  category: string;
+  resolution?: string;
+  codec?: string;
+  bitrate?: number;
+  fileSize: number;
+  dateAdded: string;
+  tags: string[];
+  chapters?: Chapter[];
+  subtitles?: SubtitleTrack[];
+  accessibility?: AccessibilityFeatures;
+  filePath: string;
+}
+
+export interface DownloadJob {
+  id: string;
+  url: string;
+  status: 'queued' | 'downloading' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  quality: string;
+  category: string;
+  outputPath?: string;
+  error?: string;
+  startTime?: Date;
+  endTime?: Date;
+  videoMetadata?: VideoMetadata;
+}
+
+export interface LibraryFilters {
+  category?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface VideoLibrary {
+  videos: Video[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  categories: string[];
+  scanStats: {
+    scanned: number;
+    processed: number;
+    errors: number;
+  };
+}

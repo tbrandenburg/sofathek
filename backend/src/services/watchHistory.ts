@@ -1,0 +1,822 @@
+import path from 'path';
+import fs from 'fs-extra';
+
+export interface WatchEvent {
+  profileId: string;
+  videoId: string;
+  videoTitle: string;
+  watchedAt: string; // ISO timestamp
+  durationWatched: number; // seconds
+  totalDuration: number; // seconds
+  category?: string;
+  completedPercentage: number;
+}
+
+export interface WatchSession {
+  sessionId: string;
+  profileId: string;
+  videoId: string;
+  startedAt: string;
+  lastUpdateAt: string;
+  currentTime: number;
+  totalDuration: number;
+  isCompleted: boolean;
+}
+
+export interface InteractionEvent {
+  sessionId: string;
+  videoId: string;
+  action: string;
+  timestamp: number;
+  data: Record<string, any>;
+}
+
+export interface UsageStatistics {
+  totalViews: number;
+  totalWatchTime: number;
+  averageWatchTime: number;
+  completionRate: number;
+  mostWatchedVideos: Array<{
+    videoId: string;
+    title: string;
+    views: number;
+    totalTime: number;
+  }>;
+  dailyStats: Array<{
+    date: string;
+    views: number;
+    watchTime: number;
+  }>;
+  recentSessions: Array<{
+    id: string;
+    videoId: string;
+    videoTitle: string;
+    startTime: string;
+    endTime?: string;
+    totalWatchTime: number;
+    progress: number;
+    completed: boolean;
+    sessionId: string;
+  }>;
+}
+
+export class WatchHistoryService {
+  private historyFilePath: string;
+  private sessionsFilePath: string;
+  private interactionsFilePath: string;
+  private dataDirectory: string;
+
+  constructor() {
+    // Use data directory for persistent storage
+    this.dataDirectory = path.resolve(process.cwd(), '..', 'data', 'usage');
+    this.historyFilePath = path.join(this.dataDirectory, 'watch-history.json');
+    this.sessionsFilePath = path.join(
+      this.dataDirectory,
+      'active-sessions.json'
+    );
+    this.interactionsFilePath = path.join(
+      this.dataDirectory,
+      'interactions.json'
+    );
+
+    // Ensure data directory exists
+    this.initializeDataDirectory();
+  }
+
+  /**
+   * Initialize data directory and files
+   */
+  private async initializeDataDirectory(): Promise<void> {
+    try {
+      await fs.ensureDir(this.dataDirectory);
+
+      // Initialize history file if it doesn't exist
+      if (!(await fs.pathExists(this.historyFilePath))) {
+        await fs.writeJson(this.historyFilePath, []);
+      }
+
+      // Initialize sessions file if it doesn't exist
+      if (!(await fs.pathExists(this.sessionsFilePath))) {
+        await fs.writeJson(this.sessionsFilePath, {});
+      }
+
+      // Initialize interactions file if it doesn't exist
+      if (!(await fs.pathExists(this.interactionsFilePath))) {
+        await fs.writeJson(this.interactionsFilePath, []);
+      }
+    } catch (error) {
+      console.error(
+        'Failed to initialize watch history data directory:',
+        error
+      );
+    }
+  }
+
+  /**
+   * Start a new watch session
+   */
+  async startWatchSession(
+    profileId: string,
+    videoId: string,
+    videoTitle: string,
+    totalDuration: number,
+    category?: string
+  ): Promise<string> {
+    try {
+      const sessionId = this.generateSessionId();
+      const sessions = await this.getActiveSessions();
+
+      const session: WatchSession = {
+        sessionId,
+        profileId,
+        videoId,
+        startedAt: new Date().toISOString(),
+        lastUpdateAt: new Date().toISOString(),
+        currentTime: 0,
+        totalDuration,
+        isCompleted: false,
+      };
+
+      // Close any existing session for this video and profile
+      const existingSessionKey = `${profileId}_${videoId}`;
+      if (sessions[existingSessionKey]) {
+        await this.endWatchSession(sessions[existingSessionKey].sessionId);
+      }
+
+      sessions[existingSessionKey] = session;
+      await fs.writeJson(this.sessionsFilePath, sessions);
+
+      console.log(
+        `Started watch session: ${sessionId} for profile ${profileId}, video ${videoId}`
+      );
+      return sessionId;
+    } catch (error) {
+      console.error('Failed to start watch session:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update watch session progress
+   */
+  async updateWatchProgress(
+    sessionId: string,
+    currentTime: number,
+    isCompleted: boolean = false
+  ): Promise<void> {
+    try {
+      const sessions = await this.getActiveSessions();
+      const session = Object.values(sessions).find(
+        s => s.sessionId === sessionId
+      );
+
+      if (!session) {
+        console.warn(`Watch session not found: ${sessionId}`);
+        return;
+      }
+
+      session.currentTime = currentTime;
+      session.lastUpdateAt = new Date().toISOString();
+      session.isCompleted = isCompleted;
+
+      await fs.writeJson(this.sessionsFilePath, sessions);
+
+      // Auto-complete session if watched > 90%
+      const completedPercentage = (currentTime / session.totalDuration) * 100;
+      if (completedPercentage >= 90 && !session.isCompleted) {
+        await this.endWatchSession(sessionId, true);
+      }
+    } catch (error) {
+      console.error('Failed to update watch progress:', error);
+    }
+  }
+
+  /**
+   * End watch session and record to history
+   */
+  async endWatchSession(
+    sessionId: string,
+    forceComplete: boolean = false
+  ): Promise<void> {
+    try {
+      const sessions = await this.getActiveSessions();
+      const sessionKey = Object.keys(sessions).find(
+        key => sessions[key].sessionId === sessionId
+      );
+
+      if (!sessionKey || !sessions[sessionKey]) {
+        console.warn(`Watch session not found: ${sessionId}`);
+        return;
+      }
+
+      const session = sessions[sessionKey];
+      const durationWatched = session.currentTime;
+      const completedPercentage =
+        (durationWatched / session.totalDuration) * 100;
+
+      // Only record meaningful watch events (watched for at least 10 seconds or 1%)
+      if (durationWatched >= 10 || completedPercentage >= 1) {
+        const watchEvent: WatchEvent = {
+          profileId: session.profileId,
+          videoId: session.videoId,
+          videoTitle: 'Unknown', // Will be populated by caller
+          watchedAt: session.startedAt,
+          durationWatched,
+          totalDuration: session.totalDuration,
+          completedPercentage: Math.round(completedPercentage),
+        };
+
+        await this.recordWatchEvent(watchEvent);
+      }
+
+      // Remove session from active sessions
+      delete sessions[sessionKey];
+      await fs.writeJson(this.sessionsFilePath, sessions);
+
+      console.log(
+        `Ended watch session: ${sessionId}, watched ${durationWatched}s (${Math.round(completedPercentage)}%)`
+      );
+    } catch (error) {
+      console.error('Failed to end watch session:', error);
+    }
+  }
+
+  /**
+   * Record a watch event to history
+   */
+  async recordWatchEvent(watchEvent: WatchEvent): Promise<void> {
+    try {
+      const history = await this.getWatchHistory();
+
+      // Add timestamp if not provided
+      if (!watchEvent.watchedAt) {
+        watchEvent.watchedAt = new Date().toISOString();
+      }
+
+      history.push(watchEvent);
+      await fs.writeJson(this.historyFilePath, history);
+
+      console.log(
+        `Recorded watch event: ${watchEvent.profileId} watched ${watchEvent.videoTitle} for ${watchEvent.durationWatched}s`
+      );
+    } catch (error) {
+      console.error('Failed to record watch event:', error);
+    }
+  }
+
+  /**
+   * Get watch history with optional filtering
+   */
+  async getWatchHistory(filters?: {
+    profileId?: string;
+    videoId?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+  }): Promise<WatchEvent[]> {
+    try {
+      let history: WatchEvent[] = await fs.readJson(this.historyFilePath);
+
+      // Apply filters
+      if (filters) {
+        if (filters.profileId) {
+          history = history.filter(
+            event => event.profileId === filters.profileId
+          );
+        }
+
+        if (filters.videoId) {
+          history = history.filter(event => event.videoId === filters.videoId);
+        }
+
+        if (filters.startDate) {
+          const startDate = new Date(filters.startDate);
+          history = history.filter(
+            event => new Date(event.watchedAt) >= startDate
+          );
+        }
+
+        if (filters.endDate) {
+          const endDate = new Date(filters.endDate);
+          history = history.filter(
+            event => new Date(event.watchedAt) <= endDate
+          );
+        }
+
+        if (filters.limit) {
+          history = history.slice(-filters.limit);
+        }
+      }
+
+      // Sort by watch date (newest first)
+      history.sort(
+        (a, b) =>
+          new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime()
+      );
+
+      return history;
+    } catch (error) {
+      console.error('Failed to get watch history:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get active watch sessions
+   */
+  async getActiveSessions(): Promise<Record<string, WatchSession>> {
+    try {
+      return await fs.readJson(this.sessionsFilePath);
+    } catch (error) {
+      console.error('Failed to get active sessions:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Get usage statistics
+   */
+  async getUsageStats(profileId?: string): Promise<{
+    totalWatchTime: number;
+    totalVideosWatched: number;
+    averageWatchTime: number;
+    completionRate: number;
+    mostWatchedVideos: Array<{
+      videoId: string;
+      videoTitle: string;
+      watchCount: number;
+    }>;
+  }> {
+    try {
+      const history = await this.getWatchHistory(
+        profileId ? { profileId } : undefined
+      );
+
+      if (history.length === 0) {
+        return {
+          totalWatchTime: 0,
+          totalVideosWatched: 0,
+          averageWatchTime: 0,
+          completionRate: 0,
+          mostWatchedVideos: [],
+        };
+      }
+
+      const totalWatchTime = history.reduce(
+        (sum, event) => sum + event.durationWatched,
+        0
+      );
+      const completedVideos = history.filter(
+        event => event.completedPercentage >= 90
+      ).length;
+
+      // Count videos watched per video ID
+      const videoWatchCounts = history.reduce(
+        (counts, event) => {
+          if (!counts[event.videoId]) {
+            counts[event.videoId] = {
+              videoId: event.videoId,
+              videoTitle: event.videoTitle,
+              watchCount: 0,
+            };
+          }
+          counts[event.videoId].watchCount++;
+          return counts;
+        },
+        {} as Record<
+          string,
+          { videoId: string; videoTitle: string; watchCount: number }
+        >
+      );
+
+      const mostWatchedVideos = Object.values(videoWatchCounts)
+        .sort((a, b) => b.watchCount - a.watchCount)
+        .slice(0, 10);
+
+      return {
+        totalWatchTime,
+        totalVideosWatched: Object.keys(videoWatchCounts).length,
+        averageWatchTime: totalWatchTime / history.length,
+        completionRate: (completedVideos / history.length) * 100,
+        mostWatchedVideos,
+      };
+    } catch (error) {
+      console.error('Failed to get usage stats:', error);
+      return {
+        totalWatchTime: 0,
+        totalVideosWatched: 0,
+        averageWatchTime: 0,
+        completionRate: 0,
+        mostWatchedVideos: [],
+      };
+    }
+  }
+
+  /**
+   * Export watch history to CSV
+   */
+  async exportToCSV(profileId?: string): Promise<string> {
+    try {
+      const history = await this.getWatchHistory(
+        profileId ? { profileId } : undefined
+      );
+
+      const csvHeader =
+        'Profile ID,Video ID,Video Title,Watched At,Duration Watched (s),Total Duration (s),Completed %,Category\n';
+      const csvRows = history
+        .map(event => {
+          const safeTitie = (event.videoTitle || '').replace(/"/g, '""'); // Escape quotes
+          return `"${event.profileId}","${event.videoId}","${safeTitie}","${event.watchedAt}",${event.durationWatched},${event.totalDuration},${event.completedPercentage},"${event.category || ''}"`;
+        })
+        .join('\n');
+
+      return csvHeader + csvRows;
+    } catch (error) {
+      console.error('Failed to export to CSV:', error);
+      return '';
+    }
+  }
+
+  /**
+   * Generate unique session ID
+   */
+  private generateSessionId(): string {
+    return `watch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Cleanup old sessions (older than 24 hours)
+   */
+  async cleanupOldSessions(): Promise<void> {
+    try {
+      const sessions = await this.getActiveSessions();
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      let cleanedCount = 0;
+      Object.keys(sessions).forEach(key => {
+        const session = sessions[key];
+        if (new Date(session.lastUpdateAt) < oneDayAgo) {
+          delete sessions[key];
+          cleanedCount++;
+        }
+      });
+
+      if (cleanedCount > 0) {
+        await fs.writeJson(this.sessionsFilePath, sessions);
+        console.log(`Cleaned up ${cleanedCount} old watch sessions`);
+      }
+    } catch (error) {
+      console.error('Failed to cleanup old sessions:', error);
+    }
+  }
+
+  // ========== NEW API-COMPATIBLE METHODS ==========
+
+  /**
+   * Start a new watch session (API compatible)
+   */
+  async startWatchSessionAPI(
+    sessionId: string,
+    videoId: string,
+    videoInfo: any
+  ): Promise<{ id: string }> {
+    try {
+      const sessions = await this.getActiveSessions();
+
+      const session: WatchSession = {
+        sessionId,
+        profileId: sessionId, // Use sessionId as profileId for simplicity
+        videoId,
+        startedAt: new Date().toISOString(),
+        lastUpdateAt: new Date().toISOString(),
+        currentTime: 0,
+        totalDuration: videoInfo.duration || 0,
+        isCompleted: false,
+      };
+
+      // Store session with unique key
+      const sessionKey = `${sessionId}_${videoId}`;
+      sessions[sessionKey] = session;
+      await fs.writeJson(this.sessionsFilePath, sessions);
+
+      console.log(`Started watch session: ${sessionId} for video ${videoId}`);
+      return { id: sessionId };
+    } catch (error) {
+      console.error('Failed to start watch session:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update progress for a watch session
+   */
+  async updateProgress(
+    sessionId: string,
+    videoId: string,
+    progressData: {
+      currentTime: number;
+      duration: number;
+      progress: number;
+      watchTime: number;
+    }
+  ): Promise<void> {
+    try {
+      const sessions = await this.getActiveSessions();
+      const sessionKey = `${sessionId}_${videoId}`;
+
+      if (!sessions[sessionKey]) {
+        console.warn(`Watch session not found: ${sessionKey}`);
+        return;
+      }
+
+      const session = sessions[sessionKey];
+      session.currentTime = progressData.currentTime;
+      session.totalDuration = progressData.duration;
+      session.lastUpdateAt = new Date().toISOString();
+
+      await fs.writeJson(this.sessionsFilePath, sessions);
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * End a watch session (API compatible)
+   */
+  async endWatchSessionAPI(
+    sessionId: string,
+    videoId: string,
+    finalStats: {
+      totalWatchTime: number;
+      completed: boolean;
+      finalProgress: number;
+      unloadSave?: boolean;
+    }
+  ): Promise<void> {
+    try {
+      const sessions = await this.getActiveSessions();
+      const sessionKey = `${sessionId}_${videoId}`;
+
+      if (!sessions[sessionKey]) {
+        console.warn(`Watch session not found: ${sessionKey}`);
+        return;
+      }
+
+      const session = sessions[sessionKey];
+
+      // Record watch event if meaningful watch time
+      if (finalStats.totalWatchTime >= 5) {
+        const watchEvent: WatchEvent = {
+          profileId: sessionId,
+          videoId,
+          videoTitle: 'Video', // Will be updated with actual title
+          watchedAt: session.startedAt,
+          durationWatched: finalStats.totalWatchTime,
+          totalDuration: session.totalDuration,
+          completedPercentage: Math.round(finalStats.finalProgress),
+        };
+
+        await this.recordWatchEvent(watchEvent);
+      }
+
+      // Remove session
+      delete sessions[sessionKey];
+      await fs.writeJson(this.sessionsFilePath, sessions);
+
+      console.log(
+        `Ended watch session: ${sessionId}, watched ${finalStats.totalWatchTime}s`
+      );
+    } catch (error) {
+      console.error('Failed to end watch session:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Record interaction event
+   */
+  async recordInteraction(
+    sessionId: string,
+    videoId: string,
+    action: string,
+    data: Record<string, any>,
+    timestamp?: number
+  ): Promise<void> {
+    try {
+      const interactions: InteractionEvent[] = await fs.readJson(
+        this.interactionsFilePath
+      );
+
+      const interaction: InteractionEvent = {
+        sessionId,
+        videoId,
+        action,
+        timestamp: timestamp || Date.now(),
+        data,
+      };
+
+      interactions.push(interaction);
+      await fs.writeJson(this.interactionsFilePath, interactions);
+    } catch (error) {
+      console.error('Failed to record interaction:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update heartbeat for session
+   */
+  async updateHeartbeat(sessionId: string, videoId: string): Promise<void> {
+    try {
+      const sessions = await this.getActiveSessions();
+      const sessionKey = `${sessionId}_${videoId}`;
+
+      if (sessions[sessionKey]) {
+        sessions[sessionKey].lastUpdateAt = new Date().toISOString();
+        await fs.writeJson(this.sessionsFilePath, sessions);
+      }
+    } catch (error) {
+      console.error('Failed to update heartbeat:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get usage statistics for time range
+   */
+  async getStatistics(range: string): Promise<UsageStatistics> {
+    try {
+      let startDate: Date | undefined;
+
+      if (range === '7d') {
+        startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      } else if (range === '30d') {
+        startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      }
+
+      const history = await this.getWatchHistory(
+        startDate ? { startDate: startDate.toISOString() } : undefined
+      );
+
+      const totalViews = history.length;
+      const totalWatchTime = history.reduce(
+        (sum, event) => sum + event.durationWatched,
+        0
+      );
+      const averageWatchTime = totalViews > 0 ? totalWatchTime / totalViews : 0;
+      const completedVideos = history.filter(
+        event => event.completedPercentage >= 90
+      ).length;
+      const completionRate = totalViews > 0 ? completedVideos / totalViews : 0;
+
+      // Most watched videos
+      const videoStats = history.reduce(
+        (acc, event) => {
+          if (!acc[event.videoId]) {
+            acc[event.videoId] = {
+              videoId: event.videoId,
+              title: event.videoTitle,
+              views: 0,
+              totalTime: 0,
+            };
+          }
+          acc[event.videoId].views++;
+          acc[event.videoId].totalTime += event.durationWatched;
+          return acc;
+        },
+        {} as Record<string, any>
+      );
+
+      const mostWatchedVideos = Object.values(videoStats)
+        .sort((a: any, b: any) => b.views - a.views)
+        .slice(0, 10);
+
+      // Daily stats
+      const dailyStats = this.calculateDailyStats(history);
+
+      // Recent sessions
+      const recentSessions = history.slice(0, 10).map(event => ({
+        id: event.profileId + '_' + event.videoId,
+        videoId: event.videoId,
+        videoTitle: event.videoTitle,
+        startTime: event.watchedAt,
+        endTime: event.watchedAt,
+        totalWatchTime: event.durationWatched,
+        progress: event.completedPercentage,
+        completed: event.completedPercentage >= 90,
+        sessionId: event.profileId,
+      }));
+
+      return {
+        totalViews,
+        totalWatchTime,
+        averageWatchTime,
+        completionRate,
+        mostWatchedVideos,
+        dailyStats,
+        recentSessions,
+      };
+    } catch (error) {
+      console.error('Failed to get statistics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get session statistics
+   */
+  async getSessionStatistics(sessionId: string): Promise<any> {
+    try {
+      const history = await this.getWatchHistory({ profileId: sessionId });
+      const sessions = await this.getActiveSessions();
+
+      const activeSession = Object.values(sessions).find(
+        s => s.sessionId === sessionId
+      );
+
+      return {
+        totalWatchEvents: history.length,
+        totalWatchTime: history.reduce(
+          (sum, event) => sum + event.durationWatched,
+          0
+        ),
+        activeSession: activeSession
+          ? {
+              videoId: activeSession.videoId,
+              currentTime: activeSession.currentTime,
+              startedAt: activeSession.startedAt,
+            }
+          : null,
+      };
+    } catch (error) {
+      console.error('Failed to get session statistics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Export data in specified format
+   */
+  async exportData(range: string, format: string): Promise<string> {
+    try {
+      if (format === 'csv') {
+        return await this.exportToCSV();
+      } else {
+        const statistics = await this.getStatistics(range);
+        return JSON.stringify(statistics, null, 2);
+      }
+    } catch (error) {
+      console.error('Failed to export data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get recent watch sessions
+   */
+  async getRecentSessions(limit: number): Promise<any[]> {
+    try {
+      const history = await this.getWatchHistory({ limit });
+      return history.map(event => ({
+        id: event.profileId + '_' + event.videoId,
+        videoId: event.videoId,
+        videoTitle: event.videoTitle,
+        startTime: event.watchedAt,
+        totalWatchTime: event.durationWatched,
+        progress: event.completedPercentage,
+        completed: event.completedPercentage >= 90,
+        sessionId: event.profileId,
+      }));
+    } catch (error) {
+      console.error('Failed to get recent sessions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate daily statistics
+   */
+  private calculateDailyStats(
+    history: WatchEvent[]
+  ): Array<{ date: string; views: number; watchTime: number }> {
+    const dailyMap = new Map();
+
+    history.forEach(event => {
+      const date = event.watchedAt.split('T')[0]; // Get date part
+      if (!dailyMap.has(date)) {
+        dailyMap.set(date, { date, views: 0, watchTime: 0 });
+      }
+      const dayStats = dailyMap.get(date);
+      dayStats.views++;
+      dayStats.watchTime += event.durationWatched;
+    });
+
+    return Array.from(dailyMap.values()).sort((a, b) =>
+      b.date.localeCompare(a.date)
+    );
+  }
+}
+
+// Export singleton instance
+export const watchHistoryService = new WatchHistoryService();

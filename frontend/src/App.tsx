@@ -14,6 +14,7 @@ import { VideoPlayerPage } from './pages/VideoPlayer';
 import { DownloadsPage } from './pages/Downloads';
 import { UploadPage } from './pages/Upload';
 import { AdminPage } from './pages/Admin';
+import SimpleUsage from './pages/Admin/SimpleUsage';
 import { ThemesPage } from './pages/Themes';
 import './styles/globals.css';
 
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/downloads" element={<DownloadsPage />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/admin/usage" element={<SimpleUsage />} />
                 <Route path="/themes" element={<ThemesPage />} />
                 <Route
                   path="*"

@@ -14,6 +14,7 @@ import videoRoutes from './routes/videos';
 import downloadRoutes from './routes/downloads';
 import profileRoutes from './routes/profiles';
 import adminRoutes from './routes/admin';
+import usageRoutes from './routes/usage';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -76,6 +77,7 @@ app.use('/api/videos', videoRoutes);
 app.use('/api/downloads', downloadRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/usage', usageRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -94,6 +96,7 @@ app.get('/', (req, res) => {
       downloads: '/api/downloads',
       profiles: '/api/profiles',
       admin: '/api/admin',
+      usage: '/api/usage',
     },
     timestamp: new Date().toISOString(),
   });

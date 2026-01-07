@@ -1,5 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Video } from '../types';
+import { VideoChapters } from './VideoPlayer/VideoChapters';
+import { SubtitleTrack } from './VideoPlayer/SubtitleTrack';
+import { SpeedSelector } from './VideoPlayer/SpeedSelector';
+import usageTracker from '../services/usageTracker';
 import './VideoPlayer.css';
 
 interface VideoPlayerProps {
@@ -43,6 +47,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [showControls, setShowControls] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSubtitleId, setSelectedSubtitleId] = useState<
+    string | undefined
+  >(video.subtitles?.find(sub => sub.default)?.id);
+  const [subtitlesVisible, setSubtitlesVisible] = useState(true);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   const controlsTimeoutRef = useRef<number | null>(null);
 
@@ -78,13 +87,24 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [isPlaying]);
 
   // Seek to specific time
-  const seekTo = useCallback((time: number) => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
+  const seekTo = useCallback(
+    (time: number) => {
+      const videoElement = videoRef.current;
+      if (!videoElement) return;
 
-    videoElement.currentTime = time;
-    setCurrentTime(time);
-  }, []);
+      const oldTime = currentTime;
+      videoElement.currentTime = time;
+      setCurrentTime(time);
+
+      // Record seek interaction
+      usageTracker.recordInteraction('seek', {
+        fromTime: oldTime,
+        toTime: time,
+        seekDistance: Math.abs(time - oldTime),
+      });
+    },
+    [currentTime]
+  );
 
   // Volume control
   const changeVolume = useCallback((newVolume: number) => {
@@ -95,6 +115,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     videoElement.volume = clampedVolume;
     setVolume(clampedVolume);
     setIsMuted(clampedVolume === 0);
+
+    // Record volume change interaction
+    usageTracker.recordInteraction('volume_change', {
+      volume: clampedVolume,
+    });
   }, []);
 
   // Mute toggle
@@ -106,6 +131,20 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     videoElement.muted = newMuted;
     setIsMuted(newMuted);
   }, [isMuted]);
+
+  // Playback rate change
+  const changePlaybackRate = useCallback((rate: number) => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    videoElement.playbackRate = rate;
+    setPlaybackRate(rate);
+
+    // Record speed change interaction
+    usageTracker.recordInteraction('speed_change', {
+      playbackRate: rate,
+    });
+  }, []);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(async () => {
@@ -145,12 +184,26 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // Event handlers
   const handlePlay = () => {
     setIsPlaying(true);
+
+    // Record play interaction
+    usageTracker.recordInteraction('play', {
+      currentTime,
+      duration,
+    });
+
     onPlay?.();
   };
 
   const handlePause = () => {
     setIsPlaying(false);
     setShowControls(true);
+
+    // Record pause interaction
+    usageTracker.recordInteraction('pause', {
+      currentTime,
+      duration,
+    });
+
     onPause?.();
   };
 
@@ -160,6 +213,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     const current = videoElement.currentTime;
     setCurrentTime(current);
+
+    // Update usage tracking progress
+    usageTracker.updateProgress(current, duration);
+
     onTimeUpdate?.(current);
   };
 
@@ -180,6 +237,18 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const handleLoadedMetadata = () => {
     setLoading(false);
+
+    // Start usage tracking when video metadata is loaded
+    usageTracker.startVideoTracking(video.id, {
+      title: video.title,
+      duration: videoRef.current?.duration || 0,
+    });
+
+    // Set global reference for usage tracker
+    if (videoRef.current) {
+      (window as any).sofathekVideoElement = videoRef.current;
+    }
+
     onLoadedMetadata?.();
   };
 
@@ -194,6 +263,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handleEnded = () => {
     setIsPlaying(false);
     setShowControls(true);
+
+    // Stop usage tracking with completion info
+    usageTracker.stopVideoTracking({
+      completed: true,
+      progress: 100,
+    });
+
     onEnded?.();
   };
 
@@ -290,6 +366,17 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     };
   }, []);
 
+  // Usage tracking cleanup on video change or unmount
+  useEffect(() => {
+    return () => {
+      // Stop tracking when component unmounts or video changes
+      usageTracker.stopVideoTracking({
+        completed: false,
+        progress: duration > 0 ? (currentTime / duration) * 100 : 0,
+      });
+    };
+  }, [video.id]); // Dependency on video.id to track when video changes
+
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
   const volumePercentage = volume * 100;
 
@@ -315,6 +402,19 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         className="video-element"
         preload="metadata"
       />
+
+      {/* Subtitle Display */}
+      {video.subtitles && video.subtitles.length > 0 && (
+        <SubtitleTrack
+          subtitles={video.subtitles}
+          currentTime={currentTime}
+          isVisible={subtitlesVisible && !!selectedSubtitleId}
+          selectedSubtitleId={selectedSubtitleId}
+          onSubtitleSelect={setSelectedSubtitleId}
+          className="video-subtitle-overlay"
+          displayOnly={true}
+        />
+      )}
 
       {loading && (
         <div className="video-loading">
@@ -356,6 +456,28 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   className="progress-handle"
                   style={{ left: `${progressPercentage}%` }}
                 />
+
+                {/* Chapter Markers */}
+                {video.chapters && video.chapters.length > 0 && (
+                  <div className="chapter-markers">
+                    {video.chapters.map(chapter => {
+                      const position =
+                        duration > 0 ? (chapter.startTime / duration) * 100 : 0;
+                      return (
+                        <div
+                          key={`marker-${chapter.id}`}
+                          className="chapter-marker"
+                          style={{ left: `${position}%` }}
+                          title={`${chapter.title} - ${formatTime(chapter.startTime)}`}
+                          onClick={e => {
+                            e.stopPropagation();
+                            seekTo(chapter.startTime);
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -438,6 +560,37 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </div>
 
               <div className="controls-right">
+                {/* Speed Control */}
+                <SpeedSelector
+                  currentSpeed={playbackRate}
+                  onSpeedChange={changePlaybackRate}
+                  className="video-speed-control"
+                />
+
+                {/* Subtitles Control */}
+                {video.subtitles && video.subtitles.length > 0 && (
+                  <SubtitleTrack
+                    subtitles={video.subtitles}
+                    currentTime={currentTime}
+                    isVisible={false}
+                    selectedSubtitleId={selectedSubtitleId}
+                    onSubtitleSelect={setSelectedSubtitleId}
+                    className="video-subtitle-control"
+                    displayOnly={false}
+                  />
+                )}
+
+                {/* Chapters Component */}
+                {video.chapters && video.chapters.length > 0 && (
+                  <VideoChapters
+                    chapters={video.chapters}
+                    currentTime={currentTime}
+                    duration={duration}
+                    onSeekToChapter={seekTo}
+                    className="video-chapters-control"
+                  />
+                )}
+
                 <button
                   className="control-button fullscreen"
                   onClick={toggleFullscreen}

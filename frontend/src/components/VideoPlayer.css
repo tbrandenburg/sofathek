@@ -150,6 +150,64 @@
   opacity: 1;
 }
 
+/* Chapter Markers in Progress Bar */
+.chapter-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.chapter-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--chapter-marker-color, rgba(255, 255, 255, 0.8));
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translateX(-50%);
+  transition: all 0.2s ease;
+  border-radius: 1px;
+}
+
+.chapter-marker:hover {
+  background: var(--accent-color);
+  width: 3px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.progress-bar:hover .chapter-marker {
+  height: 120%;
+  top: -10%;
+}
+
+/* Chapter marker tooltip on hover */
+.chapter-marker::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--overlay-background, rgba(0, 0, 0, 0.9));
+  color: var(--color-text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+  margin-bottom: 4px;
+}
+
+.chapter-marker:hover::before {
+  opacity: 1;
+}
+
 /* Control Buttons */
 .controls-bottom {
   display: flex;
@@ -187,6 +245,32 @@
 
 .control-button.play-pause {
   padding: 10px;
+}
+
+/* Video Chapters Control */
+.video-chapters-control {
+  flex-shrink: 0;
+}
+
+/* Video Subtitle Control */
+.video-subtitle-control {
+  flex-shrink: 0;
+}
+
+/* Video Speed Control */
+.video-speed-control {
+  flex-shrink: 0;
+}
+
+/* Video Subtitle Overlay */
+.video-subtitle-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 4;
 }
 
 /* Volume Control */
