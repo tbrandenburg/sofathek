@@ -17,6 +17,7 @@ Implement Sofathek, a self-hosted family mediathek application, building upon th
 - Metadata extraction and thumbnail generation using ffmpeg
 - File system scanning and video library indexing
 - JSON-based persistence for video metadata and user profiles
+- **Robust Video Recognition**: Videos are recognized and playable even without accompanying metadata JSON files (auto-generated on demand)
 
 **Phase 3: User Interface Implementation**
 
@@ -62,6 +63,7 @@ Implement Sofathek, a self-hosted family mediathek application, building upon th
 - JSON files for metadata, user profiles, and configuration
 - Docker volume mounts for persistent data storage
 - Category-based folder organization for videos
+- **Flexible Metadata Design**: Videos can be saved without their metadata JSON files and will still be recognized and playable by the system (metadata will be auto-generated when missing)
 
 ### Development Assistance & Quality Assurance:
 
@@ -1101,6 +1103,8 @@ const applyTheme = themeName => {
   }
 }
 ```
+
+**Note**: This metadata JSON file is optional. Videos can exist without their corresponding metadata files and will still be recognized, scanned, and playable by Sofathek. When metadata is missing, the system will automatically extract basic information (duration, resolution, codec) from the video file itself and generate thumbnails on demand.
 
 ## DOCUMENTATION:
 
