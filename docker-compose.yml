@@ -1,21 +1,49 @@
 version: '3.8'
 
 services:
-  golden-template:
+  sofathek:
     build:
       context: .
       target: production
+    # SAFETY RULE: Only map Sofathek's designated ports, never system ports
     ports:
-      - "${PORT:-3001}:3001"
+      - '${SOFATHEK_PORT:-3001}:3001'
     environment:
       - NODE_ENV=production
       - PORT=3001
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - SOFATHEK_MEDIA_PATH=/app/media
+      - SOFATHEK_TEMP_PATH=/app/media/temp
+    # SAFETY RULE: Isolated volumes for media storage, no system directory mounts
+    volumes:
+      - sofathek_media:/app/media
+      - sofathek_temp:/app/media/temp
     restart: unless-stopped
+    # SAFETY RULE: Resource limits to prevent system impact
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3001/api/health',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
+# SAFETY RULE: Use named volumes instead of host mounts for better isolation
+volumes:
+  sofathek_media:
+    driver: local
+  sofathek_temp:
+    driver: local

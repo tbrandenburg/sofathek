@@ -1,19 +1,39 @@
 version: '3.8'
 
 services:
-  golden-template-dev:
+  sofathek-dev:
     build:
       context: .
       target: development
+    # SAFETY RULE: Development ports - only expose Sofathek's designated ports
     ports:
-      - "3000:3000"
-      - "3001:3001"
+      - '3000:3000' # Frontend development server
+      - '3001:3001' # Backend API server
     environment:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+      - SOFATHEK_MEDIA_PATH=/app/media
+      - SOFATHEK_TEMP_PATH=/app/media/temp
+    # SAFETY RULE: Development volume mounts with explicit exclusions
     volumes:
       - .:/app
       - /app/node_modules
       - /app/frontend/node_modules
       - /app/backend/node_modules
+      # SAFETY RULE: Separate development media storage
+      - sofathek_dev_media:/app/media
+      - sofathek_dev_temp:/app/media/temp
     restart: unless-stopped
+    # SAFETY RULE: Development resource limits to prevent system overload
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+# SAFETY RULE: Development volumes for isolated storage
+volumes:
+  sofathek_dev_media:
+    driver: local
+  sofathek_dev_temp:
+    driver: local
