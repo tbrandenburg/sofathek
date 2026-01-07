@@ -1050,60 +1050,53 @@ IMPLEMENTATION:
   - Custom keyboard shortcuts (space, arrows, number keys)
 ```
 
-### 5.2 User Analytics & Usage Statistics
+### 5.2 Simple Usage Statistics
 
-**Priority: MEDIUM | Estimated Time: 2-3 hours**
+**Priority: LOW | Estimated Time: 1 hour**
 
 ```yaml
-Task 5.2.1: User Analytics Collection
+Task 5.2.1: Basic Watch History Tracking
 FILES TO CREATE:
-  - frontend/src/services/analyticsCollector.js
-  - frontend/src/hooks/useAnalytics.ts
-  - backend/src/services/analyticsProcessor.js
+  - backend/src/services/watchHistory.js
+  - frontend/src/services/usageTracker.js
 
 IMPLEMENTATION:
-  - Profile-based viewing analytics (watch time, preferences)
-  - Content popularity and recommendation engine data
-  - Theme switching frequency and preference analysis
-  - Download patterns and storage optimization insights
-  - Family-friendly content filtering analytics
+  - Simple JSON file storage for watch history per profile
+  - Track: profileId, videoId, watchedAt timestamp, duration watched
+  - No complex analytics, just basic "who watched what when" data
+  - Append-only log format for simplicity
 
 PATTERN:
-interface ViewingSession {
+interface WatchEvent {
   profileId: string;
   videoId: string;
-  startTime: number;
-  endTime: number;
-  watchDuration: number;
-  completionRate: number;
-  quality: string;
-  theme: string;
+  videoTitle: string;
+  watchedAt: string; // ISO timestamp
+  durationWatched: number; // seconds
+  totalDuration: number; // seconds
 }
 
-Task 5.2.2: Analytics Dashboard
+Task 5.2.2: Simple Usage Display
 FILES TO CREATE:
-  - frontend/src/pages/Admin/UserAnalytics.tsx
-  - frontend/src/components/Admin/AnalyticsDashboard.tsx
-  - frontend/src/components/Admin/UsageCharts.tsx
+  - frontend/src/pages/Admin/SimpleUsage.tsx
 
 IMPLEMENTATION:
-  - Real-time viewing statistics display
-  - Popular content rankings and trends
-  - Profile usage patterns visualization
-  - Theme preference analytics with charts
-  - Content recommendation insights
+  - Basic table showing recent watch history
+  - Simple filters: by profile, by date range
+  - Show: Profile name, Video title, Watch date, Duration watched
+  - No charts, no complex visualizations, just a simple list
+  - Export to CSV functionality for external analysis
 
-Task 5.2.3: Privacy-Focused Data Collection
-FILES TO CREATE:
-  - backend/src/middleware/analyticsMiddleware.js
-  - backend/src/services/dataPrivacy.js
+Task 5.2.3: Watch History Integration
+FILES TO MODIFY:
+  - frontend/src/components/VideoPlayer.tsx
+  - backend/src/routes/videos.js
 
 IMPLEMENTATION:
-  - Anonymous analytics data collection
-  - Configurable data retention policies
-  - GDPR-compliant data handling
-  - Opt-out mechanisms for privacy-conscious users
-  - Data aggregation without personal identification
+  - Add simple tracking calls when video starts/stops
+  - Store watch events in local JSON files (no database needed)
+  - Minimal performance impact - fire-and-forget logging
+  - No real-time updates, just basic tracking
 ```
 
 ### 5.3 Basic Logging System
@@ -1406,9 +1399,9 @@ WEEK 1: Advanced Video Player (Tasks 5.1.1 - 5.1.4)
 ├── Day 3: Quality Selection & Adaptive Streaming (5.1.3)
 └── Day 4: Picture-in-Picture & Advanced Controls (5.1.4)
 
-WEEK 2: Analytics & Logging (Tasks 5.2.1 - 5.3.2)
-├── Day 1-2: User Analytics & Usage Statistics (5.2.1 - 5.2.3)
-└── Day 3-4: Basic Logging System (5.3.1 - 5.3.2)
+WEEK 2: Simple Usage & Logging (Tasks 5.2.1 - 5.3.2)
+├── Day 1: Simple Usage Statistics (5.2.1 - 5.2.3) - 1 hour
+└── Day 2-3: Basic Logging System (5.3.1 - 5.3.2) - 1-2 hours
 
 WEEK 3: Comprehensive Unit Testing (Tasks 5.4.1 - 5.4.5)
 ├── Day 1: Theme System Unit Tests (5.4.1)
@@ -1429,12 +1422,13 @@ Advanced Player Features:
 - [ ] Keyboard shortcuts and accessibility features work seamlessly
 - [ ] Advanced controls (speed, A/B repeat, frame navigation) function properly
 
-User Analytics & Statistics:
-- [ ] Profile-based viewing analytics accurately track watch time and preferences
-- [ ] Content popularity metrics provide actionable insights for recommendations
-- [ ] Theme switching analytics identify user preference patterns
-- [ ] Privacy-focused data collection complies with GDPR standards
-- [ ] Analytics dashboard displays real-time usage statistics clearly
+Simple Usage Statistics:
+- [ ] Watch history tracks who watched what video and when
+- [ ] Simple admin page displays watch history in table format
+- [ ] Basic filtering by profile and date range works
+- [ ] CSV export functionality for external analysis
+- [ ] Minimal performance impact on video playback
+- [ ] JSON file storage works reliably without corruption
 
 Basic Logging System:
 - [ ] Frontend logging captures user actions and errors with appropriate levels
@@ -1481,18 +1475,18 @@ Performance Impact Risks:
 ```bash
 PHASE 5 FILE IMPACT SUMMARY:
 
-NEW FILES TO CREATE (~25 files):
+NEW FILES TO CREATE (~20 files):
 ├── Advanced Player: VideoChapters.tsx, SubtitleTrack.tsx, QualitySelector.tsx, PictureInPicture.tsx
-├── Analytics: analyticsCollector.js, UserAnalytics.tsx, AnalyticsDashboard.tsx
+├── Simple Usage: watchHistory.js, usageTracker.js, SimpleUsage.tsx
 ├── Logging: logger.ts (frontend), logger.js (backend), requestLogger.js
 ├── Backend Services: chapterExtraction.js, subtitleExtraction.js, adaptiveStreaming.js
 ├── Unit Tests: 15+ test files covering all major business logic components
-└── Support Components: AdvancedControls.tsx, UsageCharts.tsx, logCollector.js
+└── Support Components: AdvancedControls.tsx, logCollector.js
 
-EXISTING FILES TO MODIFY (~10 files):
-├── Frontend: VideoPlayer.tsx (advanced features), App.tsx (analytics integration)
-├── Backend: app.ts (logging middleware), videos.js (quality selection)
-├── Admin: AdminPage.tsx (analytics dashboard)
+EXISTING FILES TO MODIFY (~8 files):
+├── Frontend: VideoPlayer.tsx (advanced features + usage tracking)
+├── Backend: app.ts (logging middleware), videos.js (quality selection + usage tracking)
+├── Admin: AdminPage.tsx (simple usage display)
 └── Configuration: package.json (test dependencies), jest.config.js (coverage)
 ```
 
@@ -1500,12 +1494,12 @@ EXISTING FILES TO MODIFY (~10 files):
 
 ```bash
 PHASE 5 EFFORT BREAKDOWN:
-├── Advanced Video Player Features: 50% (3-4 hours)
-├── User Analytics & Statistics: 25% (2-3 hours)
+├── Advanced Video Player Features: 60% (3-4 hours)
+├── Simple Usage Statistics: 10% (1 hour)
 ├── Basic Logging System: 15% (1-2 hours)
-└── Comprehensive Unit Testing: 10% (4-5 hours)
+└── Comprehensive Unit Testing: 15% (4-5 hours)
 
-TOTAL ESTIMATED TIME: 10-14 hours
+TOTAL ESTIMATED TIME: 9-12 hours
 RECOMMENDED TIMELINE: 3 weeks (3-4 hours per week)
 ```
 
