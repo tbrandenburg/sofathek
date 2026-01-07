@@ -389,6 +389,7 @@ const applyTheme = themeName => {
 - Content Security Policy (CSP) for XSS prevention
 - Privacy-first design with local-only data processing
 - Secure headers and HTTPS enforcement
+- **Port Management Rule**: NEVER close or modify ports that Sofathek did not open (critical for shared server environments with other productive services)
 
 **Mobile Optimization:**
 
@@ -413,6 +414,45 @@ const applyTheme = themeName => {
 - Vite or modern bundlers for faster development
 - Docker multi-stage builds for smaller images
 - GitHub Actions for CI/CD automation
+
+**Server Coexistence & Safety Rules:**
+
+**⚠️ CRITICAL: Shared Server Environment Safety**
+
+Sofathek will be deployed on a server alongside other productive services. Strict adherence to these rules is mandatory:
+
+1. **Port Management (CRITICAL)**:
+   - **NEVER close ports that Sofathek did not open**
+   - **NEVER modify existing port configurations**
+   - Only bind to ports explicitly allocated for Sofathek
+   - Use Docker port mapping to avoid conflicts with host services
+   - Always verify port availability before binding
+
+2. **Resource Isolation**:
+   - Use Docker containers for complete service isolation
+   - Limit CPU and memory usage through Docker resource constraints
+   - Avoid system-wide package installations that could affect other services
+   - Use dedicated Docker volumes, never modify host filesystem directly
+
+3. **Network Safety**:
+   - Only listen on explicitly assigned network interfaces
+   - Use Docker networks for internal communication
+   - Never modify host networking rules or iptables
+   - Test network changes in isolated environments first
+
+4. **Process Management**:
+   - Run all services within Docker containers
+   - Never kill or modify processes not owned by Sofathek
+   - Use proper signal handling for graceful shutdowns
+   - Monitor resource usage to prevent system overload
+
+5. **Testing & Development Safety**:
+   - Always use Docker Compose for testing environments
+   - Never test port operations directly on production server
+   - Use ephemeral containers for development and testing
+   - Validate all network configurations in staging environment
+
+**Violation of these rules may cause service interruptions for other productive applications and is strictly forbidden.**
 
 **Success Criteria:**
 
