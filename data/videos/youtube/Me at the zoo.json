@@ -1,0 +1,23 @@
+{
+  "id": "youtube_me_at_the_zoo_1767815444149",
+  "title": "Me at the zoo",
+  "duration": 19,
+  "fileSize": 533916,
+  "dateAdded": "2026-01-07T19:50:43.957Z",
+  "resolution": "320x240",
+  "codec": "av1",
+  "bitrate": 224056,
+  "category": "youtube",
+  "thumbnail": "Me at the zoo.webp",
+  "description": "",
+  "tags": [
+    "youtube",
+    "mp4",
+    "2026"
+  ],
+  "subtitles": [],
+  "accessibility": {
+    "hasClosedCaptions": false,
+    "hasAudioDescription": false
+  }
+}

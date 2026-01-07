@@ -1,0 +1,350 @@
+/* VideoPlayer Component Styles */
+
+.video-player {
+  position: relative;
+  width: 100%;
+  background: var(--video-background, #000);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  cursor: none;
+}
+
+.video-player.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border-radius: 0;
+}
+
+.video-element {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: var(--video-background, #000);
+}
+
+/* Loading State */
+.video-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.video-loading .loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--overlay-border, rgba(255, 255, 255, 0.3));
+  border-top: 3px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.video-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.error-content {
+  text-align: center;
+  color: var(--color-text);
+  background: var(--overlay-background, rgba(0, 0, 0, 0.8));
+  padding: 24px;
+  border-radius: var(--border-radius);
+}
+
+.error-content svg {
+  color: var(--error-color, #e74c3c);
+  margin-bottom: 12px;
+}
+
+.error-content p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Video Controls */
+.video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    transparent,
+    var(--overlay-background, rgba(0, 0, 0, 0.8))
+  );
+  color: var(--color-text);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.video-controls.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.controls-overlay {
+  padding: 16px;
+}
+
+/* Progress Bar */
+.progress-container {
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--control-progress-bg, rgba(255, 255, 255, 0.3));
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  transition: height 0.2s ease;
+}
+
+.progress-bar:hover {
+  height: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: 3px;
+  transition: width 0.1s ease;
+}
+
+.progress-handle {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.progress-bar:hover .progress-handle {
+  opacity: 1;
+}
+
+/* Control Buttons */
+.controls-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.controls-left,
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-button {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.control-button:hover {
+  background: var(--control-hover-bg, rgba(255, 255, 255, 0.2));
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+.control-button.play-pause {
+  padding: 10px;
+}
+
+/* Volume Control */
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.volume-bar {
+  width: 60px;
+  height: 4px;
+  background: var(--control-progress-bg, rgba(255, 255, 255, 0.3));
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.volume-fill {
+  height: 100%;
+  background: var(--color-text);
+  border-radius: 2px;
+  transition: width 0.1s ease;
+}
+
+/* Time Display */
+.time-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  min-width: 100px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .controls-overlay {
+    padding: 12px;
+  }
+
+  .volume-container {
+    display: none; /* Hide volume on mobile */
+  }
+
+  .time-display {
+    font-size: 13px;
+    min-width: 80px;
+  }
+
+  .control-button {
+    padding: 6px;
+  }
+
+  .control-button.play-pause {
+    padding: 8px;
+  }
+
+  .progress-bar {
+    height: 8px; /* Thicker on mobile for easier touch */
+  }
+
+  .progress-bar:hover {
+    height: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-overlay {
+    padding: 8px;
+  }
+
+  .time-display {
+    font-size: 12px;
+    min-width: 70px;
+  }
+
+  .controls-left,
+  .controls-right {
+    gap: 4px;
+  }
+}
+
+/* Touch-friendly controls */
+@media (pointer: coarse) {
+  .control-button {
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .progress-bar {
+    height: 10px;
+    margin: 8px 0;
+  }
+
+  .progress-handle {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Accessibility */
+.control-button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.progress-bar:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Hide cursor when controls are hidden */
+.video-player:not(.video-controls.visible) {
+  cursor: none;
+}
+
+/* Fullscreen adjustments */
+.video-player.fullscreen .controls-overlay {
+  padding: 20px 24px;
+}
+
+.video-player.fullscreen .time-display {
+  font-size: 16px;
+}
+
+.video-player.fullscreen .control-button {
+  padding: 12px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .progress-bar {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .progress-fill {
+    background: var(--color-text);
+  }
+
+  .control-button:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .video-controls,
+  .progress-fill,
+  .volume-fill,
+  .control-button,
+  .progress-bar,
+  .progress-handle {
+    transition: none;
+  }
+
+  .video-loading .loading-spinner {
+    animation: none;
+  }
+}

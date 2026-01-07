@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const errorHandler = (
-  err: AppError,
+  err: AppError | any,
   req: Request,
   res: Response,
   next: NextFunction
@@ -51,8 +51,9 @@ export const errorHandler = (
   });
 };
 
-export const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextFunction) =>
-  Promise.resolve(fn(req, res, next)).catch(next);
+export const asyncHandler =
+  (fn: Function) => (req: Request, res: Response, next: NextFunction) =>
+    Promise.resolve(fn(req, res, next)).catch(next);
 
 export class AppError extends Error {
   statusCode: number;

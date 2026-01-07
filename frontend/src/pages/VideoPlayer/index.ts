@@ -1,0 +1,1 @@
+export { VideoPlayerPage } from './VideoPlayerPage';
