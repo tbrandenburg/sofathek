@@ -63,6 +63,50 @@ Implement Sofathek, a self-hosted family mediathek application, building upon th
 - Docker volume mounts for persistent data storage
 - Category-based folder organization for videos
 
+### Development Assistance & Quality Assurance:
+
+**MCP Integration for Development Support:**
+
+During the implementation of Sofathek, utilize the following MCP (Model Context Protocol) tools for ensuring code quality, up-to-date libraries, and best practices:
+
+**Context7 MCP Usage:**
+
+- **Library Verification**: Use Context7 to verify latest versions and best practices for all libraries mentioned in this document
+- **API Documentation**: Query Context7 for current API patterns and breaking changes in React 19, Express 5.x, and other dependencies
+- **Code Examples**: Retrieve up-to-date code examples and implementation patterns for video streaming, theming, and component architecture
+- **Best Practices**: Consult Context7 for modern development practices in areas like accessibility, performance optimization, and security
+
+**Firecrawl MCP Usage:**
+
+- **Documentation Updates**: Use Firecrawl to verify that all external documentation links are current and accessible
+- **Library Status**: Scrape official library repositories and documentation sites to check for deprecations, security updates, or major version changes
+- **Community Resources**: Gather current community best practices and real-world implementation examples for media streaming applications
+- **Troubleshooting**: Research solutions for specific implementation challenges by scraping relevant technical forums and documentation
+
+**When to Use MCP Tools:**
+
+1. **Before Implementation**: Verify all library versions and check for breaking changes
+2. **During Development**: Resolve doubts about API usage, component patterns, or configuration
+3. **Code Review**: Validate that implementations follow current best practices
+4. **Troubleshooting**: Research solutions for specific technical challenges
+5. **Documentation Updates**: Ensure all references and links remain current and accurate
+
+**MCP Query Examples:**
+
+```bash
+# Context7 queries
+"React 19 video component optimization patterns"
+"Express 5.x file streaming best practices"
+"Modern CSS Grid responsive video layouts"
+
+# Firecrawl queries
+"yt-dlp latest installation documentation"
+"Vidstack React player current API reference"
+"Tailwind CSS grid system updates"
+```
+
+This integrated approach ensures that Sofathek is built with the most current technologies, follows modern best practices, and maintains high code quality throughout development.
+
 ### Enhanced Directory Structure:
 
 ```
