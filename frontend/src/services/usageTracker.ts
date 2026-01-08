@@ -3,6 +3,8 @@
  * Handles client-side video watching statistics and communication with backend
  */
 
+import logger from '../utils/logger';
+
 interface VideoInfo {
   title?: string;
   duration?: number;
@@ -52,6 +54,14 @@ class UsageTracker {
     // Set up beforeunload to save progress
     window.addEventListener('beforeunload', this.handlePageUnload.bind(this));
 
+    logger.info('Usage tracker initialized', 'UsageTracker', {
+      sessionId: this.sessionId,
+      config: {
+        progressUpdateFrequency: this.PROGRESS_UPDATE_FREQUENCY,
+        heartbeatFrequency: this.HEARTBEAT_FREQUENCY,
+        minWatchTime: this.MIN_WATCH_TIME,
+      },
+    });
     console.log('[UsageTracker] Initialized with session:', this.sessionId);
   }
 
@@ -79,7 +89,14 @@ class UsageTracker {
     videoId: string,
     videoInfo: VideoInfo = {}
   ): Promise<boolean> {
+    const startTime = Date.now();
+
     try {
+      logger.info('Starting video tracking', 'UsageTracker', {
+        videoId,
+        videoTitle: videoInfo.title,
+        duration: videoInfo.duration,
+      });
       console.log('[UsageTracker] Starting tracking for video:', videoId);
 
       // Stop any existing tracking
@@ -106,7 +123,15 @@ class UsageTracker {
         }),
       });
 
+      const duration = Date.now() - startTime;
+
       if (!response.ok) {
+        logger.error('Failed to start tracking on backend', 'UsageTracker', {
+          videoId,
+          status: response.status,
+          statusText: response.statusText,
+          duration,
+        });
         console.warn(
           '[UsageTracker] Failed to start tracking on backend:',
           response.statusText
@@ -114,12 +139,35 @@ class UsageTracker {
         return false;
       }
 
+      logger.logApiCall(
+        'POST',
+        '/api/usage/start-watch',
+        duration,
+        response.status
+      );
+
       // Start periodic progress updates
       this.startProgressTracking();
       this.startHeartbeat();
 
+      logger.info('Video tracking started successfully', 'UsageTracker', {
+        videoId,
+        duration,
+      });
+
       return true;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.error(
+        'Error starting video tracking',
+        'UsageTracker',
+        {
+          videoId,
+          duration,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        error instanceof Error ? error : undefined
+      );
       console.error('[UsageTracker] Error starting video tracking:', error);
       return false;
     }

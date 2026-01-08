@@ -1,44 +1,65 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
-export const requestLogger = (req: Request, res: Response, next: NextFunction): void => {
-  const timestamp = new Date().toISOString();
+export const requestLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   const method = req.method;
   const url = req.originalUrl || req.url;
   const userAgent = req.get('User-Agent') || 'Unknown';
-  const ip = req.ip || req.connection.remoteAddress || 'Unknown';
+  const ip =
+    req.ip || (req.connection && req.connection.remoteAddress) || 'Unknown';
 
   // Log the incoming request
-  console.log(`[${timestamp}] ${method} ${url} - ${ip} - ${userAgent}`);
+  logger.info('Incoming request', {
+    method,
+    url,
+    ip,
+    userAgent,
+  });
 
-  // Log response details when response finishes
+  // Track performance
   const startTime = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - startTime;
     const statusCode = res.statusCode;
     const contentLength = res.get('Content-Length') || '0';
-    
-    console.log(
-      `[${timestamp}] ${method} ${url} - ${statusCode} - ${contentLength}b - ${duration}ms`
-    );
+
+    // Log request completion
+    logger.request(method, url, statusCode, duration, {
+      ip,
+      userAgent,
+      contentLength: `${contentLength}b`,
+    });
+
+    // Log performance metrics for slow requests
+    if (duration > 1000) {
+      logger.performance('slow_request', duration, {
+        method,
+        url,
+        statusCode,
+        ip,
+      });
+    }
+
+    // Log errors
+    if (statusCode >= 400) {
+      logger.error('Request error', {
+        method,
+        url,
+        statusCode,
+        duration,
+        ip,
+        userAgent,
+      });
+    }
   });
 
   next();
 };
 
-export const apiLogger = (message: string, level: 'info' | 'warn' | 'error' = 'info'): void => {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
-  
-  switch (level) {
-    case 'error':
-      console.error(logMessage);
-      break;
-    case 'warn':
-      console.warn(logMessage);
-      break;
-    default:
-      console.log(logMessage);
-      break;
-  }
-};
+// Export the logger instance for direct use in routes
+export { logger };

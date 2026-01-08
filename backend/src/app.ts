@@ -15,6 +15,7 @@ import downloadRoutes from './routes/downloads';
 import profileRoutes from './routes/profiles';
 import adminRoutes from './routes/admin';
 import usageRoutes from './routes/usage';
+import logsRoutes from './routes/logs';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -78,6 +79,7 @@ app.use('/api/downloads', downloadRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/usage', usageRoutes);
+app.use('/api/logs', logsRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

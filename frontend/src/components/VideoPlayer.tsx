@@ -4,6 +4,7 @@ import { VideoChapters } from './VideoPlayer/VideoChapters';
 import { SubtitleTrack } from './VideoPlayer/SubtitleTrack';
 import { SpeedSelector } from './VideoPlayer/SpeedSelector';
 import usageTracker from '../services/usageTracker';
+import logger from '../utils/logger';
 import './VideoPlayer.css';
 
 interface VideoPlayerProps {
@@ -185,6 +186,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handlePlay = () => {
     setIsPlaying(true);
 
+    logger.logInteraction('video_play', 'video', {
+      videoId: video.id,
+      videoTitle: video.title,
+      currentTime,
+      duration,
+    });
+
     // Record play interaction
     usageTracker.recordInteraction('play', {
       currentTime,
@@ -197,6 +205,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handlePause = () => {
     setIsPlaying(false);
     setShowControls(true);
+
+    logger.logInteraction('video_pause', 'video', {
+      videoId: video.id,
+      videoTitle: video.title,
+      currentTime,
+      duration,
+    });
 
     // Record pause interaction
     usageTracker.recordInteraction('pause', {
@@ -238,6 +253,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handleLoadedMetadata = () => {
     setLoading(false);
 
+    logger.info('Video metadata loaded', 'VideoPlayer', {
+      videoId: video.id,
+      videoTitle: video.title,
+      duration: videoRef.current?.duration || 0,
+    });
+
     // Start usage tracking when video metadata is loaded
     usageTracker.startVideoTracking(video.id, {
       title: video.title,
@@ -257,6 +278,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   ) => {
     setLoading(false);
     setError('Failed to load video');
+
+    logger.error('Video loading error', 'VideoPlayer', {
+      videoId: video.id,
+      videoTitle: video.title,
+      error: event.nativeEvent,
+    });
+
     onError?.(event.nativeEvent);
   };
 

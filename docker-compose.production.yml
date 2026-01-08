@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # Sofathek Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: production
+    image: sofathek/backend:latest
+    container_name: sofathek-backend
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgresql://sofathek:${DB_PASSWORD}@postgres:5432/sofathek_prod
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=http://localhost:3000
+      - LOG_LEVEL=info
+      - MAX_FILE_SIZE=500MB
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./media:/app/media
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - sofathek-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Sofathek Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: production
+    image: sofathek/frontend:latest
+    container_name: sofathek-frontend
+    restart: unless-stopped
+    ports:
+      - '3000:80'
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:3001
+      - VITE_APP_NAME=Sofathek Media Center
+      - VITE_APP_VERSION=1.0.0
+    depends_on:
+      - backend
+    networks:
+      - sofathek-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:80']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sofathek-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=sofathek_prod
+      - POSTGRES_USER=sofathek
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init:/docker-entrypoint-initdb.d
+    networks:
+      - sofathek-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sofathek -d sofathek_prod']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Caching & Session Management
+  redis:
+    image: redis:7-alpine
+    container_name: sofathek-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - sofathek-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Nginx Reverse Proxy (Optional but recommended for production)
+  nginx:
+    image: nginx:alpine
+    container_name: sofathek-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - sofathek-network
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost/health',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  sofathek-network:
+    driver: bridge
+
+# Production Environment Variables (create .env.production file)
+# DB_PASSWORD=your_secure_db_password_here
+# REDIS_PASSWORD=your_secure_redis_password_here
+# JWT_SECRET=your_super_secret_jwt_key_minimum_32_chars

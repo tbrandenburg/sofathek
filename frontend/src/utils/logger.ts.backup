@@ -1,0 +1,697 @@
+/**
+ * Frontend Logging System
+ * Professional logging utility for Sofathek Media Center
+ *
+ * Features:
+ * - Multiple log levels with filtering
+ * - Performance monitoring
+ * - Error tracking and reporting
+ * - Local storage persistence
+ * - Batch sending to backend
+ * - Development vs production modes
+ */
+
+export enum LogLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+  CRITICAL = 4,
+}
+
+export interface LogEntry {
+  id: string;
+  timestamp: number;
+  level: LogLevel;
+  message: string;
+  context?: string;
+  data?: any;
+  userId?: string;
+  sessionId?: string;
+  url?: string;
+  userAgent?: string;
+  stack?: string;
+}
+
+export interface PerformanceMetric {
+  name: string;
+  value: number;
+  timestamp: number;
+  context?: string;
+}
+
+export interface LoggerConfig {
+  level: LogLevel;
+  enableConsole: boolean;
+  enableStorage: boolean;
+  enableRemoteLogging: boolean;
+  maxStorageEntries: number;
+  batchSize: number;
+  flushInterval: number; // milliseconds
+  remoteEndpoint: string;
+}
+
+class Logger {
+  private config: LoggerConfig;
+  private logQueue: LogEntry[] = [];
+  private performanceMetrics: PerformanceMetric[] = [];
+  private flushTimer: number | null = null;
+  private sessionId: string;
+
+  constructor(config: Partial<LoggerConfig> = {}) {
+    this.config = {
+      level:
+        process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG,
+      enableConsole: process.env.NODE_ENV === 'development',
+      enableStorage: true,
+      enableRemoteLogging: true,
+      maxStorageEntries: 1000,
+      batchSize: 10,
+      flushInterval: 30000, // 30 seconds
+      remoteEndpoint: '/api/logs',
+      ...config,
+    };
+
+    this.sessionId = this.generateSessionId();
+    this.initializeLogger();
+  }
+
+  /**
+   * Initialize the logger
+   */
+  private initializeLogger(): void {
+    // Set up periodic flushing
+    this.startFlushTimer();
+
+    // Load persisted logs from storage
+    this.loadPersistedLogs();
+
+    // Set up global error handling
+    this.setupGlobalErrorHandlers();
+
+    // Set up performance monitoring
+    this.setupPerformanceMonitoring();
+
+    this.info('Logger initialized', 'Logger', {
+      config: this.config,
+      sessionId: this.sessionId,
+    });
+  }
+
+  /**
+   * Generate unique session ID
+   */
+  private generateSessionId(): string {
+    return `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Create log entry
+   */
+  private createLogEntry(
+    level: LogLevel,
+    message: string,
+    context?: string,
+    data?: any,
+    error?: Error
+  ): LogEntry {
+    const entry: LogEntry = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      timestamp: Date.now(),
+      level,
+      message,
+      context,
+      data,
+      sessionId: this.sessionId,
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+    };
+
+    if (error) {
+      entry.stack = error.stack;
+    }
+
+    return entry;
+  }
+
+  /**
+   * Add log entry to queue
+   */
+  private addLogEntry(entry: LogEntry): void {
+    // Check if we should log this level
+    if (entry.level < this.config.level) {
+      return;
+    }
+
+    // Add to queue
+    this.logQueue.push(entry);
+
+    // Console logging
+    if (this.config.enableConsole) {
+      this.logToConsole(entry);
+    }
+
+    // Local storage
+    if (this.config.enableStorage) {
+      this.persistToStorage(entry);
+    }
+
+    // Check if we need to flush immediately
+    if (
+      entry.level >= LogLevel.ERROR ||
+      this.logQueue.length >= this.config.batchSize
+    ) {
+      this.flush();
+    }
+  }
+
+  /**
+   * Log to console with appropriate styling
+   */
+  private logToConsole(entry: LogEntry): void {
+    const timestamp = new Date(entry.timestamp).toISOString();
+    const prefix = `[${timestamp}] [${LogLevel[entry.level]}] ${entry.context || 'App'}:`;
+
+    const style = this.getConsoleStyle(entry.level);
+
+    switch (entry.level) {
+      case LogLevel.DEBUG:
+        console.debug(prefix, entry.message, entry.data || '');
+        break;
+      case LogLevel.INFO:
+        console.info(`%c${prefix}`, style, entry.message, entry.data || '');
+        break;
+      case LogLevel.WARN:
+        console.warn(`%c${prefix}`, style, entry.message, entry.data || '');
+        break;
+      case LogLevel.ERROR:
+      case LogLevel.CRITICAL:
+        console.error(`%c${prefix}`, style, entry.message, entry.data || '');
+        if (entry.stack) {
+          console.error('Stack trace:', entry.stack);
+        }
+        break;
+    }
+  }
+
+  /**
+   * Get console styling for log level
+   */
+  private getConsoleStyle(level: LogLevel): string {
+    switch (level) {
+      case LogLevel.DEBUG:
+        return 'color: #888; font-size: 11px;';
+      case LogLevel.INFO:
+        return 'color: #2196F3; font-weight: bold;';
+      case LogLevel.WARN:
+        return 'color: #FF9800; font-weight: bold;';
+      case LogLevel.ERROR:
+        return 'color: #F44336; font-weight: bold;';
+      case LogLevel.CRITICAL:
+        return 'color: #FFFFFF; background-color: #F44336; font-weight: bold; padding: 2px 4px;';
+      default:
+        return '';
+    }
+  }
+
+  /**
+   * Persist log to local storage
+   */
+  private persistToStorage(entry: LogEntry): void {
+    try {
+      const storageKey = 'sofathek_logs';
+      const existingLogs = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+      existingLogs.push(entry);
+
+      // Limit storage size
+      if (existingLogs.length > this.config.maxStorageEntries) {
+        existingLogs.splice(
+          0,
+          existingLogs.length - this.config.maxStorageEntries
+        );
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(existingLogs));
+    } catch (error) {
+      console.warn('Failed to persist log to storage:', error);
+    }
+  }
+
+  /**
+   * Load persisted logs from storage
+   */
+  private loadPersistedLogs(): void {
+    try {
+      const storageKey = 'sofathek_logs';
+      const existingLogs: LogEntry[] = JSON.parse(
+        localStorage.getItem(storageKey) || '[]'
+      );
+
+      // Add persisted logs to queue for remote sending
+      this.logQueue.push(
+        ...existingLogs.filter(
+          (log: LogEntry) => Date.now() - log.timestamp < 24 * 60 * 60 * 1000 // Last 24 hours
+        )
+      );
+    } catch (error) {
+      console.warn('Failed to load persisted logs:', error);
+    }
+  }
+
+  /**
+   * Set up global error handlers
+   */
+  private setupGlobalErrorHandlers(): void {
+    // Handle unhandled promise rejections
+    window.addEventListener('unhandledrejection', event => {
+      this.error('Unhandled promise rejection', 'GlobalError', {
+        reason: event.reason,
+        promise: 'Promise rejection',
+      });
+    });
+
+    // Handle uncaught errors
+    window.addEventListener('error', event => {
+      this.error('Uncaught error', 'GlobalError', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error?.stack,
+      });
+    });
+
+    // Handle React error boundaries (if applicable)
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      if (args[0]?.includes && args[0].includes('React')) {
+        this.error('React error', 'React', { args });
+      }
+      originalConsoleError.apply(console, args);
+    };
+  }
+
+  /**
+   * Set up performance monitoring
+   */
+  private setupPerformanceMonitoring(): void {
+    // Monitor navigation timing
+    if (window.performance && window.performance.timing) {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const timing = window.performance.timing;
+          const navigationStart = timing.navigationStart;
+
+          this.recordPerformance(
+            'page_load_time',
+            timing.loadEventEnd - navigationStart
+          );
+          this.recordPerformance(
+            'dom_ready_time',
+            timing.domContentLoadedEventEnd - navigationStart
+          );
+          this.recordPerformance(
+            'first_paint',
+            timing.responseEnd - navigationStart
+          );
+        }, 0);
+      });
+    }
+
+    // Monitor resource loading
+    if (
+      window.performance &&
+      typeof window.performance.getEntriesByType === 'function'
+    ) {
+      const observer = new PerformanceObserver(list => {
+        for (const entry of list.getEntries()) {
+          if (entry.entryType === 'resource') {
+            const resource = entry as PerformanceResourceTiming;
+            if (resource.duration > 1000) {
+              // Log slow resources
+              this.recordPerformance(
+                'slow_resource',
+                resource.duration,
+                `Resource: ${resource.name}`
+              );
+            }
+          }
+        }
+      });
+
+      try {
+        observer.observe({ entryTypes: ['resource'] });
+      } catch (error) {
+        this.debug('Performance observer not supported', 'Performance');
+      }
+    }
+  }
+
+  /**
+   * Record performance metric
+   */
+  recordPerformance(name: string, value: number, context?: string): void {
+    const metric: PerformanceMetric = {
+      name,
+      value,
+      timestamp: Date.now(),
+      context,
+    };
+
+    this.performanceMetrics.push(metric);
+
+    // Log significant performance issues
+    if (
+      (name.includes('load') && value > 3000) ||
+      (name.includes('slow') && value > 2000)
+    ) {
+      this.warn(`Performance issue: ${name}`, 'Performance', { metric });
+    } else {
+      this.debug(`Performance: ${name} = ${value}ms`, 'Performance', {
+        metric,
+      });
+    }
+  }
+
+  /**
+   * Start flush timer
+   */
+  private startFlushTimer(): void {
+    this.flushTimer = window.setInterval(() => {
+      this.flush();
+    }, this.config.flushInterval);
+  }
+
+  /**
+   * Flush logs to remote server
+   */
+  async flush(): Promise<void> {
+    if (!this.config.enableRemoteLogging || this.logQueue.length === 0) {
+      return;
+    }
+
+    const logsToSend = [...this.logQueue];
+    const metricsToSend = [...this.performanceMetrics];
+
+    // Clear queues
+    this.logQueue = [];
+    this.performanceMetrics = [];
+
+    try {
+      // Transform logs to backend format
+      const transformedLogs = logsToSend.map(log => ({
+        level: LogLevel[log.level].toLowerCase() as 'debug' | 'info' | 'warn' | 'error' | 'critical',
+        message: log.message,
+        timestamp: new Date(log.timestamp).toISOString(),
+        context: {
+          url: log.url,
+          userAgent: log.userAgent,
+          sessionId: log.sessionId,
+          component: log.context,
+          data: log.data,
+          ...(log.stack && {
+            error: {
+              name: 'Error',
+              message: log.message,
+              stack: log.stack
+            }
+          })
+        }
+      }));
+
+      // Add performance metrics as log entries
+      const performanceLogs = metricsToSend.map(metric => ({
+        level: 'info' as const,
+        message: `Performance metric: ${metric.name}`,
+        timestamp: new Date(metric.timestamp).toISOString(),
+        context: {
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          sessionId: this.sessionId,
+          performance: {
+            metric: metric.name,
+            value: metric.value,
+            unit: 'ms'
+          }
+        }
+      }));
+
+      const allLogs = [...transformedLogs, ...performanceLogs];
+
+      const response = await fetch(`${this.config.remoteEndpoint}/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          logs: allLogs,
+          clientInfo: {
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            timestamp: new Date().toISOString(),
+            sessionId: this.sessionId
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        // If sending fails, add logs back to queue
+        this.logQueue.unshift(...logsToSend);
+        throw new Error(`Failed to send logs: ${response.statusText}`);
+      }
+
+      // Clear persisted logs after successful send
+      localStorage.removeItem('sofathek_logs');
+    } catch (error) {
+      // Add logs back to queue for retry
+      this.logQueue.unshift(...logsToSend);
+      this.performanceMetrics.unshift(...metricsToSend);
+
+      console.warn('Failed to flush logs to server:', error);
+    }
+  }
+
+    const logsToSend = [...this.logQueue];
+    const metricsToSend = [...this.performanceMetrics];
+
+    // Clear queues
+    this.logQueue = [];
+    this.performanceMetrics = [];
+
+    try {
+      // Transform logs to backend format
+      const transformedLogs = logsToSend.map(log => ({
+        level: LogLevel[log.level].toLowerCase() as
+          | 'debug'
+          | 'info'
+          | 'warn'
+          | 'error'
+          | 'critical',
+        message: log.message,
+        timestamp: new Date(log.timestamp).toISOString(),
+        context: {
+          url: log.url,
+          userAgent: log.userAgent,
+          sessionId: log.sessionId,
+          component: log.context,
+          data: log.data,
+          ...(log.error && {
+            error: {
+              name: log.error.name,
+              message: log.error.message,
+              stack: log.error.stack,
+            },
+          }),
+        },
+      }));
+
+      // Add performance metrics as log entries
+      const performanceLogs = metricsToSend.map(metric => ({
+        level: 'info' as const,
+        message: `Performance metric: ${metric.name}`,
+        timestamp: new Date(metric.timestamp).toISOString(),
+        context: {
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          sessionId: this.sessionId,
+          performance: {
+            metric: metric.name,
+            value: metric.value,
+            unit: metric.unit || 'ms',
+          },
+        },
+      }));
+
+      const allLogs = [...transformedLogs, ...performanceLogs];
+
+      const response = await fetch(`${this.config.remoteEndpoint}/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          logs: allLogs,
+          clientInfo: {
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            timestamp: new Date().toISOString(),
+            sessionId: this.sessionId,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        // If sending fails, add logs back to queue
+        this.logQueue.unshift(...logsToSend);
+        throw new Error(`Failed to send logs: ${response.statusText}`);
+      }
+
+      // Clear persisted logs after successful send
+      localStorage.removeItem('sofathek_logs');
+    } catch (error) {
+      // Add logs back to queue for retry
+      this.logQueue.unshift(...logsToSend);
+      this.performanceMetrics.unshift(...metricsToSend);
+
+      console.warn('Failed to flush logs to server:', error);
+    }
+  }
+
+  // Public logging methods
+  debug(message: string, context?: string, data?: any): void {
+    this.addLogEntry(
+      this.createLogEntry(LogLevel.DEBUG, message, context, data)
+    );
+  }
+
+  info(message: string, context?: string, data?: any): void {
+    this.addLogEntry(
+      this.createLogEntry(LogLevel.INFO, message, context, data)
+    );
+  }
+
+  warn(message: string, context?: string, data?: any): void {
+    this.addLogEntry(
+      this.createLogEntry(LogLevel.WARN, message, context, data)
+    );
+  }
+
+  error(message: string, context?: string, data?: any, error?: Error): void {
+    this.addLogEntry(
+      this.createLogEntry(LogLevel.ERROR, message, context, data, error)
+    );
+  }
+
+  critical(message: string, context?: string, data?: any, error?: Error): void {
+    this.addLogEntry(
+      this.createLogEntry(LogLevel.CRITICAL, message, context, data, error)
+    );
+  }
+
+  /**
+   * Log user interaction
+   */
+  logInteraction(action: string, element?: string, data?: any): void {
+    this.info(`User interaction: ${action}`, 'UserInteraction', {
+      element,
+      data,
+      timestamp: Date.now(),
+    });
+  }
+
+  /**
+   * Log API call
+   */
+  logApiCall(
+    method: string,
+    url: string,
+    duration?: number,
+    status?: number,
+    error?: Error
+  ): void {
+    const level = error
+      ? LogLevel.ERROR
+      : status && status >= 400
+        ? LogLevel.WARN
+        : LogLevel.INFO;
+    const message = `API ${method} ${url}${duration ? ` (${duration}ms)` : ''}`;
+
+    this.addLogEntry(
+      this.createLogEntry(
+        level,
+        message,
+        'API',
+        {
+          method,
+          url,
+          duration,
+          status,
+          error: error?.message,
+        },
+        error
+      )
+    );
+  }
+
+  /**
+   * Set log level
+   */
+  setLevel(level: LogLevel): void {
+    this.config.level = level;
+    this.info(`Log level changed to ${LogLevel[level]}`, 'Logger');
+  }
+
+  /**
+   * Get current configuration
+   */
+  getConfig(): LoggerConfig {
+    return { ...this.config };
+  }
+
+  /**
+   * Get logs from storage
+   */
+  getLogs(): LogEntry[] {
+    try {
+      return JSON.parse(localStorage.getItem('sofathek_logs') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Clear all logs
+   */
+  clearLogs(): void {
+    localStorage.removeItem('sofathek_logs');
+    this.logQueue = [];
+    this.performanceMetrics = [];
+    this.info('Logs cleared', 'Logger');
+  }
+
+  /**
+   * Cleanup logger
+   */
+  destroy(): void {
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+    }
+    this.flush(); // Final flush
+    this.info('Logger destroyed', 'Logger');
+  }
+}
+
+// Create and export global logger instance
+const logger = new Logger();
+
+// Export for direct usage
+export default logger;
+
+// Export logger class for custom instances
+export { Logger };
+
+// Make logger available globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).sofathekLogger = logger;
+}
