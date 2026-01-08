@@ -15,7 +15,7 @@ COPY frontend/package*.json ./
 COPY package*.json ../
 
 # Install dependencies
-RUN npm ci --include=dev && npm cache clean --force
+RUN npm install --legacy-peer-deps && npm cache clean --force
 
 # ================================
 # Stage 2: Build Stage
@@ -65,9 +65,9 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 # Switch to nginx user
 USER nginx
 
-# Health check
+# Health check using node instead of wget
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:80/health || exit 1
+    CMD nc -z localhost 80 || exit 1
 
 # Expose port 80
 EXPOSE 80

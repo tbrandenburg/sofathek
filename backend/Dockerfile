@@ -12,6 +12,7 @@ WORKDIR /app
 # Install system dependencies for native modules
 RUN apk add --no-cache \
     python3 \
+    py3-pip \
     make \
     g++ \
     ffmpeg \
@@ -19,7 +20,7 @@ RUN apk add --no-cache \
     && ln -sf python3 /usr/bin/python
 
 # Install yt-dlp for YouTube downloading
-RUN pip3 install --no-cache-dir yt-dlp
+RUN apk add --no-cache yt-dlp || pip3 install --break-system-packages --no-cache-dir yt-dlp
 
 # ================================
 # Stage 2: Dependencies Installation
@@ -31,7 +32,7 @@ COPY backend/package*.json ./
 COPY package*.json ../
 
 # Install all dependencies (including dev dependencies)
-RUN npm ci --include=dev
+RUN npm install
 
 # ================================
 # Stage 3: Build Stage
@@ -86,7 +87,7 @@ RUN mkdir -p data logs media temp && \
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-3001}/api/health || exit 1
+    CMD node -e "const http=require('http'); const req=http.request('http://localhost:${PORT:-3001}/api/health', {timeout: 10000}, res => process.exit(res.statusCode === 200 ? 0 : 1)); req.on('error', () => process.exit(1)); req.end();"
 
 # Environment variables
 ENV NODE_ENV=production

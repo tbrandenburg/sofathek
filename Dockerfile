@@ -11,17 +11,17 @@ RUN apk add --no-cache \
     && addgroup -g 1001 -S nodejs \
     && adduser -S nodejs -u 1001
 
-# Install yt-dlp for YouTube downloads
+# Install yt-dlp for YouTube downloads using apk package manager
 # SAFETY RULE: Install in isolated user space
-RUN pip3 install --no-cache-dir yt-dlp
+RUN apk add --no-cache yt-dlp || pip3 install --break-system-packages --no-cache-dir yt-dlp
 
 # Set working directory
 WORKDIR /app
 
 # Create media directories with proper permissions
 # SAFETY RULE: Ensure media storage is isolated within container
-RUN mkdir -p /app/media/videos /app/media/thumbnails /app/media/temp \
-    && chown -R nodejs:nodejs /app/media
+RUN mkdir -p /app/media/videos /app/media/thumbnails /app/media/temp /app/logs /app/data \
+    && chown -R nodejs:nodejs /app/media /app/logs /app/data
 
 # Copy package files
 COPY package*.json ./
@@ -55,15 +55,15 @@ RUN apk add --no-cache \
     && addgroup -g 1001 -S nodejs \
     && adduser -S nodejs -u 1001
 
-# Install yt-dlp in production
-RUN pip3 install --no-cache-dir yt-dlp
+# Install yt-dlp in production using apk package manager
+RUN apk add --no-cache yt-dlp || pip3 install --break-system-packages --no-cache-dir yt-dlp
 
 WORKDIR /app
 
 # Create media directories with proper permissions
 # SAFETY RULE: Media storage isolated within container filesystem
-RUN mkdir -p /app/media/videos /app/media/thumbnails /app/media/temp \
-    && chown -R nodejs:nodejs /app/media
+RUN mkdir -p /app/media/videos /app/media/thumbnails /app/media/temp /app/logs /app/data \
+    && chown -R nodejs:nodejs /app/media /app/logs /app/data
 
 # Copy package files for production dependencies
 COPY package*.json ./
@@ -78,7 +78,7 @@ COPY --from=build --chown=nodejs:nodejs /app/frontend/dist ./frontend/dist
 
 # Health check - SAFETY RULE: Only check Sofathek's own ports (3001)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
+    CMD node -e "const http=require('http'); const req=http.request('http://localhost:3001/api/health', {timeout: 3000}, res => process.exit(res.statusCode === 200 ? 0 : 1)); req.on('error', () => process.exit(1)); req.end();"
 
 # Security: run as non-root user - SAFETY RULE: Never run as root
 USER nodejs

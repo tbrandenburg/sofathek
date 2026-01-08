@@ -1,0 +1,219 @@
+version: '3.8'
+
+# Container-First Development and Testing Setup
+# This is the AUTHORITATIVE development workflow for Sofathek
+
+services:
+  # Backend Development Container
+  backend-dev:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: dependencies
+    image: sofathek/backend-dev:latest
+    container_name: sofathek-backend-dev
+    working_dir: /app
+    command: npm run dev
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - HOST=0.0.0.0
+      - LOG_LEVEL=debug
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./backend/src:/app/src:ro
+      - ./backend/package.json:/app/package.json:ro
+      - ./backend/nodemon.json:/app/nodemon.json:ro
+      - ./backend/tsconfig.json:/app/tsconfig.json:ro
+      - ./shared:/app/../shared:ro
+      - backend_node_modules:/app/node_modules
+      - backend_dist:/app/dist
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./media:/app/media
+    networks:
+      - sofathek-dev
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          'require("http").get("http://localhost:3001/api/health", res => process.exit(res.statusCode === 200 ? 0 : 1)).on("error", () => process.exit(1))',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Development Container
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dependencies
+    image: sofathek/frontend-dev:latest
+    container_name: sofathek-frontend-dev
+    working_dir: /app
+    command: npm run dev -- --host 0.0.0.0
+    ports:
+      - '3005:3008'
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001
+      - VITE_APP_NAME=Sofathek Media Center (Dev)
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+      - ./frontend/index.html:/app/index.html:ro
+      - ./frontend/vite.config.ts:/app/vite.config.ts:ro
+      - ./frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./frontend/package.json:/app/package.json:ro
+      - ./shared:/app/../shared:ro
+      - frontend_node_modules:/app/node_modules
+      - frontend_dist:/app/dist
+    networks:
+      - sofathek-dev
+    depends_on:
+      - backend-dev
+
+  # Backend Testing Container
+  backend-test:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: dependencies
+    image: sofathek/backend-test:latest
+    container_name: sofathek-backend-test
+    working_dir: /app
+    command: npm test
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    volumes:
+      - ./backend/src:/app/src:ro
+      - ./backend/__tests__:/app/__tests__:ro
+      - ./backend/package.json:/app/package.json:ro
+      - ./backend/tsconfig.json:/app/tsconfig.json:ro
+      - ./backend/jest.config.js:/app/jest.config.js:ro
+      - ./shared:/app/../shared:ro
+      - backend_test_node_modules:/app/node_modules
+    networks:
+      - sofathek-dev
+    profiles:
+      - test
+
+  # Frontend Testing Container
+  frontend-test:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dependencies
+    image: sofathek/frontend-test:latest
+    container_name: sofathek-frontend-test
+    working_dir: /app
+    command: npm test -- --watchAll=false --passWithNoTests
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/__tests__:/app/__tests__:ro
+      - ./frontend/package.json:/app/package.json:ro
+      - ./frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./shared:/app/../shared:ro
+      - frontend_test_node_modules:/app/node_modules
+    networks:
+      - sofathek-dev
+    profiles:
+      - test
+
+  # End-to-End Testing Container
+  e2e-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: sofathek/e2e-test:latest
+    container_name: sofathek-e2e-test
+    working_dir: /app
+    command: npx playwright test
+    environment:
+      - NODE_ENV=test
+      - CI=true
+      - PLAYWRIGHT_BROWSERS_PATH=/app/.playwright
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./playwright.config.ts:/app/playwright.config.ts:ro
+      - ./package.json:/app/package.json:ro
+      - e2e_node_modules:/app/node_modules
+      - playwright_browsers:/app/.playwright
+    networks:
+      - sofathek-dev
+    depends_on:
+      - backend-dev
+      - frontend-dev
+    profiles:
+      - test
+
+  # Production Build Test Container
+  build-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: sofathek/build-test:latest
+    container_name: sofathek-build-test
+    ports:
+      - '3002:3001'
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      - build_test_media:/app/media
+    networks:
+      - sofathek-dev
+    profiles:
+      - build-test
+
+volumes:
+  backend_node_modules:
+    driver: local
+  frontend_node_modules:
+    driver: local
+  backend_test_node_modules:
+    driver: local
+  frontend_test_node_modules:
+    driver: local
+  e2e_node_modules:
+    driver: local
+  backend_dist:
+    driver: local
+  frontend_dist:
+    driver: local
+  playwright_browsers:
+    driver: local
+  build_test_media:
+    driver: local
+
+networks:
+  sofathek-dev:
+    driver: bridge
+
+# Container-First Commands:
+#
+# Development:
+#   docker-compose -f docker-compose.container-first.yml up backend-dev frontend-dev
+#
+# Testing:
+#   docker-compose -f docker-compose.container-first.yml --profile test up backend-test frontend-test
+#   docker-compose -f docker-compose.container-first.yml --profile test run --rm e2e-test
+#
+# Build Testing:
+#   docker-compose -f docker-compose.container-first.yml --profile build-test up build-test
+#
+# Full Validation:
+#   docker-compose -f docker-compose.container-first.yml --profile test up --abort-on-container-exit

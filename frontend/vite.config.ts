@@ -14,7 +14,7 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:3007',
+        target: 'http://backend-dev:3001',
         changeOrigin: true,
         secure: false,
       },

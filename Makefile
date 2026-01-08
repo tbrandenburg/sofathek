@@ -1,7 +1,7 @@
-# Golden Template Repository Makefile
-# Development workflow automation
+# Sofathek Makefile
+# Container-first development workflow automation
 
-.PHONY: help setup install dev build test lint format clean docker-dev docker-prod
+.PHONY: help setup install dev build test lint format clean docker-dev docker-prod docker-container-dev docker-test docker-build-prod docker-stop docker-clean health-check validate info
 
 # Default target
 .DEFAULT_GOAL := help
@@ -14,9 +14,9 @@ BLUE := \033[0;34m
 NC := \033[0m # No Color
 
 help: ## Display this help message
-	@echo "$(BLUE)Golden Template Repository$(NC)"
+	@echo "$(BLUE)Sofathek - Self-hosted Family Media Center$(NC)"
 	@echo "$(YELLOW)Available commands:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 setup: ## Complete project setup (install dependencies and git hooks)
 	@echo "$(BLUE)Setting up project...$(NC)"
@@ -31,7 +31,7 @@ install: ## Install all dependencies
 
 dev: ## Start development servers (frontend + backend)
 	@echo "$(BLUE)Starting development servers...$(NC)"
-	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:3005$(NC)"
 	@echo "$(YELLOW)Backend:  http://localhost:3001$(NC)"
 	npm run dev
 
@@ -74,28 +74,46 @@ clean: ## Clean build artifacts and dependencies
 	rm -rf shared/dist
 	@echo "$(GREEN)✅ Cleaned!$(NC)"
 
-docker-dev: ## Run development environment with Docker
+docker-dev: ## Run development environment with Docker (legacy)
 	@echo "$(BLUE)Starting Docker development environment...$(NC)"
+	@echo "$(YELLOW)⚠️  Consider using 'make docker-container-dev' for container-first workflow$(NC)"
 	docker-compose -f docker-compose.dev.yml up --build
+
+docker-container-dev: ## Run container-first development (RECOMMENDED)
+	@echo "$(BLUE)Starting container-first development environment...$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:3005$(NC)"
+	@echo "$(YELLOW)Backend:  http://localhost:3001$(NC)"
+	docker compose -f docker-compose.container-first.yml up backend-dev frontend-dev
 
 docker-prod: ## Run production environment with Docker
 	@echo "$(BLUE)Starting Docker production environment...$(NC)"
 	docker-compose up --build
 
+docker-build-prod: ## Build production Docker image
+	@echo "$(BLUE)Building production Docker image...$(NC)"
+	docker build -t sofathek-production --target production .
+	@echo "$(GREEN)✅ Production image built: sofathek-production$(NC)"
+
+docker-test: ## Run tests in containers
+	@echo "$(BLUE)Running tests in container environment...$(NC)"
+	docker compose -f docker-compose.container-first.yml --profile test up backend-test frontend-test
+
 docker-stop: ## Stop Docker containers
 	@echo "$(BLUE)Stopping Docker containers...$(NC)"
-	docker-compose down
-	docker-compose -f docker-compose.dev.yml down
+	-docker-compose down 2>/dev/null || true
+	-docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
+	-docker compose -f docker-compose.container-first.yml down 2>/dev/null || true
 
 docker-clean: ## Remove Docker containers and images
 	@echo "$(BLUE)Cleaning Docker containers and images...$(NC)"
 	docker-compose down --rmi all --volumes
 	docker-compose -f docker-compose.dev.yml down --rmi all --volumes
+	docker compose -f docker-compose.container-first.yml down --rmi all --volumes
 
 health-check: ## Check if services are running
 	@echo "$(BLUE)Checking service health...$(NC)"
 	@curl -s http://localhost:3001/api/health > /dev/null && echo "$(GREEN)✅ Backend: OK$(NC)" || echo "$(RED)❌ Backend: DOWN$(NC)"
-	@curl -s http://localhost:3000 > /dev/null && echo "$(GREEN)✅ Frontend: OK$(NC)" || echo "$(RED)❌ Frontend: DOWN$(NC)"
+	@curl -s http://localhost:3005 > /dev/null && echo "$(GREEN)✅ Frontend: OK$(NC)" || echo "$(RED)❌ Frontend: DOWN$(NC)"
 
 logs: ## Show development logs
 	@echo "$(BLUE)Showing development logs...$(NC)"
@@ -114,19 +132,29 @@ validate: ## Validate entire setup
 	@echo "$(GREEN)✅ Validation complete!$(NC)"
 
 info: ## Show project information
-	@echo "$(BLUE)Golden Template Repository$(NC)"
+	@echo "$(BLUE)Sofathek - Self-hosted Family Media Center$(NC)"
+	@echo "$(YELLOW)React 19 + Express.js + TypeScript$(NC)"
+	@echo ""
 	@echo "$(YELLOW)Structure:$(NC)"
-	@echo "  frontend/  - React 18 + TypeScript + Vite"
+	@echo "  frontend/  - React 19 + TypeScript + Vite"
 	@echo "  backend/   - Express.js + TypeScript + Node.js"
 	@echo "  shared/    - Shared types and utilities"
 	@echo ""
-	@echo "$(YELLOW)Commands:$(NC)"
-	@echo "  make setup     - Initial project setup"
-	@echo "  make dev       - Start development"
-	@echo "  make build     - Production build"
-	@echo "  make test      - Run tests"
-	@echo "  make validate  - Validate entire setup"
+	@echo "$(YELLOW)Development Commands:$(NC)"
+	@echo "  make setup                - Initial project setup"
+	@echo "  make dev                  - Start development (native)"
+	@echo "  make docker-container-dev - Start development (containers) ⭐"
+	@echo "  make build                - Production build"
+	@echo "  make test                 - Run tests"
+	@echo "  make docker-test          - Run tests (containers)"
+	@echo "  make validate             - Validate entire setup"
+	@echo ""
+	@echo "$(YELLOW)Container Commands:$(NC)"
+	@echo "  make docker-container-dev - Container-first development"
+	@echo "  make docker-build-prod    - Build production image"
+	@echo "  make docker-test          - Test in containers"
+	@echo "  make health-check         - Check service health"
 
 # Create logs directory if it doesn't exist
-logs:
+create-logs-dir:
 	@mkdir -p logs

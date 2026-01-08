@@ -15,15 +15,18 @@ cd sofathek
 cp .env.example .env
 # Edit .env with your configuration
 
-# Start the application
+# Start the application (production)
 docker-compose up -d
+
+# OR for container-first development (recommended for development)
+make docker-container-dev
 ```
 
 ## Usage
 
 ```bash
 # Access the application
-# Frontend: http://localhost:3000
+# Frontend: http://localhost:3005 (container-first) or http://localhost:3000 (legacy)
 # Backend API: http://localhost:3001
 
 # Download YouTube videos
@@ -37,6 +40,27 @@ docker-compose up -d
 ```
 
 ### Development
+
+#### Container-First Development (Recommended)
+
+```bash
+# Start development environment with containers
+make docker-container-dev
+
+# Run tests in containers
+make docker-test
+
+# Build production Docker image
+make docker-build-prod
+
+# Check service health
+make health-check
+
+# View all available commands
+make help
+```
+
+#### Native Development
 
 ```bash
 # Install dependencies

@@ -37,7 +37,7 @@
     "docker:dev": "docker-compose -f docker-compose.dev.yml up",
     "docker:prod": "docker-compose up --build",
     "docker:build": "docker build -t sofathek .",
-    "prepare": "husky install"
+    "prepare": "command -v git >/dev/null 2>&1 && husky install || echo 'Git not available, skipping husky install'"
   },
   "workspaces": [
     "frontend",
