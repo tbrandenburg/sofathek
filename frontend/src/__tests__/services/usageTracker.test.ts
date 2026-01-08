@@ -52,9 +52,21 @@ Object.defineProperty(navigator, 'sendBeacon', {
   writable: true,
 });
 
-// Mock setInterval and clearInterval as proper Jest mocks
-const mockSetInterval = jest.fn();
-const mockClearInterval = jest.fn();
+// Mock setInterval and clearInterval with proper interval ID tracking
+let intervalCounter = 0;
+let activeIntervals = new Set<number>();
+
+const mockSetInterval = jest.fn((callback: Function, delay: number) => {
+  const id = ++intervalCounter;
+  activeIntervals.add(id);
+  // Don't actually set the interval, just return the ID
+  return id;
+});
+
+const mockClearInterval = jest.fn((id: number) => {
+  activeIntervals.delete(id);
+});
+
 global.setInterval = mockSetInterval as any;
 global.clearInterval = mockClearInterval as any;
 (window as any).setInterval = mockSetInterval;
@@ -74,9 +86,22 @@ describe('UsageTracker', () => {
     // Don't clear ALL mocks - be selective to preserve important call history
     jest.clearAllTimers();
 
+    // Reset interval tracking
+    intervalCounter = 0;
+    activeIntervals.clear();
+
     // Re-apply global mocks for consistent sessionId
     jest.spyOn(Date, 'now').mockReturnValue(1000000);
     jest.spyOn(Math, 'random').mockReturnValue(0.123456789);
+
+    // Clear sessionStorage mocks
+    (sessionStorageMock.getItem as jest.Mock).mockClear();
+    (sessionStorageMock.setItem as jest.Mock).mockClear();
+    (sessionStorageMock.removeItem as jest.Mock).mockClear();
+    (sessionStorageMock.clear as jest.Mock).mockClear();
+
+    // Reset sessionStorage to return null by default (no existing session)
+    (sessionStorageMock.getItem as jest.Mock).mockReturnValue(null);
 
     // Get references to global mocks but don't recreate them
     mockLogger = require('../../utils/logger').default;
@@ -85,16 +110,9 @@ describe('UsageTracker', () => {
     mockSetInterval = global.setInterval as jest.Mock;
     mockClearInterval = global.clearInterval as jest.Mock;
 
-    // Clear their call history selectively, not all at once
-    if (mockSetInterval && typeof mockSetInterval.mockClear === 'function') {
-      // Only clear setInterval for specific tests that need it
-    }
-    if (
-      mockClearInterval &&
-      typeof mockClearInterval.mockClear === 'function'
-    ) {
-      // Only clear clearInterval for specific tests that need it
-    }
+    // Clear their call history selectively
+    mockSetInterval.mockClear();
+    mockClearInterval.mockClear();
 
     mockSendBeacon = navigator.sendBeacon as jest.Mock;
     // Don't clear sendBeacon unless specifically needed
@@ -161,7 +179,7 @@ describe('UsageTracker', () => {
       expect(window.sessionStorage.setItem).not.toHaveBeenCalled();
     });
 
-    it('should use existing session ID when available', () => {
+    it('should not call setItem when existing session ID is found', () => {
       const existingSessionId = 'session_existing_123';
       (window.sessionStorage.getItem as jest.Mock).mockReturnValue(
         existingSessionId
@@ -507,9 +525,12 @@ describe('UsageTracker', () => {
       await usageTracker.startVideoTracking('video_123');
     });
 
-    it('should pause tracking when page becomes hidden', () => {
-      // Start video tracking first so intervals are created
-      usageTracker.startVideoTracking('test_video');
+    it('should pause tracking when page becomes hidden', async () => {
+      // Ensure we have active tracking with intervals
+      await usageTracker.startVideoTracking('test_video', {
+        title: 'Test Video',
+        duration: 3600,
+      });
 
       // Verify intervals were created
       expect(mockSetInterval).toHaveBeenCalled();
@@ -645,7 +666,9 @@ describe('UsageTracker', () => {
       await usageTracker.startVideoTracking('video_123');
 
       // Advance time to meet minimum watch time requirement
-      jest.spyOn(Date, 'now').mockReturnValue(1000000 + 6000); // 6 seconds later
+      // Mock Date.now to return a time 6 seconds later
+      const mockDateNow = jest.spyOn(Date, 'now');
+      mockDateNow.mockReturnValue(1000000 + 6000); // 6 seconds later
 
       // Clear and setup sendBeacon mock
       mockSendBeacon.mockClear();
@@ -664,6 +687,9 @@ describe('UsageTracker', () => {
         '/api/usage/end-watch',
         expect.any(String) // JSON payload
       );
+
+      // Cleanup
+      mockDateNow.mockRestore();
     });
 
     it('should handle sendBeacon unavailable', async () => {
