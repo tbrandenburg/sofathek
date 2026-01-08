@@ -4,6 +4,35 @@ import '@testing-library/jest-dom';
 declare const global: any;
 declare const jest: any;
 
+// Mock global fetch
+global.fetch = jest.fn();
+
+// Mock sessionStorage
+const sessionStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+global.sessionStorage = sessionStorageMock;
+
+// Mock navigator.sendBeacon
+Object.defineProperty(navigator, 'sendBeacon', {
+  writable: true,
+  value: jest.fn(),
+});
+
+// Mock document visibility API
+Object.defineProperty(document, 'hidden', {
+  writable: true,
+  value: false,
+});
+
+Object.defineProperty(document, 'visibilityState', {
+  writable: true,
+  value: 'visible',
+});
+
 // Mock ResizeObserver which is not available in test environment
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),

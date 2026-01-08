@@ -42,8 +42,7 @@ class UsageTracker {
    * Initialize the usage tracker with session management
    */
   private initializeTracker(): void {
-    // Generate session ID if not exists
-    this.sessionId = this.getOrCreateSessionId();
+    // Note: sessionId will be generated lazily when first needed
 
     // Set up page visibility handling for accurate tracking
     document.addEventListener(
@@ -55,14 +54,27 @@ class UsageTracker {
     window.addEventListener('beforeunload', this.handlePageUnload.bind(this));
 
     logger.info('Usage tracker initialized', 'UsageTracker', {
-      sessionId: this.sessionId,
+      sessionId: this.getSessionId(),
       config: {
         progressUpdateFrequency: this.PROGRESS_UPDATE_FREQUENCY,
         heartbeatFrequency: this.HEARTBEAT_FREQUENCY,
         minWatchTime: this.MIN_WATCH_TIME,
       },
     });
-    console.log('[UsageTracker] Initialized with session:', this.sessionId);
+    console.log(
+      '[UsageTracker] Initialized with session:',
+      this.getSessionId()
+    );
+  }
+
+  /**
+   * Get session ID (lazy initialization)
+   */
+  private getSessionId(): string {
+    if (!this.sessionId) {
+      this.sessionId = this.getOrCreateSessionId();
+    }
+    return this.sessionId;
   }
 
   /**
@@ -70,11 +82,22 @@ class UsageTracker {
    */
   private getOrCreateSessionId(): string {
     const storageKey = 'sofathek_session_id';
-    let sessionId = sessionStorage.getItem(storageKey);
+    let sessionId: string | null = null;
+
+    try {
+      sessionId = sessionStorage?.getItem(storageKey);
+    } catch (error) {
+      // Handle cases where sessionStorage is unavailable
+      console.warn('[UsageTracker] sessionStorage unavailable:', error);
+    }
 
     if (!sessionId) {
       sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem(storageKey, sessionId);
+      try {
+        sessionStorage?.setItem(storageKey, sessionId);
+      } catch (error) {
+        // Silently handle storage errors
+      }
     }
 
     return sessionId;
@@ -100,7 +123,7 @@ class UsageTracker {
       console.log('[UsageTracker] Starting tracking for video:', videoId);
 
       // Stop any existing tracking
-      this.stopVideoTracking();
+      await this.stopVideoTracking();
 
       this.currentVideoId = videoId;
       this.watchStartTime = Date.now();
@@ -113,7 +136,7 @@ class UsageTracker {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sessionId: this.sessionId,
+          sessionId: this.getSessionId(),
           videoId: this.currentVideoId,
           videoInfo: {
             title: videoInfo.title || 'Unknown Title',
@@ -197,6 +220,7 @@ class UsageTracker {
       this.lastProgressUpdate = currentTime;
 
       const watchTime = Math.floor((Date.now() - this.watchStartTime) / 1000);
+      // Handle zero duration gracefully - return 0 progress as expected by tests
       const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
       await fetch('/api/usage/update-progress', {
@@ -205,7 +229,7 @@ class UsageTracker {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sessionId: this.sessionId,
+          sessionId: this.getSessionId(),
           videoId: this.currentVideoId,
           currentTime: Math.floor(currentTime),
           duration: Math.floor(duration),
@@ -249,7 +273,7 @@ class UsageTracker {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            sessionId: this.sessionId,
+            sessionId: this.getSessionId(),
             videoId: this.currentVideoId,
             totalWatchTime: totalWatchTime,
             completed: finalStats.completed || false,
@@ -306,7 +330,7 @@ class UsageTracker {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              sessionId: this.sessionId,
+              sessionId: this.getSessionId(),
               videoId: this.currentVideoId,
             }),
           });
@@ -337,11 +361,17 @@ class UsageTracker {
     if (document.hidden) {
       // Page hidden - pause tracking but don't stop
       this.stopProgressTracking();
+      logger.info('Tracking paused - page hidden', 'UsageTracker', {
+        videoId: this.currentVideoId,
+      });
       console.log('[UsageTracker] Pausing tracking - page hidden');
     } else {
       // Page visible again - resume tracking
       if (this.currentVideoId) {
         this.startProgressTracking();
+        logger.info('Tracking resumed - page visible', 'UsageTracker', {
+          videoId: this.currentVideoId,
+        });
         console.log('[UsageTracker] Resuming tracking - page visible');
       }
     }
@@ -360,7 +390,7 @@ class UsageTracker {
       if (totalWatchTime >= this.MIN_WATCH_TIME) {
         // Use sendBeacon for reliable data transmission on page unload
         const data = JSON.stringify({
-          sessionId: this.sessionId,
+          sessionId: this.getSessionId(),
           videoId: this.currentVideoId,
           totalWatchTime: totalWatchTime,
           completed: false,
@@ -392,7 +422,7 @@ class UsageTracker {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sessionId: this.sessionId,
+          sessionId: this.getSessionId(),
           videoId: this.currentVideoId,
           action: action,
           timestamp: Date.now(),
@@ -410,7 +440,7 @@ class UsageTracker {
   public async getSessionStats(): Promise<any> {
     try {
       const response = await fetch(
-        `/api/usage/session-stats?sessionId=${this.sessionId}`
+        `/api/usage/session-stats?sessionId=${this.getSessionId()}`
       );
       if (response.ok) {
         return await response.json();
