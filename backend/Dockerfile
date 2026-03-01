@@ -5,6 +5,9 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
+# Install Python for youtube-dl-exec preinstall check
+RUN apk add --no-cache python3 && ln -sf python3 /usr/bin/python
+
 # Copy package files first for better layer caching
 COPY package*.json ./
 
@@ -13,6 +16,13 @@ RUN npm install --omit=dev && npm cache clean --force
 
 # Runtime stage - minimal production image
 FROM node:18-alpine AS runtime
+
+# Install system dependencies for YouTube processing
+# python3, py3-pip for yt-dlp
+# ffmpeg for thumbnail generation 
+# curl for health checks
+RUN apk add --no-cache python3 py3-pip ffmpeg curl && \
+    pip3 install --no-cache-dir --break-system-packages yt-dlp
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S sofathek && \
@@ -28,7 +38,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
 # Create required directories and set permissions
-RUN mkdir -p /app/data/videos /app/logs /app/dist && \
+RUN mkdir -p /app/data/videos /app/data/temp /app/logs /app/dist && \
     chown -R sofathek:sofathek /app
 
 # Switch to non-root user
