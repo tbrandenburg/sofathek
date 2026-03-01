@@ -4,6 +4,7 @@ import path from 'path';
 import { VideoService } from '../services/videoService';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
+import youtubeRouter from './youtube';
 
 const router = Router();
 
@@ -140,5 +141,8 @@ function getVideoMimeType(extension: string): string {
   
   return mimeTypes[extension.toLowerCase()] || 'video/mp4';
 }
+
+// Mount YouTube routes
+router.use('/youtube', youtubeRouter);
 
 export { router as apiRouter };

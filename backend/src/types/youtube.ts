@@ -1,0 +1,130 @@
+/**
+ * YouTube download request structure
+ */
+export interface DownloadRequest {
+  /** YouTube video URL */
+  url: string;
+  /** Optional custom title override */
+  title?: string;
+  /** Request timestamp */
+  requestedAt: Date;
+  /** Unique request identifier */
+  requestId: string;
+}
+
+/**
+ * YouTube video metadata from yt-dlp
+ */
+export interface YouTubeMetadata {
+  /** YouTube video ID */
+  id: string;
+  /** Video title from YouTube */
+  title: string;
+  /** Video description */
+  description?: string;
+  /** Video duration in seconds */
+  duration?: number;
+  /** Channel name */
+  uploader?: string;
+  /** Upload date */
+  uploadDate?: string;
+  /** View count */
+  viewCount?: number;
+  /** Video format information */
+  format?: string;
+  /** Video resolution width */
+  width?: number;
+  /** Video resolution height */
+  height?: number;
+  /** Thumbnail URL from YouTube */
+  thumbnailUrl?: string;
+}
+
+/**
+ * Download processing result
+ */
+export interface DownloadResult {
+  /** Unique download identifier */
+  id: string;
+  /** Download status */
+  status: 'success' | 'error' | 'cancelled';
+  /** YouTube metadata */
+  metadata?: YouTubeMetadata;
+  /** Local video file path (if successful) */
+  videoPath?: string;
+  /** Local thumbnail file path (if generated) */
+  thumbnailPath?: string;
+  /** Error message (if failed) */
+  error?: string;
+  /** Download completion timestamp */
+  completedAt: Date;
+  /** Download start timestamp */
+  startedAt: Date;
+}
+
+/**
+ * Download queue item
+ */
+export interface QueueItem {
+  /** Unique queue item identifier */
+  id: string;
+  /** Original download request */
+  request: DownloadRequest;
+  /** Current processing status */
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  /** Download progress percentage (0-100) */
+  progress: number;
+  /** Current processing step description */
+  currentStep: string;
+  /** Download result (when completed) */
+  result?: DownloadResult;
+  /** Error information (when failed) */
+  error?: string;
+  /** Queue addition timestamp */
+  queuedAt: Date;
+  /** Processing start timestamp */
+  startedAt?: Date;
+  /** Completion timestamp */
+  completedAt?: Date;
+}
+
+/**
+ * Download queue status summary
+ */
+export interface QueueStatus {
+  /** Total items in queue */
+  totalItems: number;
+  /** Currently processing items */
+  processing: number;
+  /** Completed items */
+  completed: number;
+  /** Failed items */
+  failed: number;
+  /** Pending items */
+  pending: number;
+  /** List of queue items */
+  items: QueueItem[];
+  /** Last updated timestamp */
+  lastUpdated: Date;
+}
+
+/**
+ * Supported YouTube URL patterns for validation
+ */
+export const YOUTUBE_URL_PATTERNS = [
+  /^https?:\/\/(?:www\.)?youtube\.com\/watch\?v=[\w-]+/,
+  /^https?:\/\/(?:www\.)?youtube\.com\/embed\/[\w-]+/,
+  /^https?:\/\/youtu\.be\/[\w-]+/,
+  /^https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]+/
+] as const;
+
+/**
+ * YouTube download quality options
+ */
+export const YOUTUBE_QUALITY_OPTIONS = [
+  'best[ext=mp4]/best',
+  'best[height<=720]/best',
+  'best[height<=480]/best'
+] as const;
+
+export type YouTubeQualityOption = typeof YOUTUBE_QUALITY_OPTIONS[number];
