@@ -4,7 +4,8 @@
   "description": "Self-hosted family media center with Netflix-like interface and YouTube download capabilities",
   "private": true,
   "workspaces": [
-    "backend"
+    "backend",
+    "frontend"
   ],
   "scripts": {
     "docker:dev": "docker-compose up --build",
