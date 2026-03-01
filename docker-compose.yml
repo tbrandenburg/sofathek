@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - VIDEOS_DIR=/app/data/videos
+    volumes:
+      # Bind mount for development hot reload
+      - ./backend/src:/app/src:ro
+      - ./backend/package.json:/app/package.json:ro
+      - ./backend/tsconfig.json:/app/tsconfig.json:ro
+      # Named volumes for data persistence
+      - sofathek_videos:/app/data/videos
+      - sofathek_logs:/app/logs
+      # Cache node_modules for faster rebuilds
+      - /app/node_modules
+    networks:
+      - sofathek_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sofathek_videos:
+    driver: local
+  sofathek_logs:
+    driver: local
+
+networks:
+  sofathek_network:
+    driver: bridge
