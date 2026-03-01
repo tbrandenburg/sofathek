@@ -104,6 +104,7 @@ Implement Sofathek, a self-hosted family media center application with Netflix-l
 - Proper error handling and logging
 - Docker containerization for easy deployment
 - Clean code architecture and documentation
+- End-to-end testing with Playwright after each implementation step
 
 ### 6. File Structure (Planned)
 
