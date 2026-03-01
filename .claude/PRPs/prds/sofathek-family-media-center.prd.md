@@ -142,8 +142,8 @@ When we want to provide video entertainment to our children, I want to curate an
 | # | Phase | Description | Status | Parallel | Depends | PRP Plan |
 |---|-------|-------------|--------|----------|---------|----------|
 | 1 | Core Infrastructure | Project setup, Docker config, basic streaming | in-progress | - | - | [sofathek-core-infrastructure.plan.md](./../plans/sofathek-core-infrastructure.plan.md) |
-| 2 | YouTube Integration | yt-dlp service, download workflow, progress tracking | pending | - | 1 | - |
-| 3 | Library Interface | React frontend, video grid, basic playback | pending | with 2 | 1 | - |
+| 2 | YouTube Integration | yt-dlp service, download workflow, progress tracking | in-progress | - | 1 | [sofathek-youtube-integration.plan.md](./../plans/sofathek-youtube-integration.plan.md) |
+| 3 | Library Interface | React frontend, video grid, basic playback | in-progress | with 2 | 1 | [sofathek-library-interface.plan.md](./../plans/sofathek-library-interface.plan.md) |
 | 4 | UI Polish | Responsive design, theming, error handling | pending | - | 2, 3 | - |
 | 5 | Production Ready | Testing, documentation, deployment guides | pending | - | 4 | - |
 

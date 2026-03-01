@@ -1,0 +1,17 @@
+[
+  {
+    "id": "9cefb424-5fe0-4bc5-b4ad-9209857282d1",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=YE7VzlLtp-4",
+      "requestedAt": "2026-03-01T19:24:38.530Z",
+      "requestId": "abd5ea8f-6e21-4c9e-90fd-75155198ae47"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-01T19:24:38.531Z",
+    "startedAt": "2026-03-01T19:25:00.941Z",
+    "completedAt": "2026-03-01T19:25:11.217Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary"
+  }
+]
