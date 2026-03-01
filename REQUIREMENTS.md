@@ -36,7 +36,7 @@ Implement Sofathek, a self-hosted family media center application with Netflix-l
 
 #### User Experience
 - Netflix-like paginated grid interface
-- 10-theme system with dark/light mode support
+- Dark/light theme toggle with modern design
 - Single-user interface (no authentication or profiles)
 - Mobile-responsive design
 
@@ -50,8 +50,9 @@ Implement Sofathek, a self-hosted family media center application with Netflix-l
 
 #### Frontend
 - React 18+ with TypeScript
-- Modern CSS Grid layout
-- CSS custom properties for theming
+- Shadcn/ui design system for modern, accessible components
+- Tailwind CSS for styling and responsive design
+- Dark/light theme system with CSS custom properties
 - HTML5 video player with custom controls
 
 #### Backend
@@ -94,7 +95,7 @@ Implement Sofathek, a self-hosted family media center application with Netflix-l
 - Progress tracking and status updates
 
 #### Phase 5: Advanced Features
-- Theme system implementation (10 themes)
+- Dark/light theme system implementation
 - Basic usage statistics tracking (view counts, watch time)
 - Playback progress tracking and resume
 - Usage analytics display in admin interface
@@ -108,8 +109,8 @@ Implement Sofathek, a self-hosted family media center application with Netflix-l
 - Efficient handling of large video collections
 
 #### User Experience
-- Intuitive Netflix-like interface
-- Smooth theme switching
+- Intuitive Netflix-like interface with Shadcn/ui components
+- Smooth dark/light theme switching
 - Reliable video playback with seeking
 - Clear error messages and loading states
 
@@ -137,8 +138,8 @@ sofathek/
 
 - ✅ Complete video library management system
 - ✅ YouTube video download and processing
-- ✅ Netflix-like responsive interface
-- ✅ Multiple theme support
+- ✅ Netflix-like responsive interface with modern design system
+- ✅ Dark/light theme support
 - ✅ Video streaming with progress tracking
 - ✅ Basic usage statistics and analytics
 - ✅ Admin interface for management
@@ -151,7 +152,7 @@ sofathek/
 2. Implement basic backend API with video streaming
 3. Create React frontend with video grid interface
 4. Integrate yt-dlp for YouTube downloads
-5. Add theming system and usage statistics
+5. Add dark/light theming system and usage statistics
 6. Implement admin features and system monitoring
 
 This document serves as the foundational requirements for implementing Sofathek. Each phase should be completed with proper testing before moving to the next phase.
