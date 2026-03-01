@@ -20,21 +20,30 @@ Implement Sofathek, a self-hosted family media center application with Netflix-l
 - File system scanning and automatic video discovery
 - Metadata extraction and thumbnail generation using ffmpeg
 - Video playback with progress tracking and resume functionality
+- Basic usage statistics (video view counts, total watch time, most popular videos)
 
 #### YouTube Integration
 - YouTube video download via yt-dlp
 - Quality selection and download queue management
 - Automatic processing and library integration
 
+#### Usage Statistics
+- Track video view counts and watch time
+- Record most watched videos and categories
+- Store statistics in JSON files (no database required)
+- Display analytics in admin interface
+- Privacy-focused (no personal data collection)
+
 #### User Experience
 - Netflix-like paginated grid interface
 - 10-theme system with dark/light mode support
-- Profile system for multiple users (no authentication required)
+- Single-user interface (no authentication or profiles)
 - Mobile-responsive design
 
 #### Admin Features
 - YouTube URL input and download management
 - File operations (delete, move, rename videos)
+- Basic usage statistics (view counts, most watched)
 - System monitoring (storage usage, download queue status)
 
 ### 3. Technical Stack
@@ -86,9 +95,9 @@ Implement Sofathek, a self-hosted family media center application with Netflix-l
 
 #### Phase 5: Advanced Features
 - Theme system implementation (10 themes)
-- User profiles and preferences
+- Basic usage statistics tracking (view counts, watch time)
 - Playback progress tracking and resume
-- Advanced admin features and monitoring
+- Usage analytics display in admin interface
 
 ### 5. Quality Requirements
 
@@ -119,7 +128,7 @@ sofathek/
 ├── docker/           # Docker configuration files
 ├── data/             # Volume mount for persistent data
 │   ├── videos/       # Video library storage
-│   ├── profiles/     # User profiles (JSON)
+│   ├── statistics/   # Usage statistics (JSON)
 │   └── config/       # Application configuration
 └── docs/            # Documentation
 ```
@@ -131,6 +140,7 @@ sofathek/
 - ✅ Netflix-like responsive interface
 - ✅ Multiple theme support
 - ✅ Video streaming with progress tracking
+- ✅ Basic usage statistics and analytics
 - ✅ Admin interface for management
 - ✅ Docker deployment ready
 - ✅ Mobile-friendly responsive design
@@ -141,7 +151,7 @@ sofathek/
 2. Implement basic backend API with video streaming
 3. Create React frontend with video grid interface
 4. Integrate yt-dlp for YouTube downloads
-5. Add theming system and user profiles
+5. Add theming system and usage statistics
 6. Implement admin features and system monitoring
 
 This document serves as the foundational requirements for implementing Sofathek. Each phase should be completed with proper testing before moving to the next phase.
