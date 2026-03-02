@@ -46,7 +46,7 @@ describe('API Service', () => {
       const result = await getVideos();
 
       expect(result).toEqual(mockResponse.data);
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/videos');
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3010/api/videos');
     });
 
     test('should throw ApiError on API failure', async () => {
@@ -96,7 +96,7 @@ describe('API Service', () => {
       const result = await getVideoById('test-video-1');
 
       expect(result).toEqual(mockVideo);
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/videos/test-video-1');
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3010/api/videos/test-video-1');
     });
 
     test('should properly encode video ID in URL', async () => {
@@ -107,19 +107,19 @@ describe('API Service', () => {
 
       await getVideoById('video with spaces');
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/videos/video%20with%20spaces');
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3010/api/videos/video%20with%20spaces');
     });
   });
 
   describe('getVideoStreamUrl', () => {
     test('should return correct streaming URL', () => {
       const url = getVideoStreamUrl('test-video.mp4');
-      expect(url).toBe('http://localhost:3001/api/stream/test-video.mp4');
+      expect(url).toBe('http://localhost:3010/api/stream/test-video.mp4');
     });
 
     test('should properly encode filename', () => {
       const url = getVideoStreamUrl('video with spaces.mp4');
-      expect(url).toBe('http://localhost:3001/api/stream/video%20with%20spaces.mp4');
+      expect(url).toBe('http://localhost:3010/api/stream/video%20with%20spaces.mp4');
     });
   });
 
@@ -133,7 +133,7 @@ describe('API Service', () => {
       };
 
       const url = getVideoThumbnailUrl(video);
-      expect(url).toBe('http://localhost:3001/api/stream/thumb.jpg');
+      expect(url).toBe('http://localhost:3010/api/stream/thumb.jpg');
     });
 
     test('should return null when no thumbnail', () => {

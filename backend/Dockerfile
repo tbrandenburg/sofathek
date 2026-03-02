@@ -45,11 +45,11 @@ RUN mkdir -p /app/data/videos /app/data/temp /app/logs /app/dist && \
 USER sofathek
 
 # Expose port
-EXPOSE 3001
+EXPOSE 3010
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:3001/health || exit 1
+    CMD curl -f http://localhost:3010/health || exit 1
 
 # Start application
 CMD ["npm", "start"]
