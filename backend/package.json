@@ -10,9 +10,11 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --passWithNoTests",
+    "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":40,\"functions\":40,\"lines\":40,\"statements\":40}}'",
+    "test:unit": "jest src/__tests__/unit",
+    "test:integration": "jest src/__tests__/integration",
     "test:youtube": "ts-node src/test-youtube-integration.ts",
     "test:queue": "ts-node src/test-download-queue.ts"
   },
