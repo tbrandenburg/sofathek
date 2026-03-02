@@ -6,7 +6,7 @@ const port = 3010;
 
 // Enable CORS with specific options for development
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5183', 'http://localhost:5173'],
+  origin: ['http://localhost:5183'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
