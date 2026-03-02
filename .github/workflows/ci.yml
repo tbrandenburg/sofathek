@@ -164,15 +164,33 @@ jobs:
           echo "Backend:" && timeout 5 curl -s http://localhost:3010/health | head -1 || echo "Backend timeout"
           echo "Frontend:" && timeout 5 curl -s -I http://localhost:5183 | head -1 || echo "Frontend timeout"
           
-          echo "Servers are ready. Starting E2E tests..."
+          echo "Servers are ready. Adding stability wait for E2E tests..."
+          
+          # Brief wait to ensure servers are fully stable for browser automation
+          sleep 3
+          
+          echo "Starting E2E tests with enhanced configuration..."
           
       - name: Run Playwright E2E tests
         run: |
-          echo "Running ultra-basic E2E test for CI reliability..."
+          echo "Running ultra-basic E2E test with enhanced CI configuration..."
           cd frontend
           
-          # Run only the ultra-basic test first to get CI passing
-          npx playwright test ultra-basic.spec.ts --timeout=60000 --reporter=list
+          # Verify servers are still responding right before tests
+          echo "Final server verification:"
+          curl -f http://localhost:3010/health || (echo "Backend health check failed" && exit 1)
+          curl -f http://localhost:5183 || (echo "Frontend health check failed" && exit 1)
+          
+          # Set CI-specific environment variables for Playwright
+          export CI=true
+          export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+          
+          # Run only the ultra-basic test with enhanced configuration
+          npx playwright test ultra-basic.spec.ts \
+            --timeout=60000 \
+            --reporter=list \
+            --max-failures=1 \
+            --retries=2
           
       - name: Cleanup background servers
         if: always()

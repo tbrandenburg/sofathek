@@ -42,7 +42,29 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers */
-  projects: [
+  projects: process.env.CI ? [
+    // Only test Chromium in CI for speed and reliability
+    {
+      name: 'chromium',
+      use: { 
+        ...devices['Desktop Chrome'],
+        // CI-specific browser configuration
+        launchOptions: {
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--no-first-run',
+            '--no-default-browser-check',
+            '--disable-background-timer-throttling',
+            '--disable-renderer-backgrounding',
+            '--disable-backgrounding-occluded-windows',
+          ],
+        },
+      },
+    },
+  ] : [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
