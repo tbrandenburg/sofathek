@@ -9,7 +9,6 @@
     "frontend"
   ],
   "scripts": {
-    "install": "npm install --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "start": "npm run start --workspace=backend & sleep 3 && npm run preview --workspace=frontend",
     "dev": "npm run dev --workspace=backend & sleep 3 && npm run dev --workspace=frontend",
