@@ -120,29 +120,74 @@ jobs:
         
       - name: Start development servers in background
         run: |
-          make dev &
+          echo "Starting servers with improved reliability..."
+          
+          # Start backend server
+          cd backend && PORT=3010 npm run dev &
+          BACKEND_PID=$!
+          echo "Backend PID: $BACKEND_PID"
+          
+          # Build frontend first for reliable serving
+          cd frontend && npm run build
+          
+          # Start frontend with built files (more reliable than dev server)
+          cd frontend && python3 -m http.server 5183 --directory dist &
+          FRONTEND_PID=$!
+          echo "Frontend PID: $FRONTEND_PID"
+          
+          # Wait initial time for servers to initialize
           sleep 10
-          # Wait for backend to be ready
+          
+          # Wait for backend health endpoint (more specific check)
+          echo "Checking backend health..."
           for i in {1..30}; do
-            if curl -f http://localhost:3010/health > /dev/null 2>&1; then
-              echo "Backend is ready"
+            if curl -f -s http://localhost:3010/health | grep -q "healthy"; then
+              echo "✅ Backend is ready and healthy"
               break
             fi
-            echo "Waiting for backend... ($i/30)"
-            sleep 2
-          done
-          # Wait for frontend to be ready  
-          for i in {1..30}; do
-            if curl -f http://localhost:5183 > /dev/null 2>&1; then
-              echo "Frontend is ready"
-              break
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend health check failed after 60s"
+              curl -v http://localhost:3010/health || echo "Backend connection failed"
+              exit 1
             fi
-            echo "Waiting for frontend... ($i/30)"
+            echo "Waiting for backend health... ($i/30)"
             sleep 2
           done
           
+          # Wait for frontend to be ready (check built files)
+          echo "Checking frontend server..." 
+          for i in {1..15}; do
+            if curl -f -s -I http://localhost:5183 | grep -q "200\|HTTP/.*200"; then
+              echo "✅ Frontend is ready (serving built files)"
+              break
+            fi
+            if [ $i -eq 15 ]; then
+              echo "❌ Frontend check failed after 30s"
+              echo "Frontend process status:"
+              ps aux | grep -E "(python3.*5183)" | grep -v grep || echo "No frontend server found"
+              netstat -tulpn | grep 5183 || echo "Port 5183 not listening"
+              ls -la frontend/dist/ || echo "No dist directory found"
+              curl -v http://localhost:5183 || echo "Frontend connection failed"
+              exit 1
+            fi
+            echo "Waiting for frontend... ($i/15)"
+            sleep 2
+          done
+          
+          echo "✅ Both servers are ready for E2E tests"
+          
       - name: Run Playwright E2E tests
-        run: cd frontend && npx playwright test
+        run: |
+          echo "Running Playwright E2E tests..."
+          cd frontend && npx playwright test
+          
+      - name: Cleanup background servers
+        if: always()
+        run: |
+          echo "Cleaning up background processes..."
+          pkill -f "PORT=3010" || echo "No backend processes to kill"
+          pkill -f "python3 -m http.server 5183" || echo "No frontend processes to kill"
+          sleep 2
         
       - name: Upload Playwright test results
         uses: actions/upload-artifact@v4
