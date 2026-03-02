@@ -120,46 +120,46 @@ jobs:
         
       - name: Start development servers in background
         run: |
-          echo "Starting servers with simplified approach..."
+          echo "Starting servers with Make commands (like local development)..."
           
-          # Build frontend first
-          cd frontend && npm run build
-          echo "Frontend built successfully"
+          # Use make dev command which works locally
+          make dev &
+          SERVER_PID=$!
+          echo "Servers started with PID: $SERVER_PID"
           
-          # Start backend server
-          cd backend && PORT=3010 npm run dev &
-          sleep 3
+          # Wait for services to initialize
+          echo "Waiting 20 seconds for services to start..."
+          sleep 20
           
-          # Start frontend with built files
-          cd frontend && python3 -m http.server 5183 --directory dist &
-          sleep 3
-          
-          # Simple health checks with shorter timeouts
-          echo "Quick health checks..."
-          
-          # Backend check (simpler)
-          for i in {1..10}; do
-            if curl -f -s http://localhost:3010/health >/dev/null 2>&1; then
-              echo "✅ Backend responding"
+          # Health checks with detailed logging
+          echo "Checking backend availability..."
+          for i in {1..15}; do
+            if curl -f -s http://localhost:3010/health > /dev/null; then
+              echo "✅ Backend is responding"
+              curl -s http://localhost:3010/health | head -2
               break
             fi
+            echo "Backend check $i/15..."
             sleep 2
           done
           
-          # Frontend check (simpler)
-          for i in {1..10}; do
-            if curl -f -s http://localhost:5183 >/dev/null 2>&1; then
-              echo "✅ Frontend responding"
+          echo "Checking frontend availability..."
+          for i in {1..15}; do  
+            if curl -f -s -I http://localhost:5183 > /dev/null; then
+              echo "✅ Frontend is responding"
+              curl -s -I http://localhost:5183 | head -2
               break
             fi
+            echo "Frontend check $i/15..."
             sleep 2
           done
           
-          # Final status check
-          echo "Server status:"
-          curl -s http://localhost:3010/health | head -1 || echo "Backend check failed"
-          curl -s -I http://localhost:5183 | head -1 || echo "Frontend check failed"
-          echo "Servers started, proceeding with tests"
+          # Final connectivity test
+          echo "Final server status checks:"
+          echo "Backend:" && timeout 5 curl -s http://localhost:3010/health | head -1 || echo "Backend timeout"
+          echo "Frontend:" && timeout 5 curl -s -I http://localhost:5183 | head -1 || echo "Frontend timeout"
+          
+          echo "Servers are ready. Starting E2E tests..."
           
       - name: Run Playwright E2E tests
         run: |
