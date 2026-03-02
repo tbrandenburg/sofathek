@@ -1,0 +1,29 @@
+import { jest } from '@jest/globals';
+
+// Mock external dependencies globally
+jest.mock('fs/promises', () => ({
+  readdir: jest.fn(),
+  stat: jest.fn(),
+  access: jest.fn(),
+  writeFile: jest.fn(),
+  readFile: jest.fn(),
+}));
+
+jest.mock('youtube-dl-exec', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
+jest.mock('ffmpeggy', () => ({
+  ffmpeg: jest.fn(),
+}));
+
+// Console suppression for cleaner test output
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
