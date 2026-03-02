@@ -18,7 +18,8 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
     if (downloadMutation.isError) {
       downloadMutation.reset();
     }
-  }, [url, downloadMutation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]); // Only depend on URL, not the entire mutation object to avoid infinite loops
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +78,12 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
               disabled={downloadMutation.isPending}
               data-testid="youtube-url-input"
             />
+            {/* URL Validation Message */}
+            {url.trim() && !validation.isValid && (
+              <p className="text-sm text-red-600" data-testid="url-validation-error">
+                Please enter a valid YouTube URL
+              </p>
+            )}
           </div>
 
           {/* Error Alert */}
