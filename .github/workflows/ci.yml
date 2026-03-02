@@ -241,8 +241,34 @@ jobs:
         
       - name: Start production servers in background
         run: |
-          make start &
-          sleep 30  # Wait for servers to start
+          echo "Starting production servers for integration testing..."
+          
+          # Start backend in background
+          cd backend
+          PORT=3010 npm start &
+          BACKEND_PID=$!
+          echo "Backend started with PID: $BACKEND_PID"
+          
+          # Start frontend in background  
+          cd ../frontend
+          python3 -m http.server 5183 --directory dist &
+          FRONTEND_PID=$!
+          echo "Frontend started with PID: $FRONTEND_PID"
+          
+          # Store PIDs for cleanup
+          echo $BACKEND_PID > /tmp/backend.pid
+          echo $FRONTEND_PID > /tmp/frontend.pid
+          
+          # Wait for servers to be ready
+          echo "Waiting for servers to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3010/health >/dev/null 2>&1 && curl -f http://localhost:5183 >/dev/null 2>&1; then
+              echo "Servers are ready!"
+              break
+            fi
+            echo "Waiting for servers... ($i/30)"
+            sleep 2
+          done
           
       - name: Health check validation
         run: |
@@ -253,7 +279,32 @@ jobs:
           curl -f http://localhost:5183 || exit 1
           
       - name: Stop servers
-        run: make stop
+        if: always()
+        run: |
+          echo "Stopping production servers..."
+          # Kill by stored PIDs first (most reliable)
+          if [ -f /tmp/backend.pid ]; then
+            BACKEND_PID=$(cat /tmp/backend.pid)
+            kill $BACKEND_PID 2>/dev/null || echo "Backend PID $BACKEND_PID not found"
+          fi
+          if [ -f /tmp/frontend.pid ]; then
+            FRONTEND_PID=$(cat /tmp/frontend.pid)
+            kill $FRONTEND_PID 2>/dev/null || echo "Frontend PID $FRONTEND_PID not found"
+          fi
+          
+          # Fallback: Kill by process pattern
+          pkill -f "PORT=3010" || echo "No backend process found"
+          pkill -f "python3.*5183" || echo "No frontend process found"
+          
+          # Final fallback: Kill by port
+          lsof -ti:3010 | xargs kill -9 2>/dev/null || echo "Port 3010 already free"
+          lsof -ti:5183 | xargs kill -9 2>/dev/null || echo "Port 5183 already free"
+          
+          # Cleanup PID files
+          rm -f /tmp/backend.pid /tmp/frontend.pid
+          
+          sleep 2
+          echo "Servers stopped successfully"
 
   # Summary job for status checks
   ci-success:
