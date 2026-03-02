@@ -31,6 +31,41 @@ services:
       retries: 3
       start_period: 40s
 
+  # Frontend with Playwright E2E testing support
+  frontend:
+    image: mcr.microsoft.com/playwright:v1.58.2-focal
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5183:5183"
+    environment:
+      - CI=true
+    command: sh -c "npm install && npx playwright install && npm run dev -- --host 0.0.0.0 --port 5183"
+    depends_on:
+      - backend
+    networks:
+      - sofathek_network
+
+  # Playwright test runner service
+  e2e-tests:
+    image: mcr.microsoft.com/playwright:v1.58.2-focal
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - ./frontend/test-results:/app/test-results
+    environment:
+      - CI=true
+    command: sh -c "npm install && npx playwright install && npx playwright test"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - sofathek_network
+    profiles:
+      - testing
+
 volumes:
   sofathek_videos:
     driver: local

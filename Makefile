@@ -1,7 +1,7 @@
 # Sofathek - Family Media Center
 # Essential development commands
 
-.PHONY: help install build test lint clean dev start stop docker
+.PHONY: help install build test lint clean dev start stop docker playwright-install playwright-test e2e-test e2e-docker
 
 # Default target
 help: ## Show available commands
@@ -18,6 +18,22 @@ build: ## Build frontend and backend
 	@echo "🔨 Building..."
 	@cd backend && npm run build
 	@cd frontend && npm run build
+
+# Playwright E2E testing targets
+playwright-install: ## Install Playwright browsers and dependencies
+	@echo "Installing Playwright browsers..."
+	cd frontend && npx playwright install
+	@echo "Playwright browsers installed successfully"
+
+playwright-test: ## Run Playwright E2E tests locally
+	@echo "Running E2E tests with Playwright..."
+	cd frontend && npm run test:e2e
+
+e2e-test: dev playwright-test ## Start dev servers and run E2E tests
+
+e2e-docker: ## Run E2E tests in Docker with isolated browsers
+	@echo "Running E2E tests in Docker environment..."
+	docker-compose --profile testing run --rm e2e-tests
 
 test: ## Run all tests
 	@echo "🧪 Running tests..."
