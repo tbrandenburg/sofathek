@@ -13,3 +13,29 @@
 * Follow SOLID principles
 
 * Keep README.md updated after feature increments
+
+## Development Workflow
+
+### Essential Make Commands
+
+Use these standardized commands for all development tasks:
+
+```bash
+make install     # Install all dependencies (frontend + backend)
+make dev         # Start development servers (backend:3010, frontend:5183)
+make test        # Run all tests (unit + integration)
+make lint        # Check and fix code quality issues
+make build       # Build frontend and backend for production
+make start       # Start production servers
+make clean       # Clean build artifacts
+make stop        # Stop all running servers
+make docker      # Start with Docker Compose
+make help        # Show all available commands
+```
+
+**Key Points:**
+- Always use `make dev` for development - it handles both backend and frontend
+- Run `make lint` and `make test` before committing
+- Use `make install` for initial setup or after dependency changes
+- Backend runs on port 3010, frontend on port 5183 (safe ports)
+- All commands are designed to be safe and non-destructive
