@@ -29,11 +29,31 @@ async function youtubeApiFetch<T>(
     });
     
     if (!response.ok) {
-      throw new ApiError(
-        `YouTube API request failed: ${response.statusText}`,
-        response.status,
-        response
-      );
+      // Try to parse error response body for better error messages
+      try {
+        const errorData = await response.json();
+        // Backend sends error responses as { status: 'error', message: 'error message' }
+        let errorMessage: string;
+        if (errorData && typeof errorData === 'object') {
+          errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new ApiError(errorMessage, response.status, response);
+      } catch (parseError) {
+        // If parseError is already an ApiError, re-throw it
+        if (parseError instanceof ApiError) {
+          throw parseError;
+        }
+        // If JSON parsing fails, fall back to status text
+        throw new ApiError(
+          `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          response
+        );
+      }
     }
 
     const data: YouTubeApiResponse<T> = await response.json();
@@ -106,14 +126,16 @@ export async function getDownloadStatus(itemId: string): Promise<QueueItem> {
  * Cancel a download
  * DELETE /api/youtube/cancel/:id
  */
-export async function cancelDownload(itemId: string): Promise<void> {
-  const response = await youtubeApiFetch<void>(`/youtube/cancel/${encodeURIComponent(itemId)}`, {
+export async function cancelDownload(itemId: string): Promise<{ message: string; queueItemId: string }> {
+  const response = await youtubeApiFetch<{ message: string; queueItemId: string }>(`/youtube/download/${encodeURIComponent(itemId)}`, {
     method: 'DELETE',
   });
   
-  if (response.status !== 'success') {
+  if (response.status !== 'success' || !response.data) {
     throw new ApiError(response.message || `Failed to cancel download '${itemId}'`);
   }
+  
+  return response.data;
 }
 
 /**

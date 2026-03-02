@@ -12,5 +12,29 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
     exclude: ['tests/**/*', 'node_modules/**/*'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'tests/',
+        'src/__tests__/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/coverage/',
+        '**/dist/',
+        '**/.{idea,git,cache,output,temp}/',
+        '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*'
+      ],
+      include: ['src/**/*.{ts,tsx}'],
+      thresholds: {
+        global: {
+          branches: 40,
+          functions: 40,
+          lines: 40,
+          statements: 40
+        }
+      }
+    }
   },
 })
