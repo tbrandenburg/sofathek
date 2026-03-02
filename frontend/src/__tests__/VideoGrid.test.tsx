@@ -1,0 +1,96 @@
+import { describe, test, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { VideoGrid } from '../components/VideoGrid/VideoGrid';
+import { Video } from '../types';
+
+describe('VideoGrid Component', () => {
+  const mockVideos: Video[] = [
+    {
+      id: 'video-1',
+      file: {
+        name: 'video1.mp4',
+        size: 1024,
+        path: '/videos/video1.mp4',
+        extension: 'mp4',
+        lastModified: new Date()
+      },
+      metadata: { title: 'Video 1' },
+      viewCount: 0
+    },
+    {
+      id: 'video-2',
+      file: {
+        name: 'video2.mp4',
+        size: 2048,
+        path: '/videos/video2.mp4',
+        extension: 'mp4',
+        lastModified: new Date()
+      },
+      metadata: { title: 'Video 2' },
+      viewCount: 0
+    }
+  ];
+
+  test('should render loading state', () => {
+    render(<VideoGrid videos={[]} isLoading={true} />);
+
+    const loadingText = screen.getByText('Loading videos...');
+    expect(loadingText).toBeDefined();
+  });
+
+  test('should render error state with message', () => {
+    const errorMessage = 'Failed to load videos';
+    render(<VideoGrid videos={[]} error={errorMessage} />);
+
+    const errorElement = screen.getByTestId('error-message');
+    expect(errorElement.textContent).toContain(errorMessage);
+    
+    const retryButton = screen.getByText('Retry');
+    expect(retryButton).toBeDefined();
+  });
+
+  test('should render empty state when no videos', () => {
+    render(<VideoGrid videos={[]} />);
+
+    const emptyMessage = screen.getByText('No videos found');
+    expect(emptyMessage).toBeDefined();
+    
+    const emptyDescription = screen.getByText('Your video library is empty. Add some videos to get started.');
+    expect(emptyDescription).toBeDefined();
+  });
+
+  test('should render video cards when videos are provided', () => {
+    const mockOnVideoSelect = vi.fn();
+    render(
+      <VideoGrid 
+        videos={mockVideos} 
+        onVideoSelect={mockOnVideoSelect} 
+      />
+    );
+
+    // Should render video cards
+    const videoCards = screen.getAllByTestId('video-card');
+    expect(videoCards).toHaveLength(2);
+  });
+
+  test('should apply custom className', () => {
+    render(<VideoGrid videos={mockVideos} className="custom-grid" />);
+
+    const gridContainer = document.querySelector('.video-grid-container');
+    expect(gridContainer?.className).toContain('custom-grid');
+  });
+
+  test('should handle empty array properly', () => {
+    render(<VideoGrid videos={[]} />);
+
+    const emptyMessage = screen.getByText('No videos found');
+    expect(emptyMessage).toBeDefined();
+  });
+
+  test('should handle undefined videos array', () => {
+    render(<VideoGrid videos={undefined as any} />);
+
+    const emptyMessage = screen.getByText('No videos found');
+    expect(emptyMessage).toBeDefined();
+  });
+});

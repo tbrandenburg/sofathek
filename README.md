@@ -21,34 +21,104 @@ A self-hosted family media center application with Netflix-like interface and Yo
 
 ## Quick Start
 
+### Using Make (Recommended)
+
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd sofathek
+# Install dependencies
+make install
 
-# Start with Docker
+# Start development
+make dev         # Backend: http://localhost:3010, Frontend: http://localhost:5183
+
+# Or production build
+make start       # Build and start production servers
+```
+
+### Using Docker
+
+```bash
+# Start with Docker Compose
+make docker
+
+# Or manually:
 docker-compose up -d
+```
 
-# Or run development environment
-npm run dev
+## Development Commands
+
+```bash
+make help        # Show all available commands
+make install     # Install all dependencies  
+make dev         # Start development servers (backend:3010, frontend:5183)
+make build       # Build frontend and backend
+make start       # Build and start production servers
+make test        # Run all tests
+make lint        # Check and fix code quality
+make clean       # Clean build artifacts
+make stop        # Stop all servers
+make docker      # Start with Docker Compose
+```
+
+### Typical Workflow
+
+```bash
+# Initial setup
+make install
+
+# Development
+make dev         # Start development servers
+
+# Before committing
+make lint        # Fix code style
+make test        # Run tests
+make build       # Verify build works
+
+# Production deployment  
+make start       # Or use make docker
 ```
 
 ## Project Structure
 
 ```
 sofathek/
-├── frontend/          # React application
-├── backend/           # Express API server
-├── docker/           # Docker configuration files
-└── data/             # Volume mount for persistent data
-    ├── videos/       # Video library storage
-    └── stats.json    # Usage statistics
+├── frontend/          # React TypeScript application
+│   ├── src/           # React components and services
+│   ├── dist/          # Production build output
+│   └── package.json   # Frontend dependencies
+├── backend/           # Express TypeScript API server
+│   ├── src/           # API routes and services
+│   ├── dist/          # Compiled JavaScript
+│   └── package.json   # Backend dependencies
+├── data/              # Persistent data storage
+│   └── videos/        # Video library files
+├── dev/               # Development tools and utilities
+│   ├── state/         # Task ledger and development state
+│   └── mock-api/      # Mock API server for testing
+├── screenshots/       # E2E test screenshots
+├── docker-compose.yml # Docker orchestration
+├── Makefile          # Development automation
+└── README.md         # This file
 ```
 
 ## Requirements
 
-- Docker and Docker Compose
-- Node.js 18+ (for development)
-- ffmpeg (for video processing)
+- **Node.js 18+** (for development)
+- **Make** (for using the Makefile commands)  
+- **Docker and Docker Compose** (for containerized deployment)
+- **Python 3** (for serving production frontend)
+- **ffmpeg** (for video processing - backend feature)
+
+### Installation
+
+```bash
+# Install Node.js dependencies
+make install
+
+# Setup test data
+make setup-test-data
+
+# Verify installation
+make status
+```
 
 For detailed requirements and implementation phases, see [REQUIREMENTS.md](./REQUIREMENTS.md).
