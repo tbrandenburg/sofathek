@@ -103,7 +103,7 @@ test.describe('YouTube Download - Full Workflow', () => {
     test('should show loading state during submission', async ({ page }) => {
       // Mock with delay to see loading state
       await page.route('**/api/youtube/download', async route => {
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500); // Reduced from 1000ms for faster test
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -117,6 +117,9 @@ test.describe('YouTube Download - Full Workflow', () => {
       await helpers.form.expectFormLoading();
       
       await submitPromise;
+      
+      // Clean up routes to prevent "Test ended" error
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
     });
 
     test('should clear form after successful submission', async ({ page }) => {

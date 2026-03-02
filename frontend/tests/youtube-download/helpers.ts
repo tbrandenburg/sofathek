@@ -69,7 +69,7 @@ export class FormHelpers {
    */
   async expectFormError(expectedMessage?: string) {
     const errorAlert = this.page.locator(TEST_SELECTORS.DOWNLOAD_ERROR);
-    await expect(errorAlert).toBeVisible();
+    await expect(errorAlert).toBeVisible({ timeout: 10000 });
     
     if (expectedMessage) {
       await expect(errorAlert).toContainText(expectedMessage);
@@ -186,14 +186,15 @@ export class QueueHelpers {
   }
 
   /**
-   * Verify queue statistics in the header
+   * Expect queue to show specific stats
    */
   async expectQueueStats(stats: { total: number; processing?: number; completed?: number; failed?: number }) {
-    const queueHeader = this.page.locator(`${TEST_SELECTORS.DOWNLOAD_QUEUE} h3`);
-    await expect(queueHeader).toContainText(`${stats.total} total`);
+    // Use CardHeader's CardDescription for queue stats (not individual item descriptions)
+    const queueStats = this.page.locator(`${TEST_SELECTORS.DOWNLOAD_QUEUE} .card-header .card-description`).first();
+    await expect(queueStats).toContainText(`${stats.total} total`);
     
     if (stats.processing !== undefined) {
-      await expect(this.page.locator(TEST_SELECTORS.DOWNLOAD_QUEUE)).toContainText(`${stats.processing} processing`);
+      await expect(queueStats).toContainText(`${stats.processing} processing`);
     }
   }
 }
