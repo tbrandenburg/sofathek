@@ -1,9 +1,29 @@
-import { VideoService } from '../../../services/videoService';
-import { promises as fs } from 'fs';
 import path from 'path';
 
-// Mock fs promises module
-jest.mock('fs/promises');
+// Mock logger to avoid fs issues during winston initialization
+jest.mock('../../../utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  }
+}));
+
+// Mock fs promises module to match the service's import pattern
+jest.mock('fs', () => ({
+  promises: {
+    readdir: jest.fn(),
+    access: jest.fn(),
+    mkdir: jest.fn(),
+    stat: jest.fn()
+  }
+}));
+
+import { VideoService } from '../../../services/videoService';
+import { promises as fs } from 'fs';
+
+// Get references to the mocked functions
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('VideoService', () => {
@@ -19,7 +39,7 @@ describe('VideoService', () => {
     it('should scan directory and return video files', async () => {
       // Mock directory contents
       mockFs.readdir.mockResolvedValue(['video1.mp4', 'video2.avi', 'readme.txt'] as any);
-      mockFs.access.mockResolvedValue();
+      mockFs.access.mockResolvedValue(undefined);
       mockFs.stat.mockImplementation((_filePath) => {
         return Promise.resolve({ 
           isDirectory: () => false, 
@@ -32,8 +52,8 @@ describe('VideoService', () => {
       const result = await videoService.scanVideoDirectory();
 
       expect(result.videos).toHaveLength(2);
-      expect(result.videos[0].file.name).toBe('video1.mp4');
-      expect(result.videos[1].file.name).toBe('video2.avi');
+      expect(result.videos[0]?.file.name).toBe('video1.mp4');
+      expect(result.videos[1]?.file.name).toBe('video2.avi');
       expect(result.totalCount).toBe(2);
     });
 
@@ -49,7 +69,7 @@ describe('VideoService', () => {
     });
 
     it('should skip directories and non-video files', async () => {
-      mockFs.access.mockResolvedValue();
+      mockFs.access.mockResolvedValue(undefined);
       mockFs.readdir.mockResolvedValue(['video1.mp4', 'subfolder', 'image.jpg'] as any);
       mockFs.stat.mockImplementation((_filePath) => {
         const filename = String(_filePath).split('/').pop() || '';
@@ -70,11 +90,11 @@ describe('VideoService', () => {
       const result = await videoService.scanVideoDirectory();
 
       expect(result.videos).toHaveLength(1);
-      expect(result.videos[0].file.name).toBe('video1.mp4');
+      expect(result.videos[0]?.file.name).toBe('video1.mp4');
     });
 
     it('should handle individual file processing errors', async () => {
-      mockFs.access.mockResolvedValue();
+      mockFs.access.mockResolvedValue(undefined);
       mockFs.readdir.mockResolvedValue(['video1.mp4', 'corrupted.avi'] as any);
       mockFs.stat.mockImplementation((filePath) => {
         const filename = path.basename(filePath as string);
@@ -92,7 +112,7 @@ describe('VideoService', () => {
       const result = await videoService.scanVideoDirectory();
 
       expect(result.videos).toHaveLength(1);
-      expect(result.videos[0].file.name).toBe('video1.mp4');
+      expect(result.videos[0]?.file.name).toBe('video1.mp4');
     });
   });
 
