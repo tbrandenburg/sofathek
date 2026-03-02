@@ -137,3 +137,23 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Sofathek specific ignores
+screenshots/*.png
+dev/mock-api/*.log
+backend/backend.log
+backend/logs/
+frontend/dist/
+backend/dist/
+backend/temp/
+data/videos/
+.claude/
+
+# Build artifacts
+build/
+dist/
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/

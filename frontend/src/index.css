@@ -1,0 +1,337 @@
+/* Tailwind CSS base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom component styles for Sofathek video interface */
+@layer components {
+  .card {
+    @apply rounded-lg border border-slate-200 bg-white shadow-card overflow-hidden transition-all duration-200;
+  }
+
+  .card:hover {
+    @apply shadow-card-hover -translate-y-0.5;
+  }
+
+  .button {
+    @apply inline-flex items-center justify-center rounded-md font-medium px-4 py-2 border-0 cursor-pointer transition-all duration-200 bg-primary-500 text-white;
+  }
+
+  .button:hover {
+    @apply bg-primary-600;
+  }
+
+  .video-grid {
+    @apply grid gap-6 grid-cols-video-grid p-4;
+  }
+
+  @screen md {
+    .video-grid {
+      @apply grid-cols-2 gap-8 p-6;
+    }
+  }
+
+  @screen lg {
+    .video-grid {
+      @apply grid-cols-3 gap-8 p-8;
+    }
+  }
+
+  @screen xl {
+    .video-grid {
+      @apply grid-cols-4 gap-8 p-8;
+    }
+  }
+
+  /* Video Card Styles */
+  .video-card {
+    @apply transition-all duration-200;
+  }
+
+  .video-card:hover {
+    @apply -translate-y-1 shadow-video-card;
+  }
+
+  .video-thumbnail {
+    @apply relative w-full h-45 bg-slate-100 overflow-hidden;
+  }
+
+  .video-image {
+    @apply w-full h-full object-cover;
+  }
+
+  .video-placeholder {
+    @apply w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-400 to-accent-500 text-white;
+  }
+
+  .play-icon {
+    @apply text-2xl opacity-80;
+  }
+
+  .duration-overlay {
+    @apply absolute bottom-2 right-2 bg-black bg-opacity-80 text-white px-1.5 py-0.5 rounded text-xs font-medium;
+  }
+
+  .video-title {
+    @apply text-base font-semibold mb-1 leading-tight line-clamp-2;
+  }
+
+  .video-metadata {
+    @apply text-xs text-slate-500 m-0;
+  }
+
+  .metadata-row {
+    @apply mb-1;
+  }
+
+  .metadata-row:last-child {
+    @apply mb-0;
+  }
+
+  /* Card content styles */
+  .card-header {
+    @apply p-4;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold mb-2 leading-tight;
+  }
+
+  .card-description {
+    @apply text-sm text-gray-600 mb-4;
+  }
+
+  /* VideoGrid Container Styles */
+  .video-grid-container {
+    @apply w-full min-h-96;
+  }
+
+  .video-stats {
+    @apply pt-4 px-4 text-sm text-slate-500 font-medium;
+  }
+
+  /* Loading State Styles */
+  .loading-state {
+    @apply flex flex-col items-center justify-center min-h-72 p-8 text-center;
+  }
+
+  .loading-spinner {
+    @apply w-10 h-10 border-3 border-slate-200 border-t-primary-500 rounded-full animate-spin mb-4;
+  }
+
+  .loading-state p {
+    @apply text-base text-slate-500 m-0;
+  }
+
+  /* Error State Styles */
+  .error-state {
+    @apply flex flex-col items-center justify-center min-h-72 p-8 text-center;
+  }
+
+  .error-state p {
+    @apply text-base text-red-600 mb-6 max-w-md;
+  }
+
+  .retry-button {
+    @apply bg-red-600 text-white;
+  }
+
+  .retry-button:hover {
+    @apply bg-red-700;
+  }
+
+  /* Empty State Styles */
+  .empty-state {
+    @apply flex flex-col items-center justify-center min-h-72 p-8 text-center;
+  }
+
+  .empty-icon {
+    @apply text-6xl mb-4 opacity-60;
+  }
+
+  .empty-state h2 {
+    @apply text-xl font-semibold text-gray-700 mb-2;
+  }
+
+  .empty-state p {
+    @apply text-base text-slate-500 m-0 max-w-md;
+  }
+
+  /* VideoPlayer Styles */
+  .video-player {
+    @apply max-w-5xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden;
+  }
+
+  .video-header {
+    @apply p-6 border-b border-slate-200 bg-slate-50;
+  }
+
+  .video-player-title {
+    @apply text-xl font-bold text-gray-800 mb-2;
+  }
+
+  .video-info {
+    @apply flex gap-4 text-sm text-slate-500;
+  }
+
+  .video-container {
+    @apply relative w-full bg-black;
+  }
+
+  .video-element {
+    @apply w-full max-h-screen block;
+  }
+
+  .video-loading, 
+  .video-error {
+    @apply flex flex-col items-center justify-center min-h-72 p-8 text-center bg-gray-800 text-white;
+  }
+
+  .video-loading .loading-spinner {
+    @apply border-gray-600 border-t-primary-500;
+  }
+
+  .error-icon {
+    @apply text-5xl mb-4;
+  }
+
+  .video-overlay {
+    @apply absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 transition-opacity duration-300 pointer-events-none;
+  }
+
+  .video-container:hover .video-overlay {
+    @apply opacity-100 pointer-events-auto;
+  }
+
+  .play-overlay-button {
+    @apply w-20 h-20 border-0 rounded-full bg-white bg-opacity-90 text-gray-800 cursor-pointer flex items-center justify-center text-2xl transition-all duration-200 shadow-lg;
+  }
+
+  .play-overlay-button:hover {
+    @apply bg-white scale-110;
+  }
+
+  .video-metadata {
+    @apply p-6 bg-slate-50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+
+  .metadata-item {
+    @apply flex flex-col gap-1;
+  }
+
+  .metadata-label {
+    @apply text-xs font-semibold text-slate-500 uppercase tracking-wide;
+  }
+
+  .metadata-value {
+    @apply text-sm text-gray-800 font-medium;
+  }
+
+  /* App Layout Styles */
+  .app {
+    @apply min-h-screen flex flex-col bg-slate-50;
+  }
+
+  .app-header {
+    @apply bg-gradient-to-br from-primary-400 to-accent-500 text-white py-8 shadow-lg;
+  }
+
+  .header-content {
+    @apply max-w-5xl mx-auto px-4 text-center;
+  }
+
+  .app-title {
+    @apply text-5xl font-extrabold mb-2 drop-shadow-md;
+  }
+
+  .app-subtitle {
+    @apply text-xl font-light opacity-90 m-0;
+  }
+
+  .app-main {
+    @apply flex-1 max-w-5xl mx-auto w-full py-8 px-4;
+  }
+
+  .main-video-grid {
+    @apply w-full;
+  }
+
+  /* Video Player Modal Styles */
+  .video-player-modal {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-backdrop {
+    @apply absolute inset-0 bg-black bg-opacity-80 cursor-pointer;
+  }
+
+  .modal-content {
+    @apply relative bg-white rounded-xl max-w-[90vw] max-h-[90vh] overflow-hidden shadow-modal z-10;
+  }
+
+  .modal-close-button {
+    @apply absolute top-4 right-4 z-10 w-10 h-10 border-0 rounded-full bg-black bg-opacity-70 text-white text-xl cursor-pointer flex items-center justify-center transition-all duration-200;
+  }
+
+  .modal-close-button:hover {
+    @apply bg-black bg-opacity-90 scale-110;
+  }
+
+  .modal-video-player {
+    @apply w-full max-w-4xl;
+  }
+
+}
+
+/* Custom responsive utilities for specific breakpoints */
+@media (max-width: 767px) {
+  .app-title {
+    @apply text-3xl;
+  }
+  
+  .app-subtitle {
+    @apply text-base;
+  }
+  
+  .app-main {
+    @apply py-4 px-2;
+  }
+  
+  .modal-content {
+    @apply max-w-[95vw] max-h-[95vh];
+  }
+  
+  .video-metadata {
+    @apply grid-cols-1;
+  }
+}
+
+/* Utility styles for specific height values not in Tailwind */
+@layer utilities {
+  .h-45 {
+    height: 11.25rem; /* 180px */
+  }
+  
+  .min-h-72 {
+    min-height: 18rem; /* 288px */
+  }
+  
+  .min-h-96 {
+    min-height: 24rem; /* 384px */
+  }
+  
+  .border-3 {
+    border-width: 3px;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .max-h-screen {
+    max-height: 70vh;
+  }
+}
