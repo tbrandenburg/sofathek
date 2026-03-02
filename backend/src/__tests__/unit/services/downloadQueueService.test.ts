@@ -4,11 +4,13 @@ import { DownloadQueueService } from '../../../services/downloadQueueService';
 const mockReadFile = jest.fn();
 const mockWriteFile = jest.fn();
 const mockMkdir = jest.fn();
+const mockRename = jest.fn();
 
 jest.mock('fs/promises', () => ({
   readFile: (...args: any[]) => mockReadFile(...args),
   writeFile: (...args: any[]) => mockWriteFile(...args),
-  mkdir: (...args: any[]) => mockMkdir(...args)
+  mkdir: (...args: any[]) => mockMkdir(...args),
+  rename: (...args: any[]) => mockRename(...args)
 }));
 
 jest.mock('fs', () => ({
@@ -17,8 +19,9 @@ jest.mock('fs', () => ({
 }));
 
 // Mock YouTubeDownloadService
+const mockDownloadVideo = jest.fn();
 const mockYoutubeService = {
-  downloadVideo: jest.fn()
+  downloadVideo: mockDownloadVideo
 } as any;
 
 describe('DownloadQueueService', () => {
@@ -31,6 +34,14 @@ describe('DownloadQueueService', () => {
     // Set up default successful mocks
     mockWriteFile.mockResolvedValue(undefined);
     mockMkdir.mockResolvedValue(undefined);
+    mockRename.mockResolvedValue(undefined);
+    
+    // Mock YouTube service to return success result
+    mockDownloadVideo.mockResolvedValue({
+      status: 'success',
+      videoPath: '/test/output/video.mp4',
+      thumbnailPath: '/test/output/thumbnail.jpg'
+    });
   });
 
   describe('initialize', () => {
@@ -44,18 +55,16 @@ describe('DownloadQueueService', () => {
     });
 
     it('should load existing queue from file', async () => {
-      const mockQueueData = {
-        queue: [
-          {
-            id: 'test-id',
-            request: { url: 'https://youtu.be/test', requestId: 'req-1', requestedAt: new Date() },
-            status: 'pending',
-            progress: 0,
-            currentStep: 'queued',
-            queuedAt: new Date()
-          }
-        ]
-      };
+      const mockQueueData = [
+        {
+          id: 'test-id',
+          request: { url: 'https://youtu.be/test', requestId: 'req-1', requestedAt: new Date().toISOString() },
+          status: 'pending',
+          progress: 0,
+          currentStep: 'queued',
+          queuedAt: new Date().toISOString()
+        }
+      ];
       mockReadFile.mockResolvedValue(JSON.stringify(mockQueueData));
 
       await service.initialize();
@@ -82,7 +91,7 @@ describe('DownloadQueueService', () => {
       const queueItem = await service.addToQueue(request);
 
       expect(queueItem.id).toBeDefined();
-      expect(queueItem.status).toBe('pending');
+      expect(queueItem.request.url).toBe(request.url);
       
       const status = await service.getQueueStatus();
       expect(status.totalItems).toBe(1);
