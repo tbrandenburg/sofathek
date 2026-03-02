@@ -4,6 +4,7 @@
 import { YouTubeDownloadService } from './youTubeDownloadService';
 import { DownloadQueueService } from './downloadQueueService';
 import { ThumbnailService } from './thumbnailService';
+import { logger } from '../utils/logger';
 import * as path from 'path';
 
 // Environment-based configuration
@@ -18,7 +19,7 @@ export const downloadQueueService = new DownloadQueueService(TEMP_DIR, youTubeDo
 
 // Initialize queue service
 downloadQueueService.initialize().catch(error => {
-  console.error('Failed to initialize download queue service:', error);
+  logger.error('Failed to initialize download queue service:', error);
 });
 
 // Export service classes for testing and custom initialization

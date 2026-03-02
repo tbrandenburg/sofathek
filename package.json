@@ -1,0 +1,66 @@
+{
+  "name": "sofathek",
+  "version": "1.5.0",
+  "description": "Family Media Center - Production-ready video streaming and management platform",
+  "type": "commonjs",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspace=backend & sleep 3 && npm run preview --workspace=frontend",
+    "dev": "npm run dev --workspace=backend & sleep 3 && npm run dev --workspace=frontend",
+    "test": "npm run test --workspaces --if-present",
+    "test:watch": "npm run test:watch --workspaces --if-present",
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules/.cache",
+    "reset": "rm -rf node_modules */node_modules && npm install",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "health": "curl -s http://localhost:3010/health | jq '.' || curl -s http://localhost:3010/health",
+    "version:patch": "npm version patch --workspaces && git add . && git commit -m 'chore: bump version'",
+    "version:minor": "npm version minor --workspaces && git add . && git commit -m 'chore: bump version'",
+    "version:major": "npm version major --workspaces && git add . && git commit -m 'chore: bump version'",
+    "preinstall": "echo '📦 Installing Sofathek dependencies...'",
+    "postinstall": "echo '✅ Installation complete. Run npm run dev to start development.'",
+    "prebuild": "echo '🔨 Building Sofathek for production...'",
+    "postbuild": "echo '✅ Build complete. Run npm start to start production servers.'",
+    "pretest": "echo '🧪 Running all tests...'",
+    "posttest": "echo '✅ All tests completed.'"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tombrandenburgh/sofathek.git"
+  },
+  "keywords": [
+    "media-center",
+    "video-streaming",
+    "family-app",
+    "netflix-like",
+    "youtube-downloader",
+    "react",
+    "typescript",
+    "express",
+    "monorepo"
+  ],
+  "author": "Thomas Brandenburg",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tombrandenburgh/sofathek/issues"
+  },
+  "homepage": "https://github.com/tombrandenburgh/sofathek#readme",
+  "devDependencies": {
+    "@types/node": "^18.15.0"
+  }
+}
