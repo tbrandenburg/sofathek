@@ -14,6 +14,7 @@
 
 * Keep README.md updated after feature increments
 * Never ever mock something in end-2-end tests - they shall test the whole functionality in real-world scenarios - they shall be ruthless and painful and discover all errors early the users would otherwise discover later
+* Never force skip tests or commit/push hooks
 
 ## Anti-Deception Rules
 

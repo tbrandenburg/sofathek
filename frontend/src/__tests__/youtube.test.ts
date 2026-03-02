@@ -75,7 +75,7 @@ describe('YouTube Service', () => {
         url: 'https://www.youtube.com/watch?v=invalid'
       };
 
-      mockFetch.mockResolvedValueOnce({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 400,
         statusText: 'Bad Request',
@@ -91,7 +91,7 @@ describe('YouTube Service', () => {
         url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
       };
 
-      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
       await expect(downloadVideo(request)).rejects.toThrow(ApiError);
       await expect(downloadVideo(request)).rejects.toThrow('Network error');
@@ -212,7 +212,7 @@ describe('YouTube Service', () => {
     test('should handle cancel failure gracefully', async () => {
       const downloadId = 'nonexistent-download';
 
-      mockFetch.mockResolvedValueOnce({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found',

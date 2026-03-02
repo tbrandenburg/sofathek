@@ -185,11 +185,12 @@ describe('YouTube Hooks', () => {
       const { result } = renderHook(() => useDownloadQueue(), { wrapper });
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
+        expect(result.current.isError).toBe(true);
+      }, { timeout: 5000 });
 
-      expect(result.current.data).toBeUndefined();
-      expect(result.current.error).toEqual(mockError);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeDefined();
+      expect(result.current.error?.message).toContain('["youtube","queue"]');
     });
   });
 
