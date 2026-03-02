@@ -121,7 +121,25 @@ jobs:
       - name: Start development servers in background
         run: |
           make dev &
-          sleep 30  # Wait for servers to start
+          sleep 10
+          # Wait for backend to be ready
+          for i in {1..30}; do
+            if curl -f http://localhost:3010/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+          # Wait for frontend to be ready  
+          for i in {1..30}; do
+            if curl -f http://localhost:5183 > /dev/null 2>&1; then
+              echo "Frontend is ready"
+              break
+            fi
+            echo "Waiting for frontend... ($i/30)"
+            sleep 2
+          done
           
       - name: Run Playwright E2E tests
         run: cd frontend && npx playwright test
