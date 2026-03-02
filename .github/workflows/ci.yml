@@ -24,15 +24,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
-            
-      - name: Install backend dependencies
-        run: cd backend && npm ci
-        
-      - name: Install frontend dependencies  
-        run: cd frontend && npm ci
+          
+      - name: Install dependencies
+        run: npm ci
         
       - name: Run TypeScript type checking
         run: make type-check
@@ -55,12 +49,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
             
       - name: Install dependencies
-        run: make install
+        run: npm ci
         
       - name: Build applications
         run: make build
@@ -89,12 +80,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
             
       - name: Install dependencies
-        run: make install
+        run: npm ci
         
       - name: Run unit tests with coverage
         run: |
@@ -125,12 +113,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
             
       - name: Install dependencies
-        run: make install
+        run: npm ci
         
       - name: Install Playwright browsers
         run: make playwright-install
@@ -175,12 +160,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
             
       - name: Install dependencies
-        run: make install
+        run: npm ci
         
       - name: Build for production
         run: make build
