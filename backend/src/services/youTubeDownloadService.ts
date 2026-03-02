@@ -63,12 +63,23 @@ export class YouTubeDownloadService {
         tempPath: tempVideoPath
       });
 
-      // Generate thumbnail
-      const thumbnailPath = await this.thumbnailService.generateThumbnail(tempVideoPath);
-      logger.info('Thumbnail generated', {
-        downloadId,
-        thumbnailPath
-      });
+      // Generate thumbnail (graceful degradation)
+      let thumbnailPath: string | undefined;
+      try {
+        thumbnailPath = await this.thumbnailService.generateThumbnail(tempVideoPath);
+        logger.info('Thumbnail generated successfully', { 
+          downloadId,
+          thumbnailPath 
+        });
+      } catch (error) {
+        logger.warn('Thumbnail generation failed, continuing without thumbnail', {
+          downloadId,
+          videoPath: tempVideoPath,
+          error: error instanceof Error ? error.message : String(error)
+        });
+        // Don't fail the entire download for thumbnail issues
+        thumbnailPath = undefined;
+      }
 
       // Move video to final location
       const finalVideoPath = await this.moveVideoToLibrary(tempVideoPath, metadata);
@@ -82,7 +93,7 @@ export class YouTubeDownloadService {
         status: 'success',
         metadata,
         videoPath: finalVideoPath,
-        thumbnailPath,
+        ...(thumbnailPath && { thumbnailPath }),
         completedAt: new Date(),
         startedAt
       };
