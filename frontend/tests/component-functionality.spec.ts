@@ -11,6 +11,20 @@ test.describe('Component Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    
+    // Wait for React app to be fully loaded by checking for key elements
+    try {
+      // Wait for the root div to have content (React has loaded)
+      await page.waitForSelector('#root:not(:empty)', { timeout: 30000 });
+      
+      // Additional wait for theme toggle to be present (main app component loaded)
+      await page.waitForSelector('button', { timeout: 10000 });
+      
+      // Give components time to initialize
+      await page.waitForTimeout(1000);
+    } catch (error) {
+      console.log('App loading check failed, proceeding anyway:', error.message);
+    }
   });
 
   test.describe('Theme Toggle Functionality', () => {

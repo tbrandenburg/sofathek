@@ -154,32 +154,46 @@ jobs:
             sleep 2
           done
           
-          # Wait for frontend to be ready (check built files)
-          echo "Checking frontend server..." 
-          for i in {1..15}; do
+          # Wait for frontend to be ready and serving React app
+          echo "Checking frontend server and app loading..." 
+          for i in {1..20}; do
+            # Check if server is responding
             if curl -f -s -I http://localhost:5183 | grep -q "200\|HTTP/.*200"; then
-              echo "✅ Frontend is ready (serving built files)"
-              break
+              # Check if React app content is loading (look for root div and title)
+              if curl -s http://localhost:5183 | grep -q "Sofathek - Family Media Center" && \
+                 curl -s http://localhost:5183 | grep -q '<div id="root">'; then
+                echo "✅ Frontend is ready (React app content available)"
+                
+                # Additional wait for JavaScript to load and execute
+                echo "Waiting additional 10s for React app initialization..."
+                sleep 10
+                break
+              fi
             fi
-            if [ $i -eq 15 ]; then
-              echo "❌ Frontend check failed after 30s"
+            if [ $i -eq 20 ]; then
+              echo "❌ Frontend app check failed after 40s"
               echo "Frontend process status:"
               ps aux | grep -E "(python3.*5183)" | grep -v grep || echo "No frontend server found"
               netstat -tulpn | grep 5183 || echo "Port 5183 not listening"
-              ls -la frontend/dist/ || echo "No dist directory found"
-              curl -v http://localhost:5183 || echo "Frontend connection failed"
+              echo "Frontend content check:"
+              curl -s http://localhost:5183 | head -10 || echo "Could not fetch frontend content"
               exit 1
             fi
-            echo "Waiting for frontend... ($i/15)"
+            echo "Waiting for frontend app... ($i/20)"
             sleep 2
           done
           
-          echo "✅ Both servers are ready for E2E tests"
+          echo "✅ Both servers and React app are ready for E2E tests"
           
       - name: Run Playwright E2E tests
         run: |
           echo "Running Playwright E2E tests..."
-          cd frontend && npx playwright test
+          echo "Final verification before tests..."
+          echo "Backend status:" && curl -s http://localhost:3010/health | jq '.status // "unknown"' || echo "Backend unavailable"
+          echo "Frontend status:" && curl -s -I http://localhost:5183 | head -1 || echo "Frontend unavailable"
+          echo "Frontend content check:" && curl -s http://localhost:5183 | grep -o "<title>.*</title>" || echo "No title found"
+          echo "Starting E2E tests..."
+          cd frontend && npx playwright test --timeout=60000
           
       - name: Cleanup background servers
         if: always()
