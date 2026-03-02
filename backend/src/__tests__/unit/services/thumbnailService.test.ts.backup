@@ -17,12 +17,25 @@ jest.mock('fs/promises', () => ({
 
 const mockFFmpeggyRun = jest.fn();
 const mockFFmpeggyDone = jest.fn();
+const mockFFmpeggyDefaultConfig = { test: 'initial' };
+
 jest.mock('ffmpeggy', () => ({
   FFmpeggy: jest.fn().mockImplementation(() => ({
     run: mockFFmpeggyRun,
     done: mockFFmpeggyDone
-  }))
+  })),
+  // Mock DefaultConfig to test configuration branches
+  get DefaultConfig() {
+    return mockFFmpeggyDefaultConfig;
+  },
+  set DefaultConfig(config) {
+    Object.assign(mockFFmpeggyDefaultConfig, config);
+  }
 }));
+
+// Mock static binaries for branch coverage
+jest.mock('ffmpeg-static', () => '/path/to/ffmpeg-static');
+jest.mock('ffprobe-static', () => ({ path: '/path/to/ffprobe-static' }));
 
 describe('ThumbnailService', () => {
   let service: ThumbnailService;
@@ -81,6 +94,82 @@ describe('ThumbnailService', () => {
           mtime: isOld ? oldDate : new Date()
         });
       });
+      
+      mockUnlink.mockResolvedValue(undefined);
+      
+      const count = await service.cleanupTempFiles(24);
+      
+      expect(count).toBe(1);
+      expect(mockUnlink).toHaveBeenCalledWith('/test/temp/old-file.jpg');
+    });
+  });
+});
+
+describe('ThumbnailService FFmpeggy Configuration', () => {
+  // Test module-level configuration code paths for branch coverage
+  
+  it('should handle FFmpeggy.DefaultConfig undefined scenario', () => {
+    // Mock scenario where DefaultConfig is not available
+    const originalConsole = console.warn;
+    console.warn = jest.fn();
+    
+    // Temporarily remove DefaultConfig
+    const { FFmpeggy } = require('ffmpeggy');
+    const originalDefaultConfig = FFmpeggy.DefaultConfig;
+    delete FFmpeggy.DefaultConfig;
+    
+    // Re-import the service to trigger configuration code
+    jest.resetModules();
+    
+    // This should trigger the DefaultConfig undefined branch
+    expect(() => require('../../../services/thumbnailService')).not.toThrow();
+    
+    // Restore
+    FFmpeggy.DefaultConfig = originalDefaultConfig;
+    console.warn = originalConsole;
+  });
+  
+  it('should handle FFmpeggy configuration errors gracefully', () => {
+    // Mock scenario where configuration throws an error
+    const originalConsole = console.warn;
+    console.warn = jest.fn();
+    
+    const { FFmpeggy } = require('ffmpeggy');
+    
+    // Mock DefaultConfig setter to throw error
+    Object.defineProperty(FFmpeggy, 'DefaultConfig', {
+      set: () => {
+        throw new Error('Configuration error');
+      },
+      configurable: true
+    });
+    
+    // Re-import should not crash and should handle error gracefully
+    jest.resetModules();
+    expect(() => require('../../../services/thumbnailService')).not.toThrow();
+    
+    console.warn = originalConsole;
+  });
+  
+  it('should handle missing static binaries gracefully', () => {
+    const originalConsole = console.warn;
+    console.warn = jest.fn();
+    
+    // Mock scenario where static binaries are null/undefined
+    jest.doMock('ffmpeg-static', () => null);
+    jest.doMock('ffprobe-static', () => ({ path: null }));
+    
+    // Re-import should fallback to environment variables and system paths
+    jest.resetModules();
+    expect(() => require('../../../services/thumbnailService')).not.toThrow();
+    
+    console.warn = originalConsole;
+    
+    // Reset mocks
+    jest.dontMock('ffmpeg-static');
+    jest.dontMock('ffprobe-static');
+  });
+});
       mockUnlink.mockResolvedValue(undefined);
       
       const result = await service.cleanupTempFiles(24);
@@ -170,27 +259,5 @@ describe('ThumbnailService - Real FFmpeg Integration', () => {
       // Expected if test video doesn't exist
       expect(error).toBeDefined();
     }
-  });
-});
-
-// Configuration branch coverage tests
-describe('ThumbnailService Configuration', () => {
-  it('should handle module import without throwing errors', () => {
-    // Simple test that the module can be imported
-    // This covers the module-level configuration code paths
-    expect(() => {
-      const { ThumbnailService } = require('../../../services/thumbnailService');
-      new ThumbnailService('/test', '/test');
-    }).not.toThrow();
-  });
-  
-  it('should handle static binary configuration', () => {
-    // Test that static binaries are configured correctly
-    const ffmpegStatic = require('ffmpeg-static');
-    const ffprobeStatic = require('ffprobe-static');
-    
-    expect(ffmpegStatic).toBeDefined();
-    expect(ffprobeStatic).toBeDefined();
-    expect(ffprobeStatic.path).toBeDefined();
   });
 });

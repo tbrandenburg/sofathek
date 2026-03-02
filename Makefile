@@ -1,7 +1,7 @@
 # Sofathek - Family Media Center
 # Essential development commands
 
-.PHONY: help install build test lint clean dev start stop docker playwright-install playwright-test e2e-test e2e-docker
+.PHONY: help install build test lint clean dev start stop docker playwright-install playwright-test e2e-test e2e-docker clean-ports
 
 # Default target
 help: ## Show available commands
@@ -50,9 +50,22 @@ type-check: ## Run TypeScript type checking
 	@cd backend && npm run type-check
 	@cd frontend && npm run type-check
 
+clean-ports: ## Clean up processes on development ports
+	@echo "🧹 Cleaning up ports 3010 and 5183..."
+	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
+	@lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
+	@sleep 1
+	@lsof -ti:3010 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
+	@lsof -ti:5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
+	@pkill -f "PORT=3010" 2>/dev/null || true
+	@pkill -f "python3 -m http.server 5183" 2>/dev/null || true
+	@pkill -f "vite.*--port 5183" 2>/dev/null || true
+
 dev: ## Start development servers (backend:3010, frontend:5183)
 	@echo "🚀 Starting development servers..."
 	@echo "Backend: http://localhost:3010 | Frontend: http://localhost:5183"
+	@echo "🧹 Cleaning up any existing processes..."
+	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:3010,5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=3010\|vite.*--port 5183" 2>/dev/null || true
 	@trap 'kill %1 %2 2>/dev/null; exit 0' INT; \
 	(cd backend && PORT=3010 npm run dev) & \
 	sleep 3 && \
@@ -61,17 +74,21 @@ dev: ## Start development servers (backend:3010, frontend:5183)
 
 start: build ## Start production servers
 	@echo "🚀 Starting production servers..."
+	@echo "🧹 Cleaning up any existing processes..."
+	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:3010,5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=3010\|python3.*http.server 5183" 2>/dev/null || true
 	@trap 'kill %1 %2 2>/dev/null; exit 0' INT; \
 	(cd backend && PORT=3010 npm start) & \
 	sleep 3 && \
 	(cd frontend && python3 -m http.server 5183 --directory dist) & \
 	wait
 
-stop: ## Stop all servers
+stop: ## Stop all servers and clean up ports
 	@echo "🛑 Stopping servers..."
-	@pkill -f "PORT=3010" || true
-	@pkill -f "python3 -m http.server 5183" || true
-	@pkill -f "vite.*--port 5183" || true
+	@bash -c 'for port in 3010 5183; do pids=$$(lsof -ti:$$port 2>/dev/null || true); if [ -n "$$pids" ]; then echo "  Killing processes on port $$port: $$pids"; kill -TERM $$pids 2>/dev/null || true; sleep 0.5; kill -KILL $$pids 2>/dev/null || true; fi; done'
+	@pkill -f "PORT=3010" 2>/dev/null || true
+	@pkill -f "python3 -m http.server 5183" 2>/dev/null || true  
+	@pkill -f "vite.*--port 5183" 2>/dev/null || true
+	@echo "✅ All servers stopped and ports cleaned up"
 
 clean: ## Clean build artifacts
 	@echo "🧹 Cleaning..."
