@@ -148,6 +148,7 @@ backend/dist/
 backend/temp/
 data/videos/
 .claude/
+dev/
 
 # Build artifacts
 build/
