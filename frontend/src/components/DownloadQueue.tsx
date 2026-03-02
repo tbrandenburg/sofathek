@@ -120,14 +120,17 @@ function QueueItemComponent({ item, onCancel, className = '' }: QueueItemCompone
         {/* Progress bar for processing items */}
         {item.status === 'processing' && (
           <div className="mt-3">
-            <div className="w-full bg-gray-200 rounded-full h-2" role="progressbar">
+            <div 
+              className="w-full bg-gray-200 rounded-full h-2" 
+              role="progressbar"
+              aria-valuenow={Math.max(0, Math.min(100, item.progress))}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${Math.max(0, Math.min(100, item.progress))}%` }}
                 data-testid={`progress-bar-${item.id}`}
-                aria-valuenow={Math.max(0, Math.min(100, item.progress))}
-                aria-valuemin={0}
-                aria-valuemax={100}
               />
             </div>
           </div>

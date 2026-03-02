@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
@@ -12,6 +12,13 @@ interface YouTubeDownloadProps {
 export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
   const [url, setUrl] = useState('');
   const downloadMutation = useYouTubeDownload();
+
+  // Reset error state when URL changes
+  useEffect(() => {
+    if (downloadMutation.isError) {
+      downloadMutation.reset();
+    }
+  }, [url, downloadMutation]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
