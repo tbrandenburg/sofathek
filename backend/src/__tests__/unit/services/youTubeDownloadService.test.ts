@@ -15,11 +15,7 @@ jest.mock('fs/promises', () => ({
   unlink: (...args: any[]) => mockUnlink(...args)
 }));
 
-jest.mock('youtube-dl-exec', () => ({
-  __esModule: true,
-  default: jest.fn(),
-  exec: jest.fn()
-}));
+jest.mock('youtube-dl-exec', () => jest.fn());
 
 // Simple mock for ThumbnailService 
 const mockThumbnailService = {
@@ -48,6 +44,17 @@ describe('YouTubeDownloadService', () => {
       expect(await service.validateYouTubeUrl('https://vimeo.com/123456')).toBe(false);
       expect(await service.validateYouTubeUrl('')).toBe(false);
     });
+
+    it('should handle validation errors gracefully', async () => {
+      // Mock URL validation to throw an error
+      const originalConsoleError = console.error;
+      console.error = jest.fn(); // Suppress error logging for test
+
+      expect(await service.validateYouTubeUrl('')).toBe(false);
+      expect(await service.validateYouTubeUrl('invalid-url')).toBe(false);
+
+      console.error = originalConsoleError;
+    });
   });
 
   describe('cleanupFailedDownload', () => {
@@ -74,6 +81,36 @@ describe('YouTubeDownloadService', () => {
 
       // Should not throw
       await expect(service.cleanupFailedDownload(videoId)).resolves.not.toThrow();
+    });
+
+    it('should handle unlink errors gracefully', async () => {
+      const videoId = 'test-video-id';
+      const testFiles = ['Test_Video-test-video-id.mp4'];
+      
+      mockReaddir.mockResolvedValue(testFiles);
+      mockUnlink.mockRejectedValue(new Error('Permission denied'));
+
+      // Should not throw
+      await expect(service.cleanupFailedDownload(videoId)).resolves.not.toThrow();
+    });
+  });
+
+  describe('downloadVideo', () => {
+    it('should handle invalid URL and return error result', async () => {
+      const mockRequest = {
+        url: 'invalid-url',
+        title: 'Test Video',
+        requestedAt: new Date(),
+        requestId: 'test-request-123'
+      };
+
+      const result = await service.downloadVideo(mockRequest);
+
+      expect(result.status).toBe('error');
+      expect(result.error).toContain('Invalid YouTube URL format');
+      expect(result.id).toBeDefined();
+      expect(result.startedAt).toBeDefined();
+      expect(result.completedAt).toBeDefined();
     });
   });
 });

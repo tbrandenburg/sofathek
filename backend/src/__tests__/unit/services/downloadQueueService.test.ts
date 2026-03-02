@@ -122,5 +122,37 @@ describe('DownloadQueueService', () => {
       const result = await service.cancelDownload('non-existent-id');
       expect(result).toBe(false);
     });
+
+    it('should return false when canceling already completed download', async () => {
+      const request = {
+        url: 'https://youtu.be/test-video',
+        requestId: 'req-1',
+        requestedAt: new Date()
+      };
+
+      const queueItem = await service.addToQueue(request);
+      // Manually set status to completed
+      const status = service.getQueueStatus();
+      const item = status.items.find(i => i.id === queueItem.id);
+      if (item) {
+        item.status = 'completed';
+      }
+      
+      const result = await service.cancelDownload(queueItem.id);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('cleanupOldItems', () => {
+    beforeEach(async () => {
+      mockReadFile.mockRejectedValue(new Error('File not found'));
+      mockWriteFile.mockResolvedValue(undefined);
+      await service.initialize();
+    });
+
+    it('should handle cleanup with no old items', async () => {
+      const cleanedCount = await service.cleanupOldItems(24);
+      expect(cleanedCount).toBe(0);
+    });
   });
 });
