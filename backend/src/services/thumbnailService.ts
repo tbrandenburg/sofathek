@@ -4,15 +4,24 @@ import * as fs from 'fs/promises';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 
-// Configure FFmpeg binary paths for FFmpeggy using DefaultConfig
-// Handle different versions of ffmpeggy library
+// Import static binaries for reliable FFmpeg/FFprobe paths
+import ffmpegBin from 'ffmpeg-static';
+const ffprobeStatic = require('ffprobe-static');
+
+// Configure FFmpeg binary paths for FFmpeggy using DefaultConfig with static binaries
 try {
   if (FFmpeggy.DefaultConfig) {
     FFmpeggy.DefaultConfig = {
       ...FFmpeggy.DefaultConfig,
-      ffmpegBin: process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
-      ffprobeBin: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
+      ffmpegBin: ffmpegBin || process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
+      ffprobeBin: ffprobeStatic.path || process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
     };
+    logger.info('FFmpeggy DefaultConfig configured with static binaries', { 
+      ffmpegBin: ffmpegBin || 'system fallback', 
+      ffprobeBin: ffprobeStatic.path || 'system fallback' 
+    });
+  } else {
+    logger.warn('FFmpeggy.DefaultConfig is not available');
   }
 } catch (error) {
   // Fallback for older versions or test environments
