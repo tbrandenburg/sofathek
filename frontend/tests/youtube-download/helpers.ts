@@ -23,7 +23,7 @@ export class NavigationHelpers {
     await this.page.waitForLoadState('networkidle');
     
     // Wait for the main content to be visible
-    await expect(this.page.locator('h1')).toContainText('Video Library');
+    await expect(this.page.locator('h2')).toContainText('Video Library');
   }
 
   /**

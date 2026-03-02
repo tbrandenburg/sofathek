@@ -106,14 +106,16 @@ export async function getDownloadStatus(itemId: string): Promise<QueueItem> {
  * Cancel a download
  * DELETE /api/youtube/cancel/:id
  */
-export async function cancelDownload(itemId: string): Promise<void> {
-  const response = await youtubeApiFetch<void>(`/youtube/cancel/${encodeURIComponent(itemId)}`, {
+export async function cancelDownload(itemId: string): Promise<{ message: string; queueItemId: string }> {
+  const response = await youtubeApiFetch<{ message: string; queueItemId: string }>(`/youtube/download/${encodeURIComponent(itemId)}`, {
     method: 'DELETE',
   });
   
-  if (response.status !== 'success') {
+  if (response.status !== 'success' || !response.data) {
     throw new ApiError(response.message || `Failed to cancel download '${itemId}'`);
   }
+  
+  return response.data;
 }
 
 /**

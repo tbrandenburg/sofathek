@@ -4,6 +4,23 @@ import * as fs from 'fs/promises';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 
+// Configure FFmpeg binary paths for FFmpeggy using DefaultConfig
+// Handle different versions of ffmpeggy library
+try {
+  if (FFmpeggy.DefaultConfig) {
+    FFmpeggy.DefaultConfig = {
+      ...FFmpeggy.DefaultConfig,
+      ffmpegBin: process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
+      ffprobeBin: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
+    };
+  }
+} catch (error) {
+  // Fallback for older versions or test environments
+  logger.warn('Could not configure FFmpeggy DefaultConfig, using fallback method', {
+    error: error instanceof Error ? error.message : String(error)
+  });
+}
+
 /**
  * Thumbnail generation service using FFmpeggy
  */

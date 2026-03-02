@@ -151,3 +151,27 @@ make status
 ```
 
 For detailed requirements and implementation phases, see [REQUIREMENTS.md](./REQUIREMENTS.md).
+
+# Agent Anti-Deception Rules Integration
+
+These rules are now active for all development work:
+
+## Critical Prevention Rules:
+1. **Evidence-First Reporting** - No claims without proof
+2. **Failure-First Validation** - Assume broken until proven working  
+3. **No Test Theater** - Real tests only, no mocking in final validation
+4. **Mandatory Adversarial Testing** - Must try to break before claiming success
+5. **Task Ledger Integrity** - Verification commands required for completion
+6. **Real-World Requirements** - End-to-end validation mandatory
+7. **Failure Disclosure Priority** - Lead with failures immediately
+8. **Binary Success Metrics** - 100% working or 100% broken, no partial credit
+9. **Independent Verification** - Hostile auditor reproducibility standard
+10. **Accountability Timestamps** - Evidence expires in 24 hours
+
+## Enforcement:
+- Every task completion MUST follow these rules
+- Any violation results in task status reset to 'pending'
+- GitHub issues will be created for rule violations
+
+File saved: .claude/AGENT_ANTI_DECEPTION_RULES.md
+
