@@ -87,5 +87,28 @@ describe('ThumbnailService', () => {
       
       expect(result).toBe(1);
     });
+
+    it('should handle cleanup errors gracefully', async () => {
+      mockReaddir.mockRejectedValue(new Error('Directory access failed'));
+      
+      // Should not throw and return 0
+      const result = await service.cleanupTempFiles(24);
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('generateThumbnail', () => {
+    it('should handle thumbnail generation failure', async () => {
+      // Mock ensureDirectoriesExist to work
+      mockAccess.mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
+      mockMkdir.mockResolvedValue(undefined);
+      mockFFmpeggyRun.mockResolvedValue(undefined);
+      mockFFmpeggyDone.mockResolvedValue(undefined);
+      // Mock final access check to fail (thumbnail verification)
+      mockAccess.mockRejectedValueOnce(new Error('Thumbnail not found'));
+      
+      await expect(service.generateThumbnail('/test/video.mp4'))
+        .rejects.toThrow('Thumbnail file was not created');
+    });
   });
 });
