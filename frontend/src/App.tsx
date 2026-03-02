@@ -1,9 +1,27 @@
 import React, { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Video } from './types';
 import { VideoGrid } from './components/VideoGrid/VideoGrid';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
 import { Layout, ContentContainer, PageHeader } from './components/Layout/Layout';
+import { YouTubeDownload } from './components/YouTubeDownload';
+import { DownloadQueue } from './components/DownloadQueue';
 import { useVideos } from './hooks/useVideos';
+
+// Create Query Client outside component to avoid recreation on renders
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 3000, // Consider data fresh for 3 seconds (good for polling)
+      gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
+      retry: 2, // Retry failed requests twice
+      refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    },
+    mutations: {
+      retry: 1, // Retry mutations once on failure
+    },
+  },
+});
 
 function App() {
   const { data: videosResult, isLoading, error } = useVideos();
@@ -37,6 +55,12 @@ function App() {
           title="Video Library" 
           subtitle={`${videos.length} videos available`}
         />
+        
+        {/* YouTube Download Section */}
+        <div className="mb-8 space-y-6">
+          <YouTubeDownload className="youtube-download-section" />
+          <DownloadQueue className="download-queue-section" />
+        </div>
         
         <VideoGrid
           videos={videos}
@@ -79,4 +103,13 @@ function App() {
   );
 }
 
-export default App;
+// Wrap the App with QueryClientProvider
+function AppWithProviders() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  );
+}
+
+export default AppWithProviders;

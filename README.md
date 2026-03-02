@@ -68,6 +68,10 @@ make install
 # Development
 make dev         # Start development servers
 
+# Code validation (auto-runs on git push)
+npm run validate:fast   # Quick validation (lint + types)
+npm run validate        # Full validation (includes build)
+
 # Before committing
 make lint        # Fix code style
 make test        # Run tests
@@ -76,6 +80,31 @@ make build       # Verify build works
 # Production deployment  
 make start       # Or use make docker
 ```
+
+## 🛡️ Code Validation
+
+Sofathek includes **automatic pre-push validation** to ensure code quality:
+
+### **Automatic Validation** (runs on `git push`):
+- 📝 **Linting**: Code style and quality checks
+- 🔍 **Type Checking**: TypeScript validation  
+- 🏗️ **Build Testing**: Production build verification
+
+### **Manual Validation Commands**:
+```bash
+npm run validate        # Full validation (~60s)
+npm run validate:fast   # Skip build (~30s) 
+npm run validate:skip   # Emergency skip
+```
+
+### **Fix Issues Quickly**:
+```bash
+npm run lint:fix        # Auto-fix linting issues
+npm run type-check      # Check TypeScript errors
+npm run build           # Test production build
+```
+
+📖 **Full documentation**: [docs/PRE_PUSH_VALIDATION.md](docs/PRE_PUSH_VALIDATION.md)
 
 ## Project Structure
 
