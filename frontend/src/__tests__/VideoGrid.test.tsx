@@ -34,8 +34,17 @@ describe('VideoGrid Component', () => {
   test('should render loading state', () => {
     render(<VideoGrid videos={[]} isLoading={true} />);
 
-    const loadingText = screen.getByText('Loading videos...');
-    expect(loadingText).toBeDefined();
+    // Check that the loading state container exists
+    const loadingContainer = document.querySelector('.loading-state');
+    expect(loadingContainer).toBeDefined();
+    
+    // Check that skeleton elements are rendered (should have 6 skeleton cards)
+    const skeletonCards = document.querySelectorAll('.video-card');
+    expect(skeletonCards.length).toBe(6);
+    
+    // Check that actual skeleton elements with animate-pulse class are present
+    const skeletonElements = document.querySelectorAll('.animate-pulse');
+    expect(skeletonElements.length).toBeGreaterThan(0);
   });
 
   test('should render error state with message', () => {
@@ -88,6 +97,7 @@ describe('VideoGrid Component', () => {
   });
 
   test('should handle undefined videos array', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     render(<VideoGrid videos={undefined as any} />);
 
     const emptyMessage = screen.getByText('No videos found');

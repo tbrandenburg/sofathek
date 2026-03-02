@@ -22,7 +22,13 @@
 
     /* Types */
     "types": ["node", "vite/client"],
-    "moduleDetection": "force"
+    "moduleDetection": "force",
+
+    /* Path Aliases for shadcn/ui */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*", "src/**/*.tsx", "vite.config.ts"],
   "exclude": ["node_modules", "dist"]
