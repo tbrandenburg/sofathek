@@ -10,7 +10,7 @@ const app: Application = express();
 // Set up CORS - allow all origins in development
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000']
+    ? process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5183']
     : true, // Allow all origins in development
   credentials: true,
   optionsSuccessStatus: 200
