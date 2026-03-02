@@ -3,10 +3,17 @@ import { DownloadQueueService } from '../../../services/downloadQueueService';
 // Simple mocks
 const mockReadFile = jest.fn();
 const mockWriteFile = jest.fn();
+const mockMkdir = jest.fn();
 
 jest.mock('fs/promises', () => ({
   readFile: (...args: any[]) => mockReadFile(...args),
-  writeFile: (...args: any[]) => mockWriteFile(...args)
+  writeFile: (...args: any[]) => mockWriteFile(...args),
+  mkdir: (...args: any[]) => mockMkdir(...args)
+}));
+
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  mkdir: (...args: any[]) => mockMkdir(...args)
 }));
 
 // Mock YouTubeDownloadService
@@ -20,6 +27,10 @@ describe('DownloadQueueService', () => {
   beforeEach(() => {
     service = new DownloadQueueService('/test/temp', mockYoutubeService);
     jest.clearAllMocks();
+    
+    // Set up default successful mocks
+    mockWriteFile.mockResolvedValue(undefined);
+    mockMkdir.mockResolvedValue(undefined);
   });
 
   describe('initialize', () => {

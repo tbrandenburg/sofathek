@@ -5,12 +5,14 @@ const mockReaddir = jest.fn();
 const mockRename = jest.fn();
 const mockAccess = jest.fn();
 const mockMkdir = jest.fn();
+const mockUnlink = jest.fn();
 
 jest.mock('fs/promises', () => ({
   readdir: (...args: any[]) => mockReaddir(...args),
   rename: (...args: any[]) => mockRename(...args),
   access: (...args: any[]) => mockAccess(...args),
-  mkdir: (...args: any[]) => mockMkdir(...args)
+  mkdir: (...args: any[]) => mockMkdir(...args),
+  unlink: (...args: any[]) => mockUnlink(...args)
 }));
 
 jest.mock('youtube-dl-exec', () => ({
@@ -58,8 +60,7 @@ describe('YouTubeDownloadService', () => {
       ];
       
       mockReaddir.mockResolvedValue(testFiles);
-      const mockUnlink = jest.fn().mockResolvedValue(undefined);
-      require('fs/promises').unlink = mockUnlink;
+      mockUnlink.mockResolvedValue(undefined);
 
       await service.cleanupFailedDownload(videoId);
 
