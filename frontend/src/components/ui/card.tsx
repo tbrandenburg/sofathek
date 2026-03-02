@@ -47,7 +47,7 @@ export function CardTitle({ children, className = '', ...props }: CardTitleProps
 
 export function CardDescription({ children, className = '', ...props }: CardDescriptionProps) {
   return (
-    <div className={`card-description ${className}`} style={{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }} {...props}>
+    <div className={`card-description ${className}`} style={{ fontSize: '0.875rem', marginBottom: '1rem' }} {...props}>
       {children}
     </div>
   )

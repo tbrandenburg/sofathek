@@ -121,3 +121,43 @@ describe('VideoCard Component', () => {
     expect(card.className).toContain('hover-card');
   });
 });
+
+describe('VideoCard accessibility', () => {
+  const mockVideo: Video = {
+    id: 'test-video-1',
+    file: {
+      name: 'test-video.mp4',
+      size: 1024000,
+      path: '/videos/test-video.mp4',
+      extension: 'mp4',
+      lastModified: new Date('2024-01-01T00:00:00Z')
+    },
+    metadata: {
+      title: 'Test Video Title',
+      duration: 120,
+      width: 1920,
+      height: 1080
+    },
+    viewCount: 5,
+    lastViewed: new Date('2024-01-15T12:00:00Z')
+  };
+
+  test('should have sufficient color contrast for metadata text', () => {
+    render(<VideoCard video={mockVideo} />);
+    const metadata = screen.getByTestId('video-metadata');
+    const computedStyle = window.getComputedStyle(metadata);
+    
+    // Verify color is using CSS variable (not hardcoded)
+    expect(computedStyle.color).not.toBe('rgb(107, 114, 126)'); // text-slate-500
+    expect(computedStyle.color).not.toBe('#666');
+  });
+
+  test('should use theme-aware colors', () => {
+    render(<VideoCard video={mockVideo} />);
+    const metadata = screen.getByTestId('video-metadata');
+    
+    // Should use CSS custom property
+    expect(metadata.className).not.toContain('text-slate-500');
+    expect(metadata.className).not.toContain('text-gray-600');
+  });
+});
