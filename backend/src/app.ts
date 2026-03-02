@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { logger } from './utils/logger';
 import { apiRouter } from './routes/api';
+import healthRouter from './routes/health';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler';
 
 // Create Express application
@@ -51,16 +52,8 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
-// Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    service: 'sofathek-backend',
-    version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
+// Enhanced health check endpoint
+app.use('/health', healthRouter);
 
 // API routes
 app.use('/api', apiRouter);
