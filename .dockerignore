@@ -1,0 +1,117 @@
+# Sofathek Root .dockerignore
+# Optimizes Docker build context when building from root directory
+
+# Node.js dependencies and cache
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+.pnp.*
+.yarn/
+
+# Build artifacts
+dist/
+*/dist/
+coverage/
+*/coverage/
+*.tsbuildinfo
+.nyc_output
+.cache
+*/cache/
+.parcel-cache
+
+# Test and development artifacts
+test-results/
+*/test-results/
+playwright-report/
+*/playwright-report/
+__tests__/
+*/__tests__/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+*/src/test-*
+
+# Logs and runtime data
+logs/
+*/logs/
+*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+backend/backend.log
+
+# Development and temporary files
+temp/
+*/temp/
+data/videos/
+data/temp/
+data/logs/
+.temp
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+Thumbs.db
+
+# Environment and configuration
+.env
+.env.*
+!.env.example
+
+# Version control and CI/CD
+.git/
+.github/
+.gitignore
+.gitattributes
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+azure-pipelines.yml
+
+# Docker files
+.dockerignore
+*/dockerignore
+docker-compose*.yml
+Dockerfile*
+
+# Documentation and project files
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+docs/
+
+# Development and planning
+scripts/
+dev/
+.claude/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Static analysis cache
+.eslintcache
+.stylelintcache
+
+# Package manager lock files (conditional)
+yarn.lock
+.yarnrc
+.npmrc

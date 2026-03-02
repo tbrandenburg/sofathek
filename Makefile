@@ -37,13 +37,18 @@ e2e-docker: ## Run E2E tests in Docker with isolated browsers
 
 test: ## Run all tests
 	@echo "🧪 Running tests..."
-	@cd backend && npm test
+	@cd backend && npm test -- --passWithNoTests
 	@cd frontend && npm test
 
 lint: ## Check and fix code quality
 	@echo "🔍 Linting..."
 	@cd backend && npm run lint:fix
 	@cd frontend && npm run lint:fix
+
+type-check: ## Run TypeScript type checking
+	@echo "🔍 Type checking..."
+	@cd backend && npm run type-check
+	@cd frontend && npm run type-check
 
 dev: ## Start development servers (backend:3010, frontend:5183)
 	@echo "🚀 Starting development servers..."

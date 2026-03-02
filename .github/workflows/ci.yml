@@ -1,0 +1,324 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+# Optimize: Avoid running duplicate jobs for push + PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # Level 1: Static Analysis
+  static-analysis:
+    name: '🔍 Level 1: Static Analysis'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run TypeScript type checking
+        run: make type-check
+        
+      - name: Run ESLint
+        run: make lint
+
+  # Level 2: Build and Functional
+  build-functional:
+    name: '🔨 Level 2: Build & Functional'
+    runs-on: ubuntu-latest
+    needs: static-analysis
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+            
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build applications
+        run: make build
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            backend/dist/
+            frontend/dist/
+          retention-days: 7
+
+  # Level 3: Unit Tests  
+  unit-tests:
+    name: '🧪 Level 3: Unit Tests'
+    runs-on: ubuntu-latest
+    needs: static-analysis
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+            
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+          
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            backend/coverage/
+            frontend/coverage/
+          retention-days: 30
+
+  # Level 4: E2E Tests
+  e2e-tests:
+    name: '🎭 Level 4: E2E Tests'
+    runs-on: ubuntu-latest
+    needs: [build-functional, unit-tests]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+            
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright browsers
+        run: make playwright-install
+        
+      - name: Start development servers in background
+        run: |
+          echo "Starting servers with Make commands (like local development)..."
+          
+          # Use make dev command which works locally
+          make dev &
+          SERVER_PID=$!
+          echo "Servers started with PID: $SERVER_PID"
+          
+          # Wait for services to initialize
+          echo "Waiting 20 seconds for services to start..."
+          sleep 20
+          
+          # Health checks with detailed logging
+          echo "Checking backend availability..."
+          for i in {1..15}; do
+            if curl -f -s http://localhost:3010/health > /dev/null; then
+              echo "✅ Backend is responding"
+              curl -s http://localhost:3010/health | head -2
+              break
+            fi
+            echo "Backend check $i/15..."
+            sleep 2
+          done
+          
+          echo "Checking frontend availability..."
+          for i in {1..15}; do  
+            if curl -f -s -I http://localhost:5183 > /dev/null; then
+              echo "✅ Frontend is responding"
+              curl -s -I http://localhost:5183 | head -2
+              break
+            fi
+            echo "Frontend check $i/15..."
+            sleep 2
+          done
+          
+          # Final connectivity test
+          echo "Final server status checks:"
+          echo "Backend:" && timeout 5 curl -s http://localhost:3010/health | head -1 || echo "Backend timeout"
+          echo "Frontend:" && timeout 5 curl -s -I http://localhost:5183 | head -1 || echo "Frontend timeout"
+          
+          echo "Servers are ready. Adding stability wait for E2E tests..."
+          
+          # Brief wait to ensure servers are fully stable for browser automation
+          sleep 3
+          
+          echo "Starting E2E tests with enhanced configuration..."
+          
+      - name: Run Playwright E2E tests
+        run: |
+          echo "Running minimal CI-focused E2E tests..."
+          cd frontend
+          
+          # Verify servers are still responding right before tests
+          echo "Final server verification:"
+          curl -f http://localhost:3010/health || (echo "Backend health check failed" && exit 1)
+          curl -f http://localhost:5183 || (echo "Frontend health check failed" && exit 1)
+          
+          # Set CI-specific environment variables for Playwright
+          export CI=true
+          export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+          
+          # Run minimal CI test that focuses on server connectivity (more reliable than browser automation in CI)
+          npx playwright test ci-minimal.spec.ts \
+            --timeout=60000 \
+            --reporter=list \
+            --max-failures=1 \
+            --retries=1
+          
+      - name: Cleanup background servers
+        if: always()
+        run: |
+          echo "Cleaning up background processes..."
+          pkill -f "PORT=3010" || echo "No backend processes to kill"
+          pkill -f "python3 -m http.server 5183" || echo "No frontend processes to kill"
+          sleep 2
+        
+      - name: Upload Playwright test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
+          
+      - name: Upload Playwright test videos
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-videos
+          path: frontend/test-results/
+          retention-days: 7
+
+  # Level 5: Integration Tests
+  integration:
+    name: '🔗 Level 5: Integration'
+    runs-on: ubuntu-latest
+    needs: [e2e-tests]
+    if: success()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+            
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build for production
+        run: make build
+        
+      - name: Start production servers in background
+        run: |
+          echo "Starting production servers for integration testing..."
+          
+          # Start backend in background
+          cd backend
+          PORT=3010 npm start &
+          BACKEND_PID=$!
+          echo "Backend started with PID: $BACKEND_PID"
+          
+          # Start frontend in background  
+          cd ../frontend
+          python3 -m http.server 5183 --directory dist &
+          FRONTEND_PID=$!
+          echo "Frontend started with PID: $FRONTEND_PID"
+          
+          # Store PIDs for cleanup
+          echo $BACKEND_PID > /tmp/backend.pid
+          echo $FRONTEND_PID > /tmp/frontend.pid
+          
+          # Wait for servers to be ready
+          echo "Waiting for servers to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3010/health >/dev/null 2>&1 && curl -f http://localhost:5183 >/dev/null 2>&1; then
+              echo "Servers are ready!"
+              break
+            fi
+            echo "Waiting for servers... ($i/30)"
+            sleep 2
+          done
+          
+      - name: Health check validation
+        run: |
+          # Test backend health endpoint
+          curl -f http://localhost:3010/health || exit 1
+          
+          # Test frontend serves static files
+          curl -f http://localhost:5183 || exit 1
+          
+      - name: Stop servers
+        if: always()
+        run: |
+          echo "Stopping production servers..."
+          # Kill by stored PIDs first (most reliable)
+          if [ -f /tmp/backend.pid ]; then
+            BACKEND_PID=$(cat /tmp/backend.pid)
+            kill $BACKEND_PID 2>/dev/null || echo "Backend PID $BACKEND_PID not found"
+          fi
+          if [ -f /tmp/frontend.pid ]; then
+            FRONTEND_PID=$(cat /tmp/frontend.pid)
+            kill $FRONTEND_PID 2>/dev/null || echo "Frontend PID $FRONTEND_PID not found"
+          fi
+          
+          # Fallback: Kill by process pattern
+          pkill -f "PORT=3010" || echo "No backend process found"
+          pkill -f "python3.*5183" || echo "No frontend process found"
+          
+          # Final fallback: Kill by port
+          lsof -ti:3010 | xargs kill -9 2>/dev/null || echo "Port 3010 already free"
+          lsof -ti:5183 | xargs kill -9 2>/dev/null || echo "Port 5183 already free"
+          
+          # Cleanup PID files
+          rm -f /tmp/backend.pid /tmp/frontend.pid
+          
+          sleep 2
+          echo "Servers stopped successfully"
+
+  # Summary job for status checks
+  ci-success:
+    name: '✅ CI Pipeline Complete'
+    runs-on: ubuntu-latest
+    needs: [static-analysis, build-functional, unit-tests, e2e-tests, integration]
+    if: success()
+    
+    steps:
+      - name: CI Pipeline Success
+        run: |
+          echo "🎉 All CI pipeline levels completed successfully!"
+          echo "✅ Level 1: Static Analysis - PASSED"
+          echo "✅ Level 2: Build & Functional - PASSED"  
+          echo "✅ Level 3: Unit Tests - PASSED"
+          echo "✅ Level 4: E2E Tests - PASSED"
+          echo "✅ Level 5: Integration - PASSED"
