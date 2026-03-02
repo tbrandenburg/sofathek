@@ -141,10 +141,10 @@ When we want to provide video entertainment to our children, I want to curate an
 
 | # | Phase | Description | Status | Parallel | Depends | PRP Plan |
 |---|-------|-------------|--------|----------|---------|----------|
-| 1 | Core Infrastructure | Project setup, Docker config, basic streaming | in-progress | - | - | [sofathek-core-infrastructure.plan.md](./../plans/sofathek-core-infrastructure.plan.md) |
-| 2 | YouTube Integration | yt-dlp service, download workflow, progress tracking | in-progress | - | 1 | [sofathek-youtube-integration.plan.md](./../plans/sofathek-youtube-integration.plan.md) |
-| 3 | Library Interface | React frontend, video grid, basic playback | in-progress | with 2 | 1 | [sofathek-library-interface.plan.md](./../plans/sofathek-library-interface.plan.md) |
-| 4 | UI Polish | Responsive design, theming, error handling | pending | - | 2, 3 | - |
+| 1 | Core Infrastructure | Project setup, Docker config, basic streaming | complete | - | - | [sofathek-core-infrastructure.plan.md](./../plans/sofathek-core-infrastructure.plan.md) |
+| 2 | YouTube Integration | yt-dlp service, download workflow, progress tracking | complete | - | 1 | [sofathek-youtube-integration.plan.md](./../plans/sofathek-youtube-integration.plan.md) |
+| 3 | Library Interface | React frontend, video grid, basic playback | complete | with 2 | 1 | [sofathek-library-interface.plan.md](./../plans/sofathek-library-interface.plan.md) |
+| 4 | UI Polish | Responsive design, theming, error handling | in-progress | - | 2, 3 | [sofathek-ui-polish.plan.md](./../plans/sofathek-ui-polish.plan.md) |
 | 5 | Production Ready | Testing, documentation, deployment guides | pending | - | 4 | - |
 
 ### Phase Details
@@ -165,9 +165,9 @@ When we want to provide video entertainment to our children, I want to curate an
 - **Success signal**: Family members can easily browse and play curated content
 
 **Phase 4: UI Polish**
-- **Goal**: Professional user experience and visual design
-- **Scope**: Dark/light themes, mobile optimization, loading states, error handling
-- **Success signal**: Interface feels polished and works well on all family devices
+- **Goal**: Professional user experience and marvellous visual design
+- **Scope**: Dark/light themes, mobile optimization, loading states, shadcn first, error handling
+- **Success signal**: Interface feels polished and works well on all family devices, Playwright tests focussing on esthetics and portability
 
 **Phase 5: Production Ready**
 - **Goal**: Reliable deployment and maintenance
