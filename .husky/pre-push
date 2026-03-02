@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Sofathek Pre-Push Hook
+# Runs static analysis and build validation before pushing
+
+# Use the comprehensive validation script
+exec ./scripts/validate.sh

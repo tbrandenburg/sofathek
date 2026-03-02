@@ -18,6 +18,10 @@
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "type-check": "npm run type-check --workspaces --if-present",
+    "validate": "./scripts/validate.sh",
+    "validate:fast": "./scripts/validate.sh --fast",
+    "validate:verbose": "./scripts/validate.sh --verbose",
+    "validate:skip": "SKIP_VALIDATION=1 ./scripts/validate.sh",
     "clean": "npm run clean --workspaces --if-present && rm -rf node_modules/.cache",
     "reset": "rm -rf node_modules */node_modules && npm install",
     "docker:build": "docker compose build",
@@ -33,7 +37,8 @@
     "prebuild": "echo '🔨 Building Sofathek for production...'",
     "postbuild": "echo '✅ Build complete. Run npm start to start production servers.'",
     "pretest": "echo '🧪 Running all tests...'",
-    "posttest": "echo '✅ All tests completed.'"
+    "posttest": "echo '✅ All tests completed.'",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -61,6 +66,7 @@
   },
   "homepage": "https://github.com/tombrandenburgh/sofathek#readme",
   "devDependencies": {
-    "@types/node": "^18.15.0"
+    "@types/node": "^18.15.0",
+    "husky": "^9.1.7"
   }
 }
