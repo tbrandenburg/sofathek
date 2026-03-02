@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Ultra Basic Smoke Test - Minimum viable E2E test for CI
@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  */
 
 // Helper function to wait for server readiness
-async function waitForServerReady(page: any, maxRetries = 5) {
+async function waitForServerReady(page: Page, maxRetries = 5): Promise<boolean> {
   for (let i = 0; i < maxRetries; i++) {
     try {
       const response = await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 10000 });

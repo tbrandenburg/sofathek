@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { logger } from '../utils/logger';
 import { 
   VideoFile, 
   VideoMetadata, 
@@ -93,7 +94,7 @@ export class VideoService {
       return await this.extractMetadata(videoFile);
 
     } catch (error) {
-      console.error(`Error getting metadata for ${filename}:`, error);
+      logger.error(`Error getting metadata for ${filename}:`, error);
       return null;
     }
   }
