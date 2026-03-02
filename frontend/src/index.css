@@ -151,7 +151,8 @@
   }
 
   .video-metadata {
-    @apply text-xs text-slate-500 m-0;
+    @apply text-xs m-0;
+    color: hsl(var(--muted-foreground));
   }
 
   .metadata-row {
@@ -172,7 +173,8 @@
   }
 
   .card-description {
-    @apply text-sm text-gray-600 mb-4;
+    @apply text-sm mb-4;
+    color: hsl(var(--muted-foreground));
   }
 
   /* VideoGrid Container Styles */
