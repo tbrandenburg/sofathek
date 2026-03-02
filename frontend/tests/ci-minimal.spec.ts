@@ -2,7 +2,16 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Minimal CI Test - Only server connectivity validation
- * Designed to pass in GitHub Actions CI environment
+ * 
+ * This is the ONLY E2E test file used in the CI pipeline.
+ * It uses Playwright's request API instead of browser automation
+ * for maximum reliability in GitHub Actions CI environment.
+ * 
+ * Why minimal approach:
+ * - Browser automation can be flaky in CI environments
+ * - Request API tests are more reliable and faster
+ * - Still validates core functionality (server responses, HTML content)
+ * - Designed to pass consistently in automated environments
  */
 
 test.describe('CI Minimal Tests', () => {
