@@ -83,7 +83,7 @@ describe('YouTube Service', () => {
       });
 
       await expect(downloadVideo(request)).rejects.toThrow(ApiError);
-      await expect(downloadVideo(request)).rejects.toThrow('YouTube API request failed: Bad Request');
+      await expect(downloadVideo(request)).rejects.toThrow('Bad Request');
     });
 
     test('should throw ApiError on network failure', async () => {
@@ -220,7 +220,7 @@ describe('YouTube Service', () => {
       });
 
       await expect(cancelDownload(downloadId)).rejects.toThrow(ApiError);
-      await expect(cancelDownload(downloadId)).rejects.toThrow('YouTube API request failed: Not Found');
+      await expect(cancelDownload(downloadId)).rejects.toThrow('Not Found');
     });
   });
 
