@@ -3,6 +3,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
 import { useYouTubeDownload } from '../hooks/useYouTube';
+import { validateYouTubeUrl } from '../services/youtube';
 
 interface YouTubeDownloadProps {
   className?: string;
@@ -19,9 +20,9 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
       return;
     }
 
-    // Basic YouTube URL validation
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
-    if (!youtubeRegex.test(url.trim())) {
+    // Validate YouTube URL using imported utility
+    const validation = validateYouTubeUrl(url.trim());
+    if (!validation.isValid) {
       return;
     }
 
@@ -39,7 +40,8 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
     setUrl(e.target.value);
   };
 
-  const isValidUrl = url.trim() && /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/.test(url.trim());
+  const validation = validateYouTubeUrl(url.trim());
+  const isValidUrl = url.trim() && validation.isValid;
   const canSubmit = isValidUrl && !downloadMutation.isPending;
 
   return (
@@ -109,9 +111,9 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
         </form>
 
         {/* URL Validation Hint */}
-        {url.trim() && !isValidUrl && (
+        {url.trim() && !validation.isValid && (
           <div className="mt-2 text-sm text-muted-foreground">
-            Please enter a valid YouTube URL (youtube.com or youtu.be)
+            {validation.error || 'Please enter a valid YouTube URL (youtube.com or youtu.be)'}
           </div>
         )}
       </div>

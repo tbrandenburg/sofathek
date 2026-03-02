@@ -6,12 +6,503 @@
       "requestedAt": "2026-03-01T19:24:38.530Z",
       "requestId": "abd5ea8f-6e21-4c9e-90fd-75155198ae47"
     },
-    "status": "failed",
+    "status": "cancelled",
     "progress": 25,
     "currentStep": "Fetching video metadata",
     "queuedAt": "2026-03-01T19:24:38.531Z",
     "startedAt": "2026-03-01T19:25:00.941Z",
-    "completedAt": "2026-03-01T19:25:11.217Z",
-    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary"
+    "completedAt": "2026-03-02T19:44:59.653Z",
+    "error": "Cancelled by user"
+  },
+  {
+    "id": "66db63f8-f836-419e-aee9-e1755c92ba4f",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=21_k2St8bBI&t=1s",
+      "requestedAt": "2026-03-02T17:48:05.007Z",
+      "requestId": "e9499b3d-4615-4d80-9a6b-54bd517d5ed6"
+    },
+    "status": "cancelled",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T17:48:05.016Z",
+    "startedAt": "2026-03-02T17:48:05.027Z",
+    "error": "Cancelled by user",
+    "completedAt": "2026-03-02T19:45:16.852Z"
+  },
+  {
+    "id": "511bda52-7740-4bfe-b0ab-2c29af7edc9e",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T18:41:03.448Z",
+      "requestId": "92f7c2f2-c656-4839-8606-54cf1fff5cdb"
+    },
+    "status": "cancelled",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:41:03.452Z",
+    "startedAt": "2026-03-02T18:41:03.467Z",
+    "error": "Cancelled by user",
+    "completedAt": "2026-03-02T19:45:16.875Z"
+  },
+  {
+    "id": "bb5501d3-1f66-4ec6-a719-47a73175b98c",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T18:41:16.592Z",
+      "requestId": "b109ba41-6c66-46ba-a1f8-94b935006ae2"
+    },
+    "status": "cancelled",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:41:16.592Z",
+    "startedAt": "2026-03-02T18:41:17.819Z",
+    "error": "Cancelled by user",
+    "completedAt": "2026-03-02T19:45:16.899Z"
+  },
+  {
+    "id": "a13474fa-f42c-47b4-ada5-8165d0dab7c4",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T18:41:29.439Z",
+      "requestId": "84ccca1b-8b32-411e-a75b-94bad2adeb02"
+    },
+    "status": "cancelled",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:41:29.439Z",
+    "startedAt": "2026-03-02T18:41:29.446Z",
+    "error": "Cancelled by user",
+    "completedAt": "2026-03-02T19:45:16.919Z"
+  },
+  {
+    "id": "3c26d5c3-55dd-4bf2-a792-dd1ccf096146",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T18:41:47.038Z",
+      "requestId": "ff9f2406-eccd-444a-a8fb-c39f6f3b5371"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:41:47.039Z",
+    "startedAt": "2026-03-02T18:41:47.043Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T18:41:50.972Z"
+  },
+  {
+    "id": "995b9314-c4e8-4213-964e-e89cc33ef3b2",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T18:41:57.857Z",
+      "requestId": "4d9ae3d8-4d09-42fd-a23b-5c32cf42e959"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:41:57.857Z",
+    "startedAt": "2026-03-02T18:41:57.865Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary",
+    "completedAt": "2026-03-02T18:42:06.830Z"
+  },
+  {
+    "id": "f9b013f2-a0e5-4fc4-ada0-20e2de50dfda",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T18:42:13.157Z",
+      "requestId": "bb6f00ef-20ac-4d3d-9fd3-73c3fbbb388a"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:42:13.157Z",
+    "startedAt": "2026-03-02T18:42:13.164Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T18:42:17.001Z"
+  },
+  {
+    "id": "8ba9172a-fd53-4464-a669-910d94025ebe",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T18:42:21.114Z",
+      "requestId": "9505d712-2c34-4474-b088-e5a67ef74e1e"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:42:21.114Z",
+    "startedAt": "2026-03-02T18:42:21.121Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary",
+    "completedAt": "2026-03-02T18:42:29.641Z"
+  },
+  {
+    "id": "565ce6d1-8156-4034-ae4c-87fffd7096ac",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T18:42:34.402Z",
+      "requestId": "28f2cff3-39c4-4e0d-a649-15dc07e1a710"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:42:34.402Z",
+    "startedAt": "2026-03-02T18:42:34.407Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T18:42:37.892Z"
+  },
+  {
+    "id": "c6a11cc7-5feb-48ee-9757-4d4efc4f0ac3",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T18:42:48.575Z",
+      "requestId": "360d5ba8-bbc2-429b-be3a-1e02f64df6db"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:42:48.575Z",
+    "startedAt": "2026-03-02T18:42:48.579Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary",
+    "completedAt": "2026-03-02T18:42:57.022Z"
+  },
+  {
+    "id": "cb5d2030-3a05-466e-accb-65420acfdd05",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T18:43:03.232Z",
+      "requestId": "09764f9e-39ba-4f71-9ba7-6c632fd99f15"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T18:43:03.232Z",
+    "startedAt": "2026-03-02T18:43:03.237Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T18:43:07.139Z"
+  },
+  {
+    "id": "56fe6c40-a477-4e93-8300-bcc7cfdd4d9b",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:16:52.184Z",
+      "requestId": "0f1c4535-ea0c-4454-a62a-554397dc8fe6"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:16:52.185Z",
+    "startedAt": "2026-03-02T19:16:52.205Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary",
+    "completedAt": "2026-03-02T19:17:03.305Z"
+  },
+  {
+    "id": "e2727054-9eb5-4d10-8912-fe728bc95eb5",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T19:17:05.360Z",
+      "requestId": "944b1f3b-4d0e-4d3b-93a0-51ed9c59912c"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:17:05.360Z",
+    "startedAt": "2026-03-02T19:17:05.368Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T19:17:10.150Z"
+  },
+  {
+    "id": "ac9acc2e-1b69-46d6-bc4a-e484cce0b8d8",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:17:17.720Z",
+      "requestId": "84c4a2ae-9b47-4fb7-9c95-cbf6f6068381"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:17:17.720Z",
+    "startedAt": "2026-03-02T19:17:17.739Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary",
+    "completedAt": "2026-03-02T19:17:34.753Z"
+  },
+  {
+    "id": "ad76fa82-cd6a-458d-8a05-bf5bdfae35ef",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T19:17:50.229Z",
+      "requestId": "fd323a28-b9f6-4dd3-b894-bf3d68dd1cf8"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:17:50.229Z",
+    "startedAt": "2026-03-02T19:17:50.238Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T19:17:55.083Z"
+  },
+  {
+    "id": "0574043d-51c2-4754-8453-12706f98b214",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:18:05.585Z",
+      "requestId": "d223a827-e40e-4250-830b-a7baec79c957"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:18:05.585Z",
+    "startedAt": "2026-03-02T19:18:05.608Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary",
+    "completedAt": "2026-03-02T19:18:23.694Z"
+  },
+  {
+    "id": "6b8865cd-fbfb-455a-9077-a0a13e43b677",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T19:18:30.212Z",
+      "requestId": "c0172151-f059-4da2-b67b-1828e50263dc"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:18:30.230Z",
+    "startedAt": "2026-03-02T19:18:30.234Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T19:18:36.877Z"
+  },
+  {
+    "id": "35cf3b3b-1935-490f-8ee3-aac561e6a94d",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:18:42.025Z",
+      "requestId": "550041bc-26c8-4487-b32b-c8915b0269e6"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:18:42.025Z",
+    "startedAt": "2026-03-02T19:18:42.037Z",
+    "error": "Failed to generate thumbnail: Missing path to ffmpeg binary",
+    "completedAt": "2026-03-02T19:18:51.432Z"
+  },
+  {
+    "id": "f04d191a-4c1e-4118-977c-59354c321887",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:19:41.054Z",
+      "requestId": "5c7feef6-5d31-44d4-9021-9ba6ee713a55"
+    },
+    "status": "completed",
+    "progress": 100,
+    "currentStep": "Download completed",
+    "queuedAt": "2026-03-02T19:19:41.055Z",
+    "startedAt": "2026-03-02T19:19:41.077Z",
+    "result": {
+      "id": "62b236bd-0d2b-4033-990b-d137562eb5aa",
+      "status": "success",
+      "metadata": {
+        "id": "m3fqyXZ4k4I",
+        "title": "Build BEAUTIFUL Diagrams with Claude Code (Full Workflow)",
+        "description": "Most AI coding tools can generate diagrams, but they look terrible (wrong spacing, overlapping elements, no visual hierarchy, etc.). I spent weeks building a Claude Code skill that not only creates beautiful Excalidraw diagrams but actually validates them visually using Playwright and Python, iterating until they look incredible.\n\nIn this video I'll walk you through the entire skill, how it works, and what the self-validation process looks like. And the diagram I use to explain the whole workflow was created by the skill itself! \n\nI'm giving the skill away for free so you can use it in your own Claude Code setup immediately.\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n- If you want to learn how to build reliable and repeatable systems for AI coding, check out the Dynamous Community and Agentic Coding Course:\nhttps://dynamous.ai/agentic-coding-course\n\n- Here is the GitHub repo with the skill:\nhttps://github.com/coleam00/excalidraw-diagram-skill\n\n- Obsidian Excalidraw plugin:\nhttps://github.com/zsviczian/obsidian-excalidraw-plugin\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n0:00 The Need for Visual Agents\n0:55 Installation and Setup\n1:47 Demo: Creating a Diagram\n2:46 Visual Validation Loop\n3:58 Iteration and Imperfections\n5:19 Philosophy: Argue Visually\n6:30 The Generation Workflow\n8:01 Customizing Patterns and Colors\n9:24 Outro\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nJoin me as I push the limits of what is possible with AI. I'll be uploading videos weekly - at least every Wednesday at 7:00 PM CDT!",
+        "duration": 593,
+        "uploader": "Cole Medin",
+        "uploadDate": "20260302",
+        "viewCount": 3027,
+        "format": "399 - 1920x1080 (1080p60)+251 - audio only (English (US) original (default), medium)",
+        "width": 1920,
+        "height": 1080,
+        "thumbnailUrl": "https://i.ytimg.com/vi/m3fqyXZ4k4I/maxresdefault.jpg"
+      },
+      "videoPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/videos/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.mp4",
+      "thumbnailPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/temp/thumbnails/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.jpg",
+      "completedAt": "2026-03-02T19:19:51.829Z",
+      "startedAt": "2026-03-02T19:19:41.092Z"
+    },
+    "completedAt": "2026-03-02T19:19:51.829Z"
+  },
+  {
+    "id": "f62dbf47-2ea2-4a23-aeaa-bbb009ebb6fc",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T19:19:54.466Z",
+      "requestId": "160dd19b-6289-4181-80ff-9b3bcb445613"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:19:54.466Z",
+    "startedAt": "2026-03-02T19:19:54.474Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T19:19:59.055Z"
+  },
+  {
+    "id": "dfca181b-e817-40a9-8f9f-33528b910c15",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:20:06.749Z",
+      "requestId": "e9405f83-b8fb-4e37-b465-1a91a57102d1"
+    },
+    "status": "completed",
+    "progress": 100,
+    "currentStep": "Download completed",
+    "queuedAt": "2026-03-02T19:20:06.749Z",
+    "startedAt": "2026-03-02T19:20:06.760Z",
+    "result": {
+      "id": "b03adfd8-46a1-4494-875b-fe094b9f6562",
+      "status": "success",
+      "metadata": {
+        "id": "m3fqyXZ4k4I",
+        "title": "Build BEAUTIFUL Diagrams with Claude Code (Full Workflow)",
+        "description": "Most AI coding tools can generate diagrams, but they look terrible (wrong spacing, overlapping elements, no visual hierarchy, etc.). I spent weeks building a Claude Code skill that not only creates beautiful Excalidraw diagrams but actually validates them visually using Playwright and Python, iterating until they look incredible.\n\nIn this video I'll walk you through the entire skill, how it works, and what the self-validation process looks like. And the diagram I use to explain the whole workflow was created by the skill itself! \n\nI'm giving the skill away for free so you can use it in your own Claude Code setup immediately.\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n- If you want to learn how to build reliable and repeatable systems for AI coding, check out the Dynamous Community and Agentic Coding Course:\nhttps://dynamous.ai/agentic-coding-course\n\n- Here is the GitHub repo with the skill:\nhttps://github.com/coleam00/excalidraw-diagram-skill\n\n- Obsidian Excalidraw plugin:\nhttps://github.com/zsviczian/obsidian-excalidraw-plugin\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n0:00 The Need for Visual Agents\n0:55 Installation and Setup\n1:47 Demo: Creating a Diagram\n2:46 Visual Validation Loop\n3:58 Iteration and Imperfections\n5:19 Philosophy: Argue Visually\n6:30 The Generation Workflow\n8:01 Customizing Patterns and Colors\n9:24 Outro\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nJoin me as I push the limits of what is possible with AI. I'll be uploading videos weekly - at least every Wednesday at 7:00 PM CDT!",
+        "duration": 593,
+        "uploader": "Cole Medin",
+        "uploadDate": "20260302",
+        "viewCount": 3027,
+        "format": "399 - 1920x1080 (1080p60)+251 - audio only (English (US) original (default), medium)",
+        "width": 1920,
+        "height": 1080,
+        "thumbnailUrl": "https://i.ytimg.com/vi/m3fqyXZ4k4I/maxresdefault.jpg"
+      },
+      "videoPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/videos/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.mp4",
+      "thumbnailPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/temp/thumbnails/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.jpg",
+      "completedAt": "2026-03-02T19:20:22.900Z",
+      "startedAt": "2026-03-02T19:20:06.793Z"
+    },
+    "completedAt": "2026-03-02T19:20:22.900Z"
+  },
+  {
+    "id": "e8a05e27-0582-459f-8bb4-708f517094a3",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T19:20:23.653Z",
+      "requestId": "501d2029-52de-4f26-800f-aa4201084c43"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:20:23.653Z",
+    "startedAt": "2026-03-02T19:20:23.668Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T19:20:29.204Z"
+  },
+  {
+    "id": "d0267000-5ed9-4676-91af-17bf93881a9b",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:23:08.605Z",
+      "requestId": "fa6dc723-5769-4538-ab58-36b78a4ce46b"
+    },
+    "status": "completed",
+    "progress": 100,
+    "currentStep": "Download completed",
+    "queuedAt": "2026-03-02T19:23:08.606Z",
+    "startedAt": "2026-03-02T19:23:08.618Z",
+    "result": {
+      "id": "8d4f863c-e689-4af4-9a5b-afa2ec85a8da",
+      "status": "success",
+      "metadata": {
+        "id": "m3fqyXZ4k4I",
+        "title": "Build BEAUTIFUL Diagrams with Claude Code (Full Workflow)",
+        "description": "Most AI coding tools can generate diagrams, but they look terrible (wrong spacing, overlapping elements, no visual hierarchy, etc.). I spent weeks building a Claude Code skill that not only creates beautiful Excalidraw diagrams but actually validates them visually using Playwright and Python, iterating until they look incredible.\n\nIn this video I'll walk you through the entire skill, how it works, and what the self-validation process looks like. And the diagram I use to explain the whole workflow was created by the skill itself! \n\nI'm giving the skill away for free so you can use it in your own Claude Code setup immediately.\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n- If you want to learn how to build reliable and repeatable systems for AI coding, check out the Dynamous Community and Agentic Coding Course:\nhttps://dynamous.ai/agentic-coding-course\n\n- Here is the GitHub repo with the skill:\nhttps://github.com/coleam00/excalidraw-diagram-skill\n\n- Obsidian Excalidraw plugin:\nhttps://github.com/zsviczian/obsidian-excalidraw-plugin\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n0:00 The Need for Visual Agents\n0:55 Installation and Setup\n1:47 Demo: Creating a Diagram\n2:46 Visual Validation Loop\n3:58 Iteration and Imperfections\n5:19 Philosophy: Argue Visually\n6:30 The Generation Workflow\n8:01 Customizing Patterns and Colors\n9:24 Outro\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nJoin me as I push the limits of what is possible with AI. I'll be uploading videos weekly - at least every Wednesday at 7:00 PM CDT!",
+        "duration": 593,
+        "uploader": "Cole Medin",
+        "uploadDate": "20260302",
+        "viewCount": 3091,
+        "format": "399 - 1920x1080 (1080p60)+251 - audio only (English (US) original (default), medium)",
+        "width": 1920,
+        "height": 1080,
+        "thumbnailUrl": "https://i.ytimg.com/vi/m3fqyXZ4k4I/maxresdefault.jpg"
+      },
+      "videoPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/videos/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.mp4",
+      "thumbnailPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/temp/thumbnails/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.jpg",
+      "completedAt": "2026-03-02T19:23:20.937Z",
+      "startedAt": "2026-03-02T19:23:08.627Z"
+    },
+    "completedAt": "2026-03-02T19:23:20.937Z"
+  },
+  {
+    "id": "f5d5556e-59fe-4405-918a-47d65e317a30",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+      "title": "Test Video",
+      "requestedAt": "2026-03-02T19:42:41.683Z",
+      "requestId": "4846df50-1887-417e-9d53-0ccb3a3de5a1"
+    },
+    "status": "completed",
+    "progress": 100,
+    "currentStep": "Download completed",
+    "queuedAt": "2026-03-02T19:42:41.684Z",
+    "startedAt": "2026-03-02T19:42:41.689Z",
+    "result": {
+      "id": "d595cc10-c218-4e6b-9242-698db3b5c9e5",
+      "status": "success",
+      "metadata": {
+        "id": "jNQXAC9IVRw",
+        "title": "Me at the zoo",
+        "description": "Microplastics are accumulating in human brains at an alarming rate\nhttps://www.youtube.com/watch?v=0PT5c1z3LL8\n\n“Nanoplastics and Human Health” with Matthew J Campen, PhD, MSPH\nhttps://www.youtube.com/watch?v=RRBN_4L09Mg\n\n00:00 Intro\n00:05 The cool thing\n00:17 End",
+        "duration": 19,
+        "uploader": "jawed",
+        "uploadDate": "20050424",
+        "viewCount": 383739414,
+        "format": "395 - 320x240 (240p)+251 - audio only (medium)",
+        "width": 320,
+        "height": 240,
+        "thumbnailUrl": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=-oaymwEmCOADEOgC8quKqQMa8AEB-AG-AoAC8AGKAgwIABABGFUgWShlMA8=&rs=AOn4CLA9eLBatYv9WbkD4BbZ2Im-biSPTw"
+      },
+      "videoPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/videos/Me_at_the_zoo-jNQXAC9IVRw.mp4",
+      "thumbnailPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/temp/thumbnails/Me_at_the_zoo-jNQXAC9IVRw.jpg",
+      "completedAt": "2026-03-02T19:42:52.618Z",
+      "startedAt": "2026-03-02T19:42:41.698Z"
+    },
+    "completedAt": "2026-03-02T19:42:52.619Z"
+  },
+  {
+    "id": "921fe47a-6901-45a6-9d1d-cebe99a4af12",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=m3fqyXZ4k4I",
+      "requestedAt": "2026-03-02T19:43:58.055Z",
+      "requestId": "9d6057ca-8529-445f-b3ae-58222f7955bc"
+    },
+    "status": "completed",
+    "progress": 100,
+    "currentStep": "Download completed",
+    "queuedAt": "2026-03-02T19:43:58.055Z",
+    "startedAt": "2026-03-02T19:43:58.079Z",
+    "result": {
+      "id": "61cf0d1f-ed6d-4a17-a8e3-d82e455022ac",
+      "status": "success",
+      "metadata": {
+        "id": "m3fqyXZ4k4I",
+        "title": "Build BEAUTIFUL Diagrams with Claude Code (Full Workflow)",
+        "description": "Most AI coding tools can generate diagrams, but they look terrible (wrong spacing, overlapping elements, no visual hierarchy, etc.). I spent weeks building a Claude Code skill that not only creates beautiful Excalidraw diagrams but actually validates them visually using Playwright and Python, iterating until they look incredible.\n\nIn this video I'll walk you through the entire skill, how it works, and what the self-validation process looks like. And the diagram I use to explain the whole workflow was created by the skill itself! \n\nI'm giving the skill away for free so you can use it in your own Claude Code setup immediately.\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n- If you want to learn how to build reliable and repeatable systems for AI coding, check out the Dynamous Community and Agentic Coding Course:\nhttps://dynamous.ai/agentic-coding-course\n\n- Here is the GitHub repo with the skill:\nhttps://github.com/coleam00/excalidraw-diagram-skill\n\n- Obsidian Excalidraw plugin:\nhttps://github.com/zsviczian/obsidian-excalidraw-plugin\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n0:00 The Need for Visual Agents\n0:55 Installation and Setup\n1:47 Demo: Creating a Diagram\n2:46 Visual Validation Loop\n3:58 Iteration and Imperfections\n5:19 Philosophy: Argue Visually\n6:30 The Generation Workflow\n8:01 Customizing Patterns and Colors\n9:24 Outro\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nJoin me as I push the limits of what is possible with AI. I'll be uploading videos weekly - at least every Wednesday at 7:00 PM CDT!",
+        "duration": 593,
+        "uploader": "Cole Medin",
+        "uploadDate": "20260302",
+        "viewCount": 3408,
+        "format": "399 - 1920x1080 (1080p60)+251 - audio only (English (US) original (default), medium)",
+        "width": 1920,
+        "height": 1080,
+        "thumbnailUrl": "https://i.ytimg.com/vi/m3fqyXZ4k4I/maxresdefault.jpg"
+      },
+      "videoPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/videos/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.mp4",
+      "thumbnailPath": "/home/tom/workspace/ai/made/workspace/sofathek/backend/data/temp/thumbnails/Build_BEAUTIFUL_Diagrams_with_Claude_Code_(Full_Workflow)-m3fqyXZ4k4I.jpg",
+      "completedAt": "2026-03-02T19:44:15.256Z",
+      "startedAt": "2026-03-02T19:43:58.146Z"
+    },
+    "completedAt": "2026-03-02T19:44:15.258Z"
+  },
+  {
+    "id": "d6dfbae0-efab-452b-badb-d1cc5dba2032",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=INVALID_VIDEO_ID_123",
+      "requestedAt": "2026-03-02T19:44:08.558Z",
+      "requestId": "45d2236e-8c8e-487d-8d9d-d10bc851c1be"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-02T19:44:08.558Z",
+    "startedAt": "2026-03-02T19:44:15.269Z",
+    "error": "Failed to get video metadata: ERROR: [youtube] INVALID_VID: Video unavailable",
+    "completedAt": "2026-03-02T19:44:19.247Z"
   }
 ]
