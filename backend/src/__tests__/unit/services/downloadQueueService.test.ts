@@ -154,5 +154,36 @@ describe('DownloadQueueService', () => {
       const cleanedCount = await service.cleanupOldItems(24);
       expect(cleanedCount).toBe(0);
     });
+    
+    it('should handle different maxAgeHours values', async () => {
+      // Test with different age limits to exercise more branches
+      const cleanedCount1 = await service.cleanupOldItems(1);
+      const cleanedCount2 = await service.cleanupOldItems(48);
+      const cleanedCount3 = await service.cleanupOldItems(168); // 1 week
+      
+      expect(cleanedCount1).toBe(0);
+      expect(cleanedCount2).toBe(0); 
+      expect(cleanedCount3).toBe(0);
+    });
+  });
+  
+  describe('error handling', () => {
+    it('should handle file system errors gracefully', async () => {
+      // Test error handling branches
+      mockReadFile.mockRejectedValue(new Error('Permission denied'));
+      mockWriteFile.mockRejectedValue(new Error('Disk full'));
+      
+      // Should not throw during initialization
+      await expect(service.initialize()).resolves.not.toThrow();
+      
+      const request = {
+        url: 'https://youtu.be/test123',
+        requestId: 'error-test',
+        requestedAt: new Date()
+      };
+      
+      // Adding should throw because of write error
+      await expect(service.addToQueue(request)).rejects.toThrow('Failed to add to queue');
+    });
   });
 });
