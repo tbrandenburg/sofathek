@@ -4,6 +4,7 @@
   "description": "Netflix-like frontend interface for Sofathek family media center",
   "type": "module",
   "scripts": {
+    "_comment": "Coverage goal: Strive for >40% coverage without hard limits during early development",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",

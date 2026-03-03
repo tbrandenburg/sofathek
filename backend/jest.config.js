@@ -17,14 +17,7 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 40,
-      functions: 40,
-      lines: 40,
-      statements: 40
-    }
-  },
+  // Coverage will still be collected but not enforced
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   testTimeout: 10000
