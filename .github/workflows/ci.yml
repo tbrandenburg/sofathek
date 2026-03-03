@@ -119,8 +119,19 @@ jobs:
         
       - name: Run unit tests  
         run: |
-          echo "=== Using working make test command ==="
-          make test
+          echo "=== Running Backend Tests ==="
+          cd backend
+          npm test -- --passWithNoTests --verbose --maxWorkers=2
+          echo "✅ Backend tests completed"
+          
+          echo
+          echo "=== Running Frontend Tests ==="
+          cd ../frontend
+          timeout 300 npm test || (echo "❌ Frontend tests failed or timed out" && exit 1)
+          echo "✅ Frontend tests completed"
+          
+          echo
+          echo "✅ All unit tests completed successfully"
           
       - name: Collect coverage (optional)
         continue-on-error: true
