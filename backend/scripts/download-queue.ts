@@ -1,11 +1,11 @@
 // Queue management test for download operations
-import { DownloadQueueService } from './services/downloadQueueService';
-import { YouTubeDownloadService } from './services/youTubeDownloadService';
-import { ThumbnailService } from './services/thumbnailService';
+import { DownloadQueueService } from '../src/services/downloadQueueService';
+import { YouTubeDownloadService } from '../src/services/youTubeDownloadService';
+import { ThumbnailService } from '../src/services/thumbnailService';
 import * as path from 'path';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { DownloadRequest } from './types/youtube';
+import { DownloadRequest } from '../src/types/youtube';
 
 // Import dynamic test URL generator
 function generateMockVideoId(): string {
@@ -75,7 +75,7 @@ async function testDownloadQueue() {
       }
     ];
     
-    const queueItems = [];
+    const queueItems: any[] = [];
     for (const request of testRequests) {
       const item = await queueService.addToQueue(request);
       queueItems.push(item);
