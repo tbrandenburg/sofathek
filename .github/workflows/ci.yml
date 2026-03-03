@@ -88,11 +88,8 @@ jobs:
             
       - name: Install dependencies
         run: |
-          echo "Installing root dependencies..."
+          echo "Installing all dependencies with npm ci..."
           npm ci
-          echo "Installing workspace dependencies..."
-          cd backend && npm ci
-          cd ../frontend && npm ci
         
       - name: Run unit tests  
         run: |
