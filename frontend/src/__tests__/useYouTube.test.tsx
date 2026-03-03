@@ -16,7 +16,6 @@ import {
   cancelDownload 
 } from '../services/youtube';
 import { DownloadRequest, QueueStatus, QueueItem } from '../types/youtube';
-import { generateMockYouTubeUrl } from '../../tests/youtube-download/fixtures';
 
 // Mock the YouTube service
 vi.mock('../services/youtube', () => ({
