@@ -90,7 +90,13 @@ jobs:
         run: npm ci
         
       - name: Run unit tests  
-        run: make test
+        run: |
+          echo "=== Using make test (proven local approach) ==="
+          echo "Working directory: $(pwd)"
+          echo "Make version: $(make --version | head -1)"
+          echo "Listing files: $(ls -la | grep -E '(Makefile|package\.json)')"
+          echo "Running make test..."
+          make test
           
       - name: Collect coverage (optional)
         continue-on-error: true
