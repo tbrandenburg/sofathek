@@ -22,7 +22,7 @@ async function testDownloadQueue() {
   
   // Setup test directories
   const tempDir = path.join(process.cwd(), 'temp', 'test-queue');
-  const videosDir = path.join(process.cwd(), '..', 'data', 'videos', 'test');
+  const videosDir = path.join(process.cwd(), 'temp', 'test-videos');
   const queueFile = path.join(tempDir, 'test-queue.json');
   
   // Ensure test directories exist

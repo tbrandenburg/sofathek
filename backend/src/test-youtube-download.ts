@@ -16,9 +16,15 @@ const testYouTubeDownload = async () => {
   
   try {
     // Initialize services with temp directories
-    const videosDir = path.join(process.cwd(), 'data', 'videos');
-    const tempDir = path.join(process.cwd(), 'data', 'temp');
-    const thumbnailsDir = path.join(process.cwd(), 'data', 'thumbnails');
+    const tempDir = path.join(process.cwd(), 'temp', 'test-youtube');
+    const videosDir = path.join(process.cwd(), 'temp', 'test-videos');
+    const thumbnailsDir = path.join(process.cwd(), 'temp', 'test-thumbnails');
+    
+    // Ensure temp directories are available
+    const fs = require('fs');
+    await fs.promises.mkdir(tempDir, { recursive: true });
+    await fs.promises.mkdir(videosDir, { recursive: true });
+    await fs.promises.mkdir(thumbnailsDir, { recursive: true });
     
     const thumbnailService = new ThumbnailService(tempDir, thumbnailsDir);
     const youtubeService = new YouTubeDownloadService(videosDir, tempDir, thumbnailService);
