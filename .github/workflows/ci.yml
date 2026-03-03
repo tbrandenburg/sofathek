@@ -90,6 +90,32 @@ jobs:
         run: |
           echo "Installing all dependencies with npm ci..."
           npm ci
+          
+      - name: Debug environment
+        run: |
+          echo "=== Debugging CI Environment ==="
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Working directory: $(pwd)"
+          echo
+          echo "Root directory contents:"
+          ls -la
+          echo
+          echo "Backend directory exists:"
+          ls -la backend/
+          echo
+          echo "Frontend directory exists:"  
+          ls -la frontend/
+          echo
+          echo "Backend package.json test scripts:"
+          cat backend/package.json | grep -A 5 -B 5 "scripts"
+          echo
+          echo "Frontend package.json test scripts:"
+          cat frontend/package.json | grep -A 5 -B 5 "scripts"
+          echo
+          echo "Make test command preview:"
+          make -n test
+          echo "=== End Debug ==="
         
       - name: Run unit tests  
         run: |
