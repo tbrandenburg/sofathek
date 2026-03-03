@@ -5,6 +5,15 @@ import { DownloadRequest } from './types/youtube';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+// Import dynamic test URL generator
+function generateMockVideoId(): string {
+  return 'test_' + Math.random().toString(36).substr(2, 9);
+}
+
+function https://www.youtube.com/watch?v=test123abc: string {
+  return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
+}
+
 const testQueueService = async () => {
   console.log('Testing DownloadQueueService...');
   
@@ -31,7 +40,7 @@ const testQueueService = async () => {
     
     // Test adding to queue (without actual download)
     const mockRequest: DownloadRequest = {
-      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      url: https://www.youtube.com/watch?v=test123abc,
       requestId: uuidv4(),
       requestedAt: new Date()
     };

@@ -158,6 +158,11 @@ dist/
 test-results/
 playwright-report/
 coverage/
+frontend/playwright-report/
+frontend/test-results/
+backend/temp/test-queue/
+backend/data/videos/*.mp4
+data/videos/*.mp4
 
 # Data
 data/

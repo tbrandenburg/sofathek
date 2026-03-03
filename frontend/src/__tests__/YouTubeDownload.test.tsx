@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { YouTubeDownload } from '../components/YouTubeDownload';
 import { useYouTubeDownload } from '../hooks/useYouTube';
+import { generateMockYouTubeUrl, generateMockVideoId } from '../../tests/youtube-download/fixtures';
 
 // Mock the YouTube hooks
 vi.mock('../hooks/useYouTube', () => ({
@@ -78,11 +79,11 @@ describe('YouTubeDownload Component', () => {
     expect(submitButton).toBeDisabled();
 
     // Valid YouTube URL
-    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } });
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=test123abc' } });
     expect(submitButton).toBeEnabled();
 
     // Valid short URL
-    fireEvent.change(input, { target: { value: 'https://youtu.be/dQw4w9WgXcQ' } });
+    fireEvent.change(input, { target: { value: 'https://youtu.be/test456def' } });
     expect(submitButton).toBeEnabled();
   });
 
@@ -109,7 +110,7 @@ describe('YouTubeDownload Component', () => {
 
     const input = screen.getByLabelText('YouTube URL');
     const submitButton = screen.getByRole('button', { name: /download video/i });
-    const testUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+    const testUrl = 'https://www.youtube.com/watch?v=test123abc';
 
     fireEvent.change(input, { target: { value: testUrl } });
     fireEvent.click(submitButton);
@@ -143,7 +144,7 @@ describe('YouTubeDownload Component', () => {
     const input = screen.getByLabelText('YouTube URL');
     const submitButton = screen.getByRole('button', { name: /download video/i });
 
-    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } });
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=test123abc' } });
     fireEvent.click(submitButton);
 
     // Simulate successful download

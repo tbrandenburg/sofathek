@@ -8,15 +8,53 @@
 import { QueueItem, QueueStatus, YouTubeMetadata } from '../../src/types/youtube';
 
 /**
+ * Generate random test video data
+ */
+export function generateMockVideoId(): string {
+  return 'test_' + Math.random().toString(36).substr(2, 9);
+}
+
+export function generateMockYouTubeUrl(): string {
+  return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
+}
+
+export function createMockVideo(overrides: Partial<YouTubeMetadata> = {}): YouTubeMetadata {
+  const videoId = generateMockVideoId();
+  return {
+    id: videoId,
+    title: overrides.title || `Test Video ${videoId}`,
+    description: overrides.description || `Test description for video ${videoId}`,
+    duration: overrides.duration || 180,
+    uploader: overrides.uploader || 'TestChannel',
+    uploadDate: overrides.uploadDate || '2024-01-01',
+    viewCount: overrides.viewCount || 1000,
+    format: overrides.format || 'mp4',
+    width: overrides.width || 1920,
+    height: overrides.height || 1080,
+    thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+    ...overrides
+  };
+}
+
+/**
  * Mock YouTube URLs for testing
  * These are real YouTube URL formats but with test video IDs
  */
 export const MOCK_YOUTUBE_URLS = {
-  // Valid YouTube URLs (different formats)
-  VALID_WATCH: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  VALID_YOUTU_BE: 'https://youtu.be/dQw4w9WgXcQ',
-  VALID_EMBED: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-  VALID_NO_WWW: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+  // Valid YouTube URLs (different formats) - using generators
+  VALID_WATCH: generateMockYouTubeUrl(),
+  VALID_YOUTU_BE: (() => {
+    const videoId = generateMockVideoId();
+    return `https://youtu.be/${videoId}`;
+  })(),
+  VALID_EMBED: (() => {
+    const videoId = generateMockVideoId();
+    return `https://www.youtube.com/embed/${videoId}`;
+  })(),
+  VALID_NO_WWW: (() => {
+    const videoId = generateMockVideoId();
+    return `https://youtube.com/watch?v=${videoId}`;
+  })(),
   
   // Invalid URLs for validation testing
   INVALID_NOT_YOUTUBE: 'https://example.com/video',
@@ -28,19 +66,12 @@ export const MOCK_YOUTUBE_URLS = {
 /**
  * Mock YouTube video metadata
  */
-export const MOCK_VIDEO_METADATA: YouTubeMetadata = {
-  id: 'dQw4w9WgXcQ',
-  title: 'Rick Astley - Never Gonna Give You Up (Official Video)',
-  description: 'The official video for "Never Gonna Give You Up" by Rick Astley',
-  duration: 213, // 3:33 in seconds
-  uploader: 'RickAstleyVEVO',
-  uploadDate: '2009-10-25',
-  viewCount: 1234567890,
-  format: 'mp4',
-  width: 1920,
-  height: 1080,
-  thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'
-};
+export const MOCK_VIDEO_METADATA: YouTubeMetadata = createMockVideo({
+  title: 'Sample Test Video',
+  description: 'A sample video for testing purposes',
+  uploader: 'TestChannel',
+  viewCount: 1234567
+});
 
 /**
  * Mock queue items for different states
