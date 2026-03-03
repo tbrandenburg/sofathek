@@ -12,7 +12,7 @@ function generateMockVideoId(): string {
   return 'test_' + Math.random().toString(36).substr(2, 9);
 }
 
-function https://www.youtube.com/watch?v=test123abc: string {
+function generateMockYouTubeUrl(): string {
   return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
 }
 
@@ -56,13 +56,13 @@ async function testDownloadQueue() {
     console.log('\n📋 Test 2: Adding Items to Queue');
     const testRequests: DownloadRequest[] = [
       {
-        url: https://www.youtube.com/watch?v=test123abc,
+        url: generateMockYouTubeUrl(),
         requestedAt: new Date(),
         requestId: uuidv4(),
         title: 'Test Video 1'
       },
       {
-        url: https://www.youtube.com/watch?v=test123abc,
+        url: generateMockYouTubeUrl(),
         requestedAt: new Date(),
         requestId: uuidv4(),
         title: 'Test Video 2'

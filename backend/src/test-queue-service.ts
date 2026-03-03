@@ -10,7 +10,7 @@ function generateMockVideoId(): string {
   return 'test_' + Math.random().toString(36).substr(2, 9);
 }
 
-function https://www.youtube.com/watch?v=test123abc: string {
+function generateMockYouTubeUrl(): string {
   return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
 }
 
@@ -40,7 +40,7 @@ const testQueueService = async () => {
     
     // Test adding to queue (without actual download)
     const mockRequest: DownloadRequest = {
-      url: https://www.youtube.com/watch?v=test123abc,
+      url: generateMockYouTubeUrl(),
       requestId: uuidv4(),
       requestedAt: new Date()
     };
