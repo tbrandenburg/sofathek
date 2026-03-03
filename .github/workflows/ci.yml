@@ -89,37 +89,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Run unit tests
+      - name: Run unit tests  
         run: |
-          echo "=== Running tests with detailed debugging ==="
-          
-          echo "🧪 Running backend tests..."
-          cd backend
-          echo "Current directory: $(pwd)"
-          echo "Files in directory:"
-          ls -la
-          echo "Running: npm test -- --passWithNoTests"
-          npm test -- --passWithNoTests || {
-            echo "❌ Backend tests failed!"
-            echo "Exit code: $?"
-            exit 1
-          }
-          echo "✅ Backend tests passed"
-          
-          echo "🧪 Running frontend tests..."  
-          cd ../frontend
-          echo "Current directory: $(pwd)" 
-          echo "Files in directory:"
-          ls -la
-          echo "Running: npm test"
-          npm test || {
-            echo "❌ Frontend tests failed!"
-            echo "Exit code: $?"
-            exit 1
-          }
-          echo "✅ Frontend tests passed"
-          
-          echo "=== All tests completed successfully ==="
+          echo "=== Running tests with workspace approach (like local) ==="
+          npm test
+          echo "=== Tests completed successfully ==="
           
       - name: Collect coverage (optional)
         continue-on-error: true
