@@ -89,6 +89,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
+      - name: Debug - Check Node version and environment
+        run: |
+          echo "Node.js version: $(node --version)"
+          echo "npm version: $(npm --version)"
+          echo "Working directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Package.json test scripts:"
+          node -e "console.log(JSON.stringify(require('./package.json').scripts, null, 2))"
+        
       - name: Run unit tests with coverage
         run: npm run test:coverage
           
