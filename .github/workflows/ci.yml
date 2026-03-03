@@ -101,17 +101,23 @@ jobs:
         
       - name: Run unit tests with coverage
         run: |
-          echo "=== Testing backend only ==="
+          echo "=== Testing without coverage thresholds first ==="
           cd backend
+          npm run test
+          echo "=== Backend tests without thresholds: PASSED ==="
+          
+          cd ../frontend
+          npm run test
+          echo "=== Frontend tests without thresholds: PASSED ==="
+          
+          echo "=== Now testing with coverage thresholds ==="
+          cd ../backend
           npm run test:coverage
-          echo "=== Backend tests completed ==="
-          echo "=== Testing frontend only ==="
+          echo "=== Backend with coverage: PASSED ==="
+          
           cd ../frontend  
           npm run test:coverage
-          echo "=== Frontend tests completed ==="
-          echo "=== Running combined test command ==="
-          cd ..
-          npm run test:coverage
+          echo "=== Frontend with coverage: PASSED ==="
           
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
