@@ -4,7 +4,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { YouTubeDownload } from '../components/YouTubeDownload';
 import { useYouTubeDownload } from '../hooks/useYouTube';
-import { generateMockYouTubeUrl, generateMockVideoId } from '../../tests/youtube-download/fixtures';
 
 // Mock the YouTube hooks
 vi.mock('../hooks/useYouTube', () => ({
