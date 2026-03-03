@@ -15,8 +15,8 @@
     "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":40,\"functions\":40,\"lines\":40,\"statements\":40}}'",
     "test:unit": "jest src/__tests__/unit",
     "test:integration": "jest src/__tests__/integration",
-    "test:youtube": "ts-node src/test-youtube-integration.ts",
-    "test:queue": "ts-node src/test-download-queue.ts"
+    "test:youtube": "ts-node scripts/youtube-integration.ts",
+    "test:queue": "ts-node scripts/download-queue.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
