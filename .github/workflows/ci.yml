@@ -87,51 +87,10 @@ jobs:
           cache: 'npm'
             
       - name: Install dependencies
-        run: |
-          echo "Installing all dependencies with npm ci..."
-          npm ci
-          
-      - name: Debug environment
-        run: |
-          echo "=== Debugging CI Environment ==="
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-          echo "Working directory: $(pwd)"
-          echo
-          echo "Root directory contents:"
-          ls -la
-          echo
-          echo "Backend directory exists:"
-          ls -la backend/
-          echo
-          echo "Frontend directory exists:"  
-          ls -la frontend/
-          echo
-          echo "Backend package.json test scripts:"
-          cat backend/package.json | grep -A 5 -B 5 "scripts"
-          echo
-          echo "Frontend package.json test scripts:"
-          cat frontend/package.json | grep -A 5 -B 5 "scripts"
-          echo
-          echo "Make test command preview:"
-          make -n test
-          echo "=== End Debug ==="
+        run: npm ci
         
       - name: Run unit tests  
-        run: |
-          echo "=== Running Backend Tests ==="
-          cd backend
-          npm test -- --passWithNoTests --verbose --maxWorkers=2
-          echo "✅ Backend tests completed"
-          
-          echo
-          echo "=== Running Frontend Tests ==="
-          cd ../frontend
-          timeout 300 npm test || (echo "❌ Frontend tests failed or timed out" && exit 1)
-          echo "✅ Frontend tests completed"
-          
-          echo
-          echo "✅ All unit tests completed successfully"
+        run: make test
           
       - name: Collect coverage (optional)
         continue-on-error: true
