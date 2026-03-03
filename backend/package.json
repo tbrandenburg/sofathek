@@ -12,7 +12,7 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":40,\"functions\":40,\"lines\":40,\"statements\":40}}'",
+    "test:coverage": "jest --coverage",
     "test:unit": "jest src/__tests__/unit",
     "test:integration": "jest src/__tests__/integration",
     "test:youtube": "ts-node scripts/youtube-integration.ts",

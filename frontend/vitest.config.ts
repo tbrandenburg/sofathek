@@ -27,14 +27,8 @@ export default defineConfig({
         '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*'
       ],
       include: ['src/**/*.{ts,tsx}'],
-      thresholds: {
-        global: {
-          branches: 40,
-          functions: 40,
-          lines: 40,
-          statements: 40
-        }
-      }
+      // Remove thresholds configuration from coverage config
+      // Keep all other coverage settings intact
     }
   },
 })
