@@ -91,9 +91,29 @@ jobs:
         
       - name: Run unit tests  
         run: |
-          echo "=== Running tests with workspace approach (like local) ==="
-          npm test
-          echo "=== Tests completed successfully ==="
+          echo "=== Running tests with proven local setup ==="
+          
+          # Ensure we're in the right directory
+          echo "Working directory: $(pwd)"
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          
+          # Verify dependencies are installed
+          if [ ! -d "node_modules" ]; then
+            echo "Installing dependencies..."
+            npm ci
+          fi
+          
+          # Run tests with explicit workspace paths
+          echo "Running backend tests..."
+          cd backend
+          npm test -- --passWithNoTests --verbose
+          
+          echo "Running frontend tests..."
+          cd ../frontend  
+          npm test -- --run
+          
+          echo "=== All tests completed successfully ==="
           
       - name: Collect coverage (optional)
         continue-on-error: true
