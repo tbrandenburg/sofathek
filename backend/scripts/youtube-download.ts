@@ -1,5 +1,5 @@
-import { YouTubeDownloadService } from './services/youTubeDownloadService';
-import { ThumbnailService } from './services/thumbnailService';
+import { YouTubeDownloadService } from '../src/services/youTubeDownloadService';
+import { ThumbnailService } from '../src/services/thumbnailService';
 import * as path from 'path';
 
 // Import dynamic test URL generator

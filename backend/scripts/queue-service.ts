@@ -1,7 +1,7 @@
-import { DownloadQueueService } from './services/downloadQueueService';
-import { YouTubeDownloadService } from './services/youTubeDownloadService';
-import { ThumbnailService } from './services/thumbnailService';
-import { DownloadRequest } from './types/youtube';
+import { DownloadQueueService } from '../src/services/downloadQueueService';
+import { YouTubeDownloadService } from '../src/services/youTubeDownloadService';
+import { ThumbnailService } from '../src/services/thumbnailService';
+import { DownloadRequest } from '../src/types/youtube';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
