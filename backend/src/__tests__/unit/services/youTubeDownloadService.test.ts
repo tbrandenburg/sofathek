@@ -193,4 +193,35 @@ describe('YouTubeDownloadService', () => {
       expect(result.id).toBeDefined();
     });
   });
+
+  describe('additional coverage for CI stability', () => {
+    it('should handle edge cases in createSafeFilename', async () => {
+      // Additional test to increase coverage stability for CI environment
+      // Test matches actual implementation: removes invalid chars, replaces spaces, trims
+      const edgeCases = [
+        { input: '', expected: '' },  // Empty string stays empty
+        { input: '   ', expected: '_' },  // Spaces become single underscore
+        { input: '...', expected: '...' },  // Dots are valid, kept as-is
+        { input: 'test/\\:*?"<>|', expected: 'test' },  // Invalid chars removed
+        { input: 'CON', expected: 'CON' }, // No special Windows handling in actual code
+        { input: 'con.mp4', expected: 'con.mp4' }, // Extensions preserved
+        { input: 'test video name', expected: 'test_video_name' }  // Spaces to underscores
+      ];
+      
+      for (const { input, expected } of edgeCases) {
+        const result = service['createSafeFilename'](input);
+        expect(result).toBe(expected);
+      }
+    });
+    
+    it('should handle validation with empty or invalid URLs consistently', async () => {
+      // Test additional validation edge cases for CI consistency
+      const invalidUrls = ['', '   ', 'not-a-url', 'http://', 'https://'];
+      
+      for (const url of invalidUrls) {
+        const isValid = await service.validateYouTubeUrl(url);
+        expect(isValid).toBe(false);
+      }
+    });
+  });
 });
