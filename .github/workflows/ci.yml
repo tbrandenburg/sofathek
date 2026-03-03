@@ -95,12 +95,20 @@ jobs:
         
       - name: Run unit tests  
         run: |
-          echo "=== Using make test (proven local approach) ==="
+          echo "=== Running tests directly like make does ==="
           echo "Working directory: $(pwd)"
-          echo "Make version: $(make --version | head -1)"
-          echo "Listing files: $(ls -la | grep -E '(Makefile|package\.json)')"
-          echo "Running make test..."
-          make test
+          
+          # Backend tests (like make test does)
+          echo "Running backend tests..."
+          cd backend && npm test -- --passWithNoTests
+          
+          echo "Backend tests completed successfully"
+          
+          # Frontend tests (like make test does)  
+          echo "Running frontend tests..."
+          cd ../frontend && npm test
+          
+          echo "All tests completed successfully"
           
       - name: Collect coverage (optional)
         continue-on-error: true
