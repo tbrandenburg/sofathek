@@ -100,7 +100,18 @@ jobs:
           node -e "console.log(JSON.stringify(require('./package.json').scripts, null, 2))"
         
       - name: Run unit tests with coverage
-        run: npm run test:coverage
+        run: |
+          echo "=== Testing backend only ==="
+          cd backend
+          npm run test:coverage
+          echo "=== Backend tests completed ==="
+          echo "=== Testing frontend only ==="
+          cd ../frontend  
+          npm run test:coverage
+          echo "=== Frontend tests completed ==="
+          echo "=== Running combined test command ==="
+          cd ..
+          npm run test:coverage
           
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
