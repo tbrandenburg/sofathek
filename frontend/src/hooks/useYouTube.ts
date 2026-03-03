@@ -59,6 +59,7 @@ export function useYouTubeDownload() {
     // Invalidate queries after success or error
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['youtube', 'queue'] });
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
     },
   });
 }

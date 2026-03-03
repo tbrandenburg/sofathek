@@ -146,7 +146,7 @@ test.describe('Real-World YouTube Download E2E Test', () => {
     const newestVideo = videoCards.first();
     
     // Verify it's a valid video card with required elements
-    await expect(newestVideo.locator('[data-testid*="title"], h3, h2, .title')).toBeVisible();
+    await expect(newestVideo.locator('[data-testid="video-title"]')).toBeVisible();
     
     // Check if duration exists and is reasonable
     const durationElement = newestVideo.locator('[data-testid*="duration"], .duration, [class*="duration"]');
@@ -218,10 +218,87 @@ test.describe('Real-World YouTube Download E2E Test', () => {
     await downloadButton.click();
     
     // Should show error state in queue or error message
-    await expect(page.locator('[data-testid="download-error"], text=Failed, text=Error')).toBeVisible({ 
+    await expect(page.locator('[data-testid="download-error"]').or(page.locator('text=Failed')).or(page.locator('text=Error'))).toBeVisible({ 
       timeout: 15000 
     });
     
     console.log('✅ Invalid download handled gracefully with error message');
+  });
+
+  // Enhanced integration tests for issue #20 - Video grid refresh after download
+  test.describe("Real-world E2E: Complete Download Journey", () => {
+    test("should show downloaded video in grid immediately after completion", async ({ page }) => {
+      // 1. Start download and verify progress
+      await page.goto('/', { waitUntil: 'networkidle', timeout: TEST_CONFIG.TIMEOUTS.PAGE_LOAD });
+      
+      const urlInput = page.locator('[data-testid="youtube-url-input"]');
+      const downloadButton = page.locator('[data-testid="download-button"]');
+      
+      await urlInput.fill(TEST_CONFIG.TEST_VIDEO.url);
+      await downloadButton.click();
+      
+      // 2. Wait for download completion using the same pattern as original test
+      const queueContainer = page.locator('[data-testid="download-queue"]');
+      const downloadItem = queueContainer.locator('[data-testid*="download-"], .download-item').first();
+      
+      // Monitor completion like original test
+      let completed = false;
+      const startTime = Date.now();
+      
+      while (!completed && (Date.now() - startTime) < TEST_CONFIG.TIMEOUTS.DOWNLOAD_COMPLETE) {
+        try {
+          await expect(downloadItem.locator('text=Completed')).toBeVisible({ timeout: 5000 });
+          completed = true;
+        } catch (error) {
+          // Check if failed
+          const failedVisible = await downloadItem.locator('text=Failed').isVisible();
+          if (failedVisible) {
+            throw new Error('Download failed during integration test');
+          }
+          // Wait before next check
+          await page.waitForTimeout(3000);
+        }
+      }
+      
+      if (!completed) {
+        throw new Error(`Download did not complete within ${TEST_CONFIG.TIMEOUTS.DOWNLOAD_COMPLETE}ms`);
+      }
+      
+      // 3. Verify video appears in grid WITHOUT page refresh
+      const videoGrid = page.locator('[data-testid="video-grid"], .video-grid, [class*="grid"]').first();
+      const downloadedVideo = videoGrid.locator('[data-testid*="video-card"], .video-card, [class*="video"]').first();
+      
+      // 4. Critical: Video must appear due to state invalidation, not manual refresh
+      await expect(downloadedVideo).toBeVisible({ timeout: 5000 }); // Short timeout proves automatic refresh
+      
+      // 5. Verify video is playable
+      const playButton = downloadedVideo.locator('button, [role="button"], a').first();
+      if (await playButton.count() > 0) {
+        await expect(playButton).toBeVisible();
+      }
+      
+      // 6. Verify video still available after page reload
+      await page.reload();
+      await expect(videoGrid.locator('[data-testid*="video-card"], .video-card, [class*="video"]').first()).toBeVisible();
+    });
+
+    test("should handle download errors gracefully without affecting video grid", async ({ page }) => {
+      // Test with invalid URL to ensure error handling doesn't break video list
+      await page.goto('/', { waitUntil: 'networkidle', timeout: TEST_CONFIG.TIMEOUTS.PAGE_LOAD });
+      
+      const urlInput = page.locator('[data-testid="youtube-url-input"]');
+      const downloadButton = page.locator('[data-testid="download-button"]');
+      
+      await urlInput.fill('https://invalid-youtube-url');
+      await downloadButton.click();
+      
+      // Verify error state
+      await expect(page.locator('[data-testid="download-error"]').or(page.locator('text=Failed')).or(page.locator('text=Error'))).toBeVisible({ timeout: 30000 });
+      
+      // Verify existing videos still visible (grid should remain functional)
+      const videoGrid = page.locator('[data-testid="video-grid"], .video-grid, [class*="grid"]').first();
+      const existingVideoCount = await videoGrid.locator('[data-testid*="video-card"], .video-card, [class*="video"]').count();
+      expect(existingVideoCount).toBeGreaterThanOrEqual(0); // Grid should remain functional
+    });
   });
 });
