@@ -97,16 +97,19 @@ jobs:
         run: |
           echo "=== Running tests directly like make does ==="
           echo "Working directory: $(pwd)"
+          echo "CI environment: $CI" 
           
           # Backend tests (like make test does)
           echo "Running backend tests..."
-          cd backend && npm test -- --passWithNoTests
+          cd backend
+          npm test -- --passWithNoTests
           
           echo "Backend tests completed successfully"
           
           # Frontend tests (like make test does)  
           echo "Running frontend tests..."
-          cd ../frontend && npm test
+          cd ../frontend
+          CI=true npm test
           
           echo "All tests completed successfully"
           
