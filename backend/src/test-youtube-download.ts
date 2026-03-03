@@ -7,7 +7,7 @@ function generateMockVideoId(): string {
   return 'test_' + Math.random().toString(36).substr(2, 9);
 }
 
-function https://www.youtube.com/watch?v=test123abc: string {
+function generateMockYouTubeUrl(): string {
   return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
 }
 
@@ -24,7 +24,7 @@ const testYouTubeDownload = async () => {
     const youtubeService = new YouTubeDownloadService(videosDir, tempDir, thumbnailService);
     
     // Test URL validation with dynamic test URL
-    const validUrl = https://www.youtube.com/watch?v=test123abc; // Dynamic test URL
+    const validUrl = generateMockYouTubeUrl(); // Dynamic test URL
     const invalidUrl = 'https://example.com/not-youtube';
     
     const isValidUrl = await youtubeService.validateYouTubeUrl(validUrl);
