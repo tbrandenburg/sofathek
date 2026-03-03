@@ -1,11 +1,20 @@
 // Queue management test for download operations
-import { DownloadQueueService } from './services/downloadQueueService';
-import { YouTubeDownloadService } from './services/youTubeDownloadService';
-import { ThumbnailService } from './services/thumbnailService';
+import { DownloadQueueService } from '../src/services/downloadQueueService';
+import { YouTubeDownloadService } from '../src/services/youTubeDownloadService';
+import { ThumbnailService } from '../src/services/thumbnailService';
 import * as path from 'path';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { DownloadRequest } from './types/youtube';
+import { DownloadRequest } from '../src/types/youtube';
+
+// Import dynamic test URL generator
+function generateMockVideoId(): string {
+  return 'test_' + Math.random().toString(36).substr(2, 9);
+}
+
+function generateMockYouTubeUrl(): string {
+  return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
+}
 
 async function testDownloadQueue() {
   console.log('🧪 Testing Download Queue Management');
@@ -13,7 +22,7 @@ async function testDownloadQueue() {
   
   // Setup test directories
   const tempDir = path.join(process.cwd(), 'temp', 'test-queue');
-  const videosDir = path.join(process.cwd(), '..', 'data', 'videos', 'test');
+  const videosDir = path.join(process.cwd(), 'temp', 'test-videos');
   const queueFile = path.join(tempDir, 'test-queue.json');
   
   // Ensure test directories exist
@@ -47,13 +56,13 @@ async function testDownloadQueue() {
     console.log('\n📋 Test 2: Adding Items to Queue');
     const testRequests: DownloadRequest[] = [
       {
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: generateMockYouTubeUrl(),
         requestedAt: new Date(),
         requestId: uuidv4(),
         title: 'Test Video 1'
       },
       {
-        url: 'https://www.youtube.com/watch?v=YE7VzlLtp-4',
+        url: generateMockYouTubeUrl(),
         requestedAt: new Date(),
         requestId: uuidv4(),
         title: 'Test Video 2'
@@ -66,7 +75,7 @@ async function testDownloadQueue() {
       }
     ];
     
-    const queueItems = [];
+    const queueItems: any[] = [];
     for (const request of testRequests) {
       const item = await queueService.addToQueue(request);
       queueItems.push(item);

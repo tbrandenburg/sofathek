@@ -56,7 +56,7 @@ describe('YouTube Hooks', () => {
   describe('useYouTubeDownload', () => {
     test('should successfully download video', async () => {
       const mockRequest: DownloadRequest = {
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/watch?v=test123abc',
         title: 'Test Video'
       };
 

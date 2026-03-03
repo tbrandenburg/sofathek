@@ -1,21 +1,36 @@
-import { YouTubeDownloadService } from './services/youTubeDownloadService';
-import { ThumbnailService } from './services/thumbnailService';
+import { YouTubeDownloadService } from '../src/services/youTubeDownloadService';
+import { ThumbnailService } from '../src/services/thumbnailService';
 import * as path from 'path';
+
+// Import dynamic test URL generator
+function generateMockVideoId(): string {
+  return 'test_' + Math.random().toString(36).substr(2, 9);
+}
+
+function generateMockYouTubeUrl(): string {
+  return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
+}
 
 const testYouTubeDownload = async () => {
   console.log('Testing YouTubeDownloadService...');
   
   try {
     // Initialize services with temp directories
-    const videosDir = path.join(process.cwd(), 'data', 'videos');
-    const tempDir = path.join(process.cwd(), 'data', 'temp');
-    const thumbnailsDir = path.join(process.cwd(), 'data', 'thumbnails');
+    const tempDir = path.join(process.cwd(), 'temp', 'test-youtube');
+    const videosDir = path.join(process.cwd(), 'temp', 'test-videos');
+    const thumbnailsDir = path.join(process.cwd(), 'temp', 'test-thumbnails');
+    
+    // Ensure temp directories are available
+    const fs = require('fs');
+    await fs.promises.mkdir(tempDir, { recursive: true });
+    await fs.promises.mkdir(videosDir, { recursive: true });
+    await fs.promises.mkdir(thumbnailsDir, { recursive: true });
     
     const thumbnailService = new ThumbnailService(tempDir, thumbnailsDir);
     const youtubeService = new YouTubeDownloadService(videosDir, tempDir, thumbnailService);
     
-    // Test URL validation
-    const validUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; // Rick Roll (short, public domain-ish)
+    // Test URL validation with dynamic test URL
+    const validUrl = generateMockYouTubeUrl(); // Dynamic test URL
     const invalidUrl = 'https://example.com/not-youtube';
     
     const isValidUrl = await youtubeService.validateYouTubeUrl(validUrl);
