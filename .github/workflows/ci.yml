@@ -87,7 +87,11 @@ jobs:
           cache: 'npm'
             
       - name: Install dependencies
-        run: npm ci
+        run: |
+          echo "Installing root dependencies..."
+          npm ci
+          echo "Installing workspace dependencies..."
+          make install
         
       - name: Run unit tests  
         run: |
