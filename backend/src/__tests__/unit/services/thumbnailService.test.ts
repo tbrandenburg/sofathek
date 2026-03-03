@@ -155,11 +155,10 @@ describe('ThumbnailService - Real FFmpeg Integration', () => {
   // Note: Testing with actual video file would require a test video file
   // This test would be enabled when test assets are available
   it.skip('should generate thumbnail from real video file with actual FFmpeg', async () => {
-    const path = await import('path');
     const fs = await import('fs/promises');
     
-    // This test would work with an actual video file
-    const testVideoPath = path.join(__dirname, '../../../data/test-video.mp4');
+    // Use temporary test file instead of deleted demo video
+    const testVideoPath = `/tmp/test-video-${Date.now()}.mp4`;
     
     try {
       const thumbnailPath = await realService.generateThumbnail(testVideoPath);

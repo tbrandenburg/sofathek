@@ -7,6 +7,15 @@ import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { DownloadRequest } from './types/youtube';
 
+// Import dynamic test URL generator
+function generateMockVideoId(): string {
+  return 'test_' + Math.random().toString(36).substr(2, 9);
+}
+
+function https://www.youtube.com/watch?v=test123abc: string {
+  return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
+}
+
 async function testDownloadQueue() {
   console.log('🧪 Testing Download Queue Management');
   console.log('=' .repeat(50));
@@ -47,13 +56,13 @@ async function testDownloadQueue() {
     console.log('\n📋 Test 2: Adding Items to Queue');
     const testRequests: DownloadRequest[] = [
       {
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: https://www.youtube.com/watch?v=test123abc,
         requestedAt: new Date(),
         requestId: uuidv4(),
         title: 'Test Video 1'
       },
       {
-        url: 'https://www.youtube.com/watch?v=YE7VzlLtp-4',
+        url: https://www.youtube.com/watch?v=test123abc,
         requestedAt: new Date(),
         requestId: uuidv4(),
         title: 'Test Video 2'

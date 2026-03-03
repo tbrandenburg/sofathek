@@ -16,6 +16,7 @@ import {
   cancelDownload 
 } from '../services/youtube';
 import { DownloadRequest, QueueStatus, QueueItem } from '../types/youtube';
+import { generateMockYouTubeUrl } from '../../tests/youtube-download/fixtures';
 
 // Mock the YouTube service
 vi.mock('../services/youtube', () => ({
@@ -56,7 +57,7 @@ describe('YouTube Hooks', () => {
   describe('useYouTubeDownload', () => {
     test('should successfully download video', async () => {
       const mockRequest: DownloadRequest = {
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/watch?v=test123abc',
         title: 'Test Video'
       };
 

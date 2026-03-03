@@ -32,10 +32,10 @@ describe('YouTubeDownloadService', () => {
 
   describe('validateYouTubeUrl', () => {
     it('should validate correct YouTube URLs', async () => {
-      expect(await service.validateYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true);
-      expect(await service.validateYouTubeUrl('https://youtu.be/dQw4w9WgXcQ')).toBe(true);
-      expect(await service.validateYouTubeUrl('https://youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true);
-      expect(await service.validateYouTubeUrl('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe(true);
+      expect(await service.validateYouTubeUrl('https://www.youtube.com/watch?v=test123abc')).toBe(true);
+      expect(await service.validateYouTubeUrl('https://youtu.be/test123abc')).toBe(true);
+      expect(await service.validateYouTubeUrl('https://youtube.com/watch?v=test123abc')).toBe(true);
+      expect(await service.validateYouTubeUrl('https://www.youtube.com/embed/test123abc')).toBe(true);
     });
 
     it('should reject invalid URLs', async () => {
@@ -141,11 +141,11 @@ describe('YouTubeDownloadService', () => {
   describe('validateYouTubeUrl', () => {
     it('should validate valid YouTube URLs', async () => {
       const validUrls = [
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        'https://youtube.com/watch?v=dQw4w9WgXcQ', 
-        'https://youtu.be/dQw4w9WgXcQ',
-        'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        'https://www.youtube.com/v/dQw4w9WgXcQ'
+        'https://www.youtube.com/watch?v=test123abc',
+        'https://youtube.com/watch?v=test456def', 
+        'https://youtu.be/test789ghi',
+        'https://www.youtube.com/embed/testabcjkl',
+        'https://www.youtube.com/v/testmnoxyz'
       ];
       
       for (const url of validUrls) {

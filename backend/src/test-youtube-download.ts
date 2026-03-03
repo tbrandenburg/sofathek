@@ -2,6 +2,15 @@ import { YouTubeDownloadService } from './services/youTubeDownloadService';
 import { ThumbnailService } from './services/thumbnailService';
 import * as path from 'path';
 
+// Import dynamic test URL generator
+function generateMockVideoId(): string {
+  return 'test_' + Math.random().toString(36).substr(2, 9);
+}
+
+function https://www.youtube.com/watch?v=test123abc: string {
+  return `https://www.youtube.com/watch?v=${generateMockVideoId()}`;
+}
+
 const testYouTubeDownload = async () => {
   console.log('Testing YouTubeDownloadService...');
   
@@ -14,8 +23,8 @@ const testYouTubeDownload = async () => {
     const thumbnailService = new ThumbnailService(tempDir, thumbnailsDir);
     const youtubeService = new YouTubeDownloadService(videosDir, tempDir, thumbnailService);
     
-    // Test URL validation
-    const validUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; // Rick Roll (short, public domain-ish)
+    // Test URL validation with dynamic test URL
+    const validUrl = https://www.youtube.com/watch?v=test123abc; // Dynamic test URL
     const invalidUrl = 'https://example.com/not-youtube';
     
     const isValidUrl = await youtubeService.validateYouTubeUrl(validUrl);

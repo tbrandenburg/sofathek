@@ -29,7 +29,7 @@ describe('YouTube Service', () => {
   describe('downloadVideo', () => {
     test('should successfully start download with valid request', async () => {
       const request: DownloadRequest = {
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/watch?v=test123abc',
         title: 'Test Video'
       };
 
@@ -44,7 +44,7 @@ describe('YouTube Service', () => {
           currentStep: 'Queued for processing',
           queuedAt: new Date().toISOString(),
           metadata: {
-            id: 'dQw4w9WgXcQ',
+            id: 'test123abc',
             title: 'Test Video'
           }
         }
@@ -88,7 +88,7 @@ describe('YouTube Service', () => {
 
     test('should throw ApiError on network failure', async () => {
       const request: DownloadRequest = {
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+        url: 'https://www.youtube.com/watch?v=test123abc'
       };
 
       mockFetch.mockRejectedValue(new Error('Network error'));
@@ -227,11 +227,11 @@ describe('YouTube Service', () => {
   describe('validateYouTubeUrl', () => {
     test('should validate standard YouTube watch URLs', () => {
       const validUrls = [
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        'https://youtube.com/watch?v=dQw4w9WgXcQ',
-        'http://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30s',
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLtest'
+        'https://www.youtube.com/watch?v=test123abc',
+        'https://youtube.com/watch?v=test123abc',
+        'http://www.youtube.com/watch?v=test123abc',
+        'https://www.youtube.com/watch?v=test123abc&t=30s',
+        'https://www.youtube.com/watch?v=test123abc&list=PLtest'
       ];
 
       validUrls.forEach(url => {
@@ -243,9 +243,9 @@ describe('YouTube Service', () => {
 
     test('should validate YouTube short URLs', () => {
       const validShortUrls = [
-        'https://youtu.be/dQw4w9WgXcQ',
-        'http://youtu.be/dQw4w9WgXcQ',
-        'https://youtu.be/dQw4w9WgXcQ?t=30'
+        'https://youtu.be/test123abc',
+        'http://youtu.be/test123abc',
+        'https://youtu.be/test123abc?t=30'
       ];
 
       validShortUrls.forEach(url => {
@@ -296,7 +296,7 @@ describe('YouTube Service', () => {
   describe('extractYouTubeVideoId', () => {
     test('should extract video ID from standard watch URLs', () => {
       const testCases = [
-        { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', expected: 'dQw4w9WgXcQ' },
+        { url: 'https://www.youtube.com/watch?v=test123abc', expected: 'test123abc' },
         { url: 'https://youtube.com/watch?v=abc123def456', expected: 'abc123def456' },
         { url: 'http://www.youtube.com/watch?v=test_video', expected: 'test_video' }
       ];
@@ -308,7 +308,7 @@ describe('YouTube Service', () => {
 
     test('should extract video ID from short URLs', () => {
       const testCases = [
-        { url: 'https://youtu.be/dQw4w9WgXcQ', expected: 'dQw4w9WgXcQ' },
+        { url: 'https://youtu.be/test123abc', expected: 'test123abc' },
         { url: 'http://youtu.be/abc123def456', expected: 'abc123def456' }
       ];
 
@@ -335,14 +335,14 @@ describe('YouTube Service', () => {
     test('should use metadata title when available', () => {
       const item: QueueItem = {
         id: 'test-1',
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/watch?v=test123abc',
         title: 'Fallback Title',
         status: 'completed',
         progress: 100,
         currentStep: 'Done',
         queuedAt: new Date().toISOString(),
         metadata: {
-          id: 'dQw4w9WgXcQ',
+          id: 'test123abc',
           title: 'Never Gonna Give You Up'
         }
       };
@@ -353,7 +353,7 @@ describe('YouTube Service', () => {
     test('should fallback to item title when metadata unavailable', () => {
       const item: QueueItem = {
         id: 'test-1',
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/watch?v=test123abc',
         title: 'Custom Title',
         status: 'pending',
         progress: 0,
@@ -367,15 +367,15 @@ describe('YouTube Service', () => {
     test('should generate title from video ID when no title available', () => {
       const item: QueueItem = {
         id: 'test-1',
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        title: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Same as URL
+        url: 'https://www.youtube.com/watch?v=test123abc',
+        title: 'https://www.youtube.com/watch?v=test123abc', // Same as URL
         status: 'pending',
         progress: 0,
         currentStep: 'Queued',
         queuedAt: new Date().toISOString()
       };
 
-      expect(formatQueueItemTitle(item)).toBe('YouTube Video (dQw4w9WgXcQ)');
+      expect(formatQueueItemTitle(item)).toBe('YouTube Video (test123abc)');
     });
   });
 
