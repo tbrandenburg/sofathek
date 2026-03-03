@@ -89,45 +89,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Debug - Check Node version and environment
+      - name: Run unit tests
         run: |
-          echo "Node.js version: $(node --version)"
-          echo "npm version: $(npm --version)"
-          echo "Working directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          echo "Package.json test scripts:"
-          node -e "console.log(JSON.stringify(require('./package.json').scripts, null, 2))"
-        
-      - name: Run unit tests with coverage
-        run: |
-          echo "=== Running tests with fail-safe approach ==="
+          echo "=== Running tests using proven local approach ==="
+          make test
+          echo "=== Tests completed successfully ==="
           
-          # Backend tests
-          echo "Testing backend..."
+      - name: Collect coverage (optional)
+        continue-on-error: true
+        run: |
+          echo "=== Attempting coverage collection (non-blocking) ==="
+          
+          # Backend coverage
           cd backend
-          npm test || { echo "Backend tests failed"; exit 1; }
+          npm run test:coverage || echo "Backend coverage collection failed (non-blocking)"
           
-          # Backend coverage check  
-          echo "Checking backend coverage..."
-          npm run test:coverage || { 
-            echo "Backend coverage failed, checking if tests at least pass..."
-            npm test && echo "Backend tests pass, coverage issue only"
-          }
-          
-          # Frontend tests
-          echo "Testing frontend..."
+          # Frontend coverage  
           cd ../frontend
-          npm test || { echo "Frontend tests failed"; exit 1; }
+          npm run test:coverage || echo "Frontend coverage collection failed (non-blocking)"
           
-          # Frontend coverage check
-          echo "Checking frontend coverage..."
-          npm run test:coverage || {
-            echo "Frontend coverage failed, checking if tests at least pass..."
-            npm test && echo "Frontend tests pass, coverage issue only"  
-          }
-          
-          echo "=== Essential tests completed - CI environment compatible ==="
+          echo "=== Coverage collection attempt completed ==="
           
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
