@@ -91,15 +91,35 @@ jobs:
         
       - name: Run unit tests
         run: |
-          echo "=== Running tests using exact Makefile commands ==="
+          echo "=== Running tests with detailed debugging ==="
           
           echo "🧪 Running backend tests..."
-          cd backend && npm test -- --passWithNoTests
+          cd backend
+          echo "Current directory: $(pwd)"
+          echo "Files in directory:"
+          ls -la
+          echo "Running: npm test -- --passWithNoTests"
+          npm test -- --passWithNoTests || {
+            echo "❌ Backend tests failed!"
+            echo "Exit code: $?"
+            exit 1
+          }
+          echo "✅ Backend tests passed"
           
           echo "🧪 Running frontend tests..."  
-          cd ../frontend && npm test
+          cd ../frontend
+          echo "Current directory: $(pwd)" 
+          echo "Files in directory:"
+          ls -la
+          echo "Running: npm test"
+          npm test || {
+            echo "❌ Frontend tests failed!"
+            echo "Exit code: $?"
+            exit 1
+          }
+          echo "✅ Frontend tests passed"
           
-          echo "=== Tests completed successfully ==="
+          echo "=== All tests completed successfully ==="
           
       - name: Collect coverage (optional)
         continue-on-error: true
