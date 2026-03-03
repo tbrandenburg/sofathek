@@ -87,29 +87,23 @@ jobs:
           cache: 'npm'
             
       - name: Install dependencies
-        run: |
-          echo "Installing root dependencies..."
-          npm ci
-          echo "Installing workspace dependencies..."
-          make install
+        run: npm ci
         
       - name: Run unit tests  
         run: |
-          echo "=== Running tests directly like make does ==="
-          echo "Working directory: $(pwd)"
-          echo "CI environment: $CI" 
+          echo "=== Running tests with explicit CI configuration ==="
           
-          # Backend tests (like make test does)
+          # Backend tests
           echo "Running backend tests..."
           cd backend
-          npm test -- --passWithNoTests
+          npm test -- --passWithNoTests --verbose
           
           echo "Backend tests completed successfully"
           
-          # Frontend tests (like make test does)  
+          # Frontend tests 
           echo "Running frontend tests..."
           cd ../frontend
-          CI=true npm test
+          CI=true npm test -- --run --reporter=verbose
           
           echo "All tests completed successfully"
           
