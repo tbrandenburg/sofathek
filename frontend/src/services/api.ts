@@ -91,8 +91,8 @@ export function getVideoThumbnailUrl(video: Video): string | null {
     return null;
   }
   
-  // Thumbnails are served as static files from the videos directory
-  return `${API_BASE_URL}/stream/${encodeURIComponent(video.metadata.thumbnail)}`;
+  // Use dedicated thumbnail endpoint
+  return `${API_BASE_URL}/thumbnails/${encodeURIComponent(video.metadata.thumbnail)}`;
 }
 
 /**

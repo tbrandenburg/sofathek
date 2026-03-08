@@ -123,6 +123,56 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
   }
 }));
 
+// Serve thumbnail files from videos directory
+router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Response) => {
+  const { filename } = req.params;
+  
+  if (!filename) {
+    throw new AppError('Filename parameter is required', 400);
+  }
+  
+  // Check in videos directory first (user-uploaded thumbnails)
+  const videosThumbPath = path.join(videosDirectory, filename);
+  
+  // Check in temp/thumbnails (generated thumbnails)
+  const tempThumbPath = path.join(process.cwd(), 'data', 'temp', 'thumbnails', filename);
+  
+  let thumbnailPath: string | null = null;
+  
+  if (fs.existsSync(videosThumbPath)) {
+    thumbnailPath = videosThumbPath;
+  } else if (fs.existsSync(tempThumbPath)) {
+    thumbnailPath = tempThumbPath;
+  }
+  
+  if (!thumbnailPath) {
+    throw new AppError(`Thumbnail '${filename}' not found`, 404);
+  }
+  
+  const stat = fs.statSync(thumbnailPath);
+  const ext = path.extname(filename).toLowerCase();
+  
+  res.writeHead(200, {
+    'Content-Length': stat.size,
+    'Content-Type': getThumbnailMimeType(ext)
+  });
+  
+  fs.createReadStream(thumbnailPath).pipe(res);
+}));
+
+/**
+ * Helper function to get MIME type for thumbnail files
+ */
+function getThumbnailMimeType(extension: string): string {
+  const mimeTypes: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp'
+  };
+  return mimeTypes[extension] || 'image/jpeg';
+}
+
 /**
  * Helper function to get MIME type for video files
  */

@@ -155,20 +155,44 @@ export class VideoService {
    * Future phases can integrate ffprobe for detailed video analysis
    */
   private async extractMetadata(videoFile: VideoFile): Promise<VideoMetadata> {
-    // Basic metadata extraction from filename
     const nameWithoutExt = path.basename(videoFile.name, path.extname(videoFile.name));
     
-    // Clean up filename for display
     const title = nameWithoutExt
       .replace(/[-_]/g, ' ')
       .replace(/\b\w/g, char => char.toUpperCase())
       .trim();
 
+    // Check for existing thumbnail (jpg, jpeg, png, webp)
+    const thumbnail = await this.findThumbnail(videoFile.path);
+
     return {
       title,
-      format: videoFile.extension.toUpperCase()
-      // Note: duration, width, height, bitrate will be added in future phases with ffprobe
+      format: videoFile.extension.toUpperCase(),
+      ...(thumbnail && { thumbnail })
     };
+  }
+
+  /**
+   * Look for thumbnail file matching the video filename
+   * Checks for: video-name.jpg, video-name.jpeg, video-name.png, video-name.webp
+   */
+  private async findThumbnail(videoPath: string): Promise<string | null> {
+    const videoDir = path.dirname(videoPath);
+    const baseName = path.basename(videoPath, path.extname(videoPath));
+    const extensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    
+    for (const ext of extensions) {
+      const thumbPath = path.join(videoDir, baseName + ext);
+      try {
+        await fs.access(thumbPath);
+        // Return just the filename for the metadata
+        return baseName + ext;
+      } catch {
+        // Thumbnail doesn't exist, try next extension
+      }
+    }
+    
+    return null;
   }
 
   /**
