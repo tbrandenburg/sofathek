@@ -123,6 +123,83 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
   }
 }));
 
+// Serve thumbnail files from videos directory
+router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Response) => {
+  const { filename } = req.params;
+  
+  if (!filename) {
+    throw new AppError('Filename parameter is required', 400);
+  }
+  
+  // Security: Validate filename to prevent directory traversal
+  if (filename.includes('..') || path.isAbsolute(filename)) {
+    throw new AppError('Invalid filename', 400);
+  }
+  
+  // Only allow image file extensions
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+  const ext = path.extname(filename).toLowerCase();
+  if (!allowedExtensions.includes(ext)) {
+    throw new AppError('Invalid file type', 400);
+  }
+  
+  // Check in videos directory first (user-uploaded thumbnails)
+  const videosThumbPath = path.join(videosDirectory, filename);
+  
+  // Check in temp/thumbnails (generated thumbnails)
+  const tempThumbPath = path.join(process.cwd(), 'data', 'temp', 'thumbnails', filename);
+  
+  let thumbnailPath: string | null = null;
+  
+  if (fs.existsSync(videosThumbPath)) {
+    thumbnailPath = videosThumbPath;
+  } else if (fs.existsSync(tempThumbPath)) {
+    thumbnailPath = tempThumbPath;
+  }
+  
+  if (!thumbnailPath) {
+    throw new AppError(`Thumbnail '${filename}' not found`, 404);
+  }
+  
+  // Security: Verify resolved path is within allowed directories
+  const resolvedVideosPath = path.resolve(videosThumbPath);
+  const resolvedTempPath = path.resolve(tempThumbPath);
+  const allowedVideosDir = path.resolve(videosDirectory);
+  const allowedTempDir = path.resolve(process.cwd(), 'data', 'temp', 'thumbnails');
+  
+  const isInVideosDir = resolvedVideosPath.startsWith(allowedVideosDir);
+  const isInTempDir = resolvedTempPath.startsWith(allowedTempDir);
+  
+  if (thumbnailPath === videosThumbPath && !isInVideosDir) {
+    throw new AppError('Invalid path', 403);
+  }
+  if (thumbnailPath === tempThumbPath && !isInTempDir) {
+    throw new AppError('Invalid path', 403);
+  }
+  
+  const stat = fs.statSync(thumbnailPath);
+  
+  res.writeHead(200, {
+    'Content-Length': stat.size,
+    'Content-Type': getThumbnailMimeType(ext)
+  });
+  
+  fs.createReadStream(thumbnailPath).pipe(res);
+}));
+
+/**
+ * Helper function to get MIME type for thumbnail files
+ */
+function getThumbnailMimeType(extension: string): string {
+  const mimeTypes: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp'
+  };
+  return mimeTypes[extension] || 'image/jpeg';
+}
+
 /**
  * Helper function to get MIME type for video files
  */

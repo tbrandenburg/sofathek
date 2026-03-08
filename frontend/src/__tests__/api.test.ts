@@ -133,7 +133,7 @@ describe('API Service', () => {
       };
 
       const url = getVideoThumbnailUrl(video);
-      expect(url).toBe('http://localhost:3010/api/stream/thumb.jpg');
+      expect(url).toBe('http://localhost:3010/api/thumbnails/thumb.jpg');
     });
 
     test('should return null when no thumbnail', () => {

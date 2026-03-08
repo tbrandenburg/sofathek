@@ -30,7 +30,7 @@ export interface VideoMetadata {
   format?: string;
   /** Video bitrate */
   bitrate?: number;
-  /** Thumbnail file path (relative to videos directory) */
+  /** Thumbnail file name (relative to videos directory) */
   thumbnail?: string;
 }
 
