@@ -7,6 +7,7 @@ import { Layout, ContentContainer, PageHeader } from './components/Layout/Layout
 import { YouTubeDownload } from './components/YouTubeDownload';
 import { DownloadQueue } from './components/DownloadQueue';
 import { useVideos } from './hooks/useVideos';
+import { getVideoStreamUrl } from './services/api';
 
 // Create Query Client outside component to avoid recreation on renders
 const queryClient = new QueryClient({
@@ -79,13 +80,24 @@ function App() {
             onClick={handleClosePlayer} 
           />
           <div className="relative bg-black rounded-lg overflow-hidden max-w-4xl w-full mx-4">
-            <button 
-              className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 text-2xl font-bold"
-              onClick={handleClosePlayer}
-              aria-label="Close video player"
-            >
-              ✕
-            </button>
+            <div className="absolute top-4 right-4 z-10 flex gap-2">
+              <a
+                href={getVideoStreamUrl(selectedVideo.file.name)}
+                download={selectedVideo.file.name}
+                className="text-white hover:text-gray-300 text-xl p-2"
+                aria-label="Download video"
+                title="Download video"
+              >
+                ↓
+              </a>
+              <button 
+                className="text-white hover:text-gray-300 text-2xl font-bold"
+                onClick={handleClosePlayer}
+                aria-label="Close video player"
+              >
+                ✕
+              </button>
+            </div>
             <VideoPlayer
               video={selectedVideo}
               controls={true}
