@@ -9,7 +9,7 @@ import youtubeRouter from './youtube';
 const router = Router();
 
 // Initialize video service (in production this would come from DI container)
-const videosDirectory = process.env.VIDEOS_PATH || path.join(process.cwd(), '..', 'data', 'videos');
+const videosDirectory = process.env.VIDEOS_PATH || path.join(process.cwd(), 'data', 'videos');
 const videoService = new VideoService(videosDirectory);
 
 /**
