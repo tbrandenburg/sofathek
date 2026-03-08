@@ -131,6 +131,18 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     throw new AppError('Filename parameter is required', 400);
   }
   
+  // Security: Validate filename to prevent directory traversal
+  if (filename.includes('..') || path.isAbsolute(filename)) {
+    throw new AppError('Invalid filename', 400);
+  }
+  
+  // Only allow image file extensions
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+  const ext = path.extname(filename).toLowerCase();
+  if (!allowedExtensions.includes(ext)) {
+    throw new AppError('Invalid file type', 400);
+  }
+  
   // Check in videos directory first (user-uploaded thumbnails)
   const videosThumbPath = path.join(videosDirectory, filename);
   
@@ -149,8 +161,23 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     throw new AppError(`Thumbnail '${filename}' not found`, 404);
   }
   
+  // Security: Verify resolved path is within allowed directories
+  const resolvedVideosPath = path.resolve(videosThumbPath);
+  const resolvedTempPath = path.resolve(tempThumbPath);
+  const allowedVideosDir = path.resolve(videosDirectory);
+  const allowedTempDir = path.resolve(process.cwd(), 'data', 'temp', 'thumbnails');
+  
+  const isInVideosDir = resolvedVideosPath.startsWith(allowedVideosDir);
+  const isInTempDir = resolvedTempPath.startsWith(allowedTempDir);
+  
+  if (thumbnailPath === videosThumbPath && !isInVideosDir) {
+    throw new AppError('Invalid path', 403);
+  }
+  if (thumbnailPath === tempThumbPath && !isInTempDir) {
+    throw new AppError('Invalid path', 403);
+  }
+  
   const stat = fs.statSync(thumbnailPath);
-  const ext = path.extname(filename).toLowerCase();
   
   res.writeHead(200, {
     'Content-Length': stat.size,
