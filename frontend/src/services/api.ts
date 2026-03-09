@@ -1,7 +1,9 @@
 import { Video, VideoScanResult, ApiResponse } from '../types';
 
-// Backend API base URL (from docker-compose configuration)
-const API_BASE_URL = 'http://localhost:3010/api';
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+// Use same-origin API by default so remote clients only need frontend port access.
+export const API_BASE_URL = (configuredApiBaseUrl || '/api').replace(/\/$/, '');
 
 /**
  * Custom error class for API errors

@@ -44,6 +44,20 @@ make docker
 docker-compose up -d
 ```
 
+
+### Network Access Configuration
+
+By default, the frontend now calls the backend via a **same-origin relative path** (`/api`).
+This allows other devices on your LAN to work when only frontend port `5183` is exposed and API requests are reverse-proxied.
+
+Optional override:
+
+```bash
+VITE_API_BASE_URL=http://<backend-host>:3010/api
+```
+
+Set `VITE_API_BASE_URL` only when you intentionally want the browser to call a specific backend origin directly.
+
 ## Development Commands
 
 ```bash

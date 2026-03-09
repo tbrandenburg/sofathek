@@ -7,10 +7,7 @@ import {
 } from '../types/youtube';
 
 // Import base API utilities
-import { ApiError } from './api';
-
-// Backend API base URL (consistent with main API service)
-const API_BASE_URL = 'http://localhost:3010/api';
+import { ApiError, API_BASE_URL } from './api';
 
 /**
  * Generic fetch wrapper for YouTube API calls with error handling
