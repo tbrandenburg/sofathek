@@ -59,7 +59,7 @@ describe('YouTube Service', () => {
 
       expect(result).toEqual(mockResponse.data);
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3010/api/youtube/download',
+        '/api/youtube/download',
         {
           method: 'POST',
           headers: {
@@ -135,7 +135,7 @@ describe('YouTube Service', () => {
       const result = await getDownloadQueue();
 
       expect(result).toEqual(mockQueueStatus);
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3010/api/youtube/queue', {
+      expect(mockFetch).toHaveBeenCalledWith('/api/youtube/queue', {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -199,7 +199,7 @@ describe('YouTube Service', () => {
 
       expect(result).toEqual({ message: 'Download cancelled successfully', queueItemId: downloadId });
       expect(mockFetch).toHaveBeenCalledWith(
-        `http://localhost:3010/api/youtube/download/${downloadId}`,
+        `/api/youtube/download/${downloadId}`,
         {
           method: 'DELETE',
           headers: {
