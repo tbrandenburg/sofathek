@@ -94,7 +94,7 @@ test.describe('Real-World YouTube Download E2E Test', () => {
         await expect(downloadItem.locator('text=Completed')).toBeVisible({ timeout: 5000 });
         completed = true;
         console.log('✅ Download completed successfully');
-      } catch (error) {
+      } catch {
         // Check if failed
         const failedVisible = await downloadItem.locator('text=Failed').isVisible();
         if (failedVisible) {
@@ -249,7 +249,7 @@ test.describe('Real-World YouTube Download E2E Test', () => {
         try {
           await expect(downloadItem.locator('text=Completed')).toBeVisible({ timeout: 5000 });
           completed = true;
-        } catch (error) {
+        } catch {
           // Check if failed
           const failedVisible = await downloadItem.locator('text=Failed').isVisible();
           if (failedVisible) {
