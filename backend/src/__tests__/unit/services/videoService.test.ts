@@ -173,4 +173,62 @@ describe('VideoService', () => {
       expect(filePath).toBe(path.join(testVideosDir, 'test.mp4'));
     });
   });
+
+  describe('Path Resolution', () => {
+    const originalCwd = process.cwd;
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      process.cwd = () => '/mock/cwd';
+      process.env = { ...originalEnv };
+      delete process.env.VIDEOS_DIR;
+    });
+
+    afterEach(() => {
+      process.cwd = originalCwd;
+      process.env = originalEnv;
+    });
+
+    it('should use default path when VIDEOS_DIR is not set', () => {
+      const service = new VideoService(
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+      );
+      const filePath = service.getVideoFilePath('test.mp4');
+      expect(filePath).toBe(path.join('/mock/cwd', 'data', 'videos', 'test.mp4'));
+    });
+
+    it('should use environment variable override when VIDEOS_DIR is set', () => {
+      process.env.VIDEOS_DIR = '/custom/videos';
+      const service = new VideoService(
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+      );
+      const filePath = service.getVideoFilePath('test.mp4');
+      expect(filePath).toBe(path.join('/custom/videos', 'test.mp4'));
+    });
+
+    it('should produce absolute paths', () => {
+      const service = new VideoService(
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+      );
+      const filePath = service.getVideoFilePath('test.mp4');
+      expect(path.isAbsolute(filePath)).toBe(true);
+    });
+
+    it('should not contain dangerous path traversals in default path', () => {
+      delete process.env.VIDEOS_DIR;
+      const service = new VideoService(
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+      );
+      const filePath = service.getVideoFilePath('test.mp4');
+      expect(filePath).not.toContain('../');
+    });
+
+    it('should handle absolute custom path from environment variable', () => {
+      process.env.VIDEOS_DIR = '/absolute/custom/path';
+      const service = new VideoService(process.env.VIDEOS_DIR);
+      const filePath = service.getVideoFilePath('video.mp4');
+      expect(filePath).toBe('/absolute/custom/path/video.mp4');
+      expect(path.isAbsolute(filePath)).toBe(true);
+    });
+  });
 });
