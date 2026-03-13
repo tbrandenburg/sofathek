@@ -179,6 +179,88 @@ describe('YouTubeDownload Component', () => {
     expect(submitButton).toBeDisabled();
   });
 
+  test('should have proper accessibility attributes', () => {
+    const Wrapper = createWrapper();
+
+    render(
+      <Wrapper>
+        <YouTubeDownload />
+      </Wrapper>
+    );
+
+    const button = screen.getByTestId('download-button');
+    const input = screen.getByLabelText('YouTube URL');
+
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=test123' } });
+
+    expect(button).toHaveAttribute('type', 'submit');
+    expect(button).not.toHaveAttribute('aria-disabled');
+
+    button.focus();
+    expect(button).toHaveFocus();
+  });
+
+  test('should have correct enabled state', () => {
+    const Wrapper = createWrapper();
+
+    render(
+      <Wrapper>
+        <YouTubeDownload />
+      </Wrapper>
+    );
+
+    const button = screen.getByTestId('download-button');
+
+    expect(button).toBeDisabled();
+
+    const input = screen.getByLabelText('YouTube URL');
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=test123' } });
+
+    expect(button).toBeEnabled();
+  });
+
+  test('should have correct disabled state during pending', () => {
+    mockUseYouTubeDownload.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      isError: false,
+      isSuccess: false,
+      error: null,
+      data: undefined,
+      reset: vi.fn()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    const Wrapper = createWrapper();
+
+    render(
+      <Wrapper>
+        <YouTubeDownload />
+      </Wrapper>
+    );
+
+    const button = screen.getByTestId('download-button');
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent('Starting Download...');
+  });
+
+  test('should render download button with correct attributes', () => {
+    const Wrapper = createWrapper();
+
+    render(
+      <Wrapper>
+        <YouTubeDownload />
+      </Wrapper>
+    );
+
+    const button = screen.getByTestId('download-button');
+
+    expect(button).toBeVisible();
+    expect(button).toHaveAttribute('data-testid', 'download-button');
+    expect(screen.getByRole('button', { name: /download video/i })).toBe(button);
+    expect(button).toHaveTextContent('Download Video');
+  });
+
   test('should display success message on successful download', () => {
     mockUseYouTubeDownload.mockReturnValue({
       mutate: vi.fn(),
