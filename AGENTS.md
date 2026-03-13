@@ -13,6 +13,8 @@
 * Follow SOLID principles
 
 * Keep README.md updated after feature increments
+* Keep repo root clean and follow established structure (`scripts/`, `docs/`, `examples/`, `src/`, `tests/`, etc.)
+  <!-- Keep top-level clutter-free: place files in the established directories above. -->
 * Never ever mock something in end-2-end tests - they shall test the whole functionality in real-world scenarios - they shall be ruthless and painful and discover all errors early the users would otherwise discover later
 * Never force skip tests or commit/push hooks
 
