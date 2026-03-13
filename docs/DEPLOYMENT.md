@@ -116,6 +116,32 @@ MAX_DOWNLOAD_SIZE=2147483648  # 2GB in bytes
 LOG_LEVEL=info
 ```
 
+### Video Storage Configuration
+
+The video storage directory can be customized using environment variables:
+
+| Variable     | Default                    | Description                          |
+|--------------|----------------------------|--------------------------------------|
+| `VIDEOS_DIR` | `/opt/sofathek/data/videos`| Production video storage path        |
+| `VIDEOS_PATH`| (development default)      | Alternative env var, takes precedence in dev |
+| `TEMP_DIR`   | `/opt/sofathek/data/temp`   | Temporary download storage            |
+
+**Docker Example:**
+
+```bash
+docker run -d \
+  -e VIDEOS_DIR=/custom/videos \
+  -v /host/videos:/custom/videos:rw \
+  sofathek/backend
+```
+
+**Volume Backup:**
+
+```bash
+# Using named volumes
+docker run --rm -v sofathek_videos:/data -v $(pwd)/backup:/backup alpine tar czf backup/videos.tar.gz -C /data .
+```
+
 ### 3. Deploy Application
 
 ```bash

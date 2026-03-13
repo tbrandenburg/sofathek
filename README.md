@@ -143,6 +143,45 @@ sofathek/
 └── README.md         # This file
 ```
 
+## Video Storage Setup
+
+### Development
+
+The application stores videos in `backend/data/videos` by default. Create the directory:
+
+```bash
+mkdir -p backend/data/videos
+```
+
+To customize the video directory, set the `VIDEOS_PATH` environment variable:
+
+```bash
+# Linux/macOS
+export VIDEOS_PATH=/custom/path/to/videos
+
+# Windows (PowerShell)
+$env:VIDEOS_PATH = "C:\custom\path\to\videos"
+```
+
+### Docker
+
+When running with Docker Compose, videos are stored in a named volume:
+
+```bash
+# Check videos volume location
+docker volume inspect sofathek_videos
+
+# Backup videos
+docker run --rm -v sofathek_videos:/data -v $(pwd)/backup:/backup alpine tar czf /backup/videos.tar.gz -C /data .
+```
+
+### Environment Variables
+
+| Variable     | Default                    | Description                    |
+|--------------|----------------------------|--------------------------------|
+| `VIDEOS_PATH` | `backend/data/videos`      | Path to video storage directory|
+| `VIDEOS_DIR`  | (falls back to VIDEOS_PATH)| Alternate env var for videos  |
+
 ## Requirements
 
 - **Node.js 18+** (for development)
