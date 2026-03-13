@@ -1,0 +1,29 @@
+workflows:
+- id: wf_mmozh3te_a0828
+  name: Continuous Issue Resolution
+  enabled: true
+  schedule: 0 */2 * * *
+  steps:
+  - type: agent
+    agent: build
+    prompt: Follow the instructions in @.opencode/commands/prp-issue-fix.md for the
+      latest open issue on Github and take its investigation comment as the implementation
+      plan
+  - type: agent
+    agent: build
+    prompt: Follow the instructions in @.opencode/commands/commit-push.md
+  - type: agent
+    agent: build
+    prompt: Only if the latest PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md
+  - type: agent
+    agent: build
+    prompt: Follow the instructions in @.opencode/commands/prp-review.md for the latest
+      PR.
+  - type: agent
+    agent: build
+    prompt: Use the `gh` CLI to merge the latest PR if it was approved by the latest
+      comment. Send a telegram message on the outcome.
+  - type: agent
+    agent: build
+    prompt: Switch back to main and do a fresh git pull
+  shellScriptPath: .harness/continuous-issue-resolution.sh
