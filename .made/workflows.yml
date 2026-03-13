@@ -22,7 +22,7 @@ workflows:
   - type: agent
     agent: build
     prompt: Use the `gh` CLI to merge the latest PR if it was approved by the latest
-      comment. Send a telegram message on the outcome.
+      comment. If any PR was processed, send a telegram message on the outcome.
   - type: agent
     agent: build
     prompt: Switch back to main and do a fresh git pull
