@@ -7,7 +7,7 @@ import { Layout, ContentContainer, PageHeader } from './components/Layout/Layout
 import { YouTubeDownload } from './components/YouTubeDownload';
 import { DownloadQueue } from './components/DownloadQueue';
 import { useVideos } from './hooks/useVideos';
-import { getVideoStreamUrl } from './services/api';
+import { getVideoStreamUrl, sanitizeFilename } from './services/api';
 
 // Create Query Client outside component to avoid recreation on renders
 const queryClient = new QueryClient({
@@ -83,7 +83,7 @@ function App() {
             <div className="absolute top-4 right-4 z-10 flex gap-2">
               <a
                 href={getVideoStreamUrl(selectedVideo.file.name)}
-                download={selectedVideo.file.name}
+                download={sanitizeFilename(selectedVideo.file.name)}
                 className="text-white hover:text-gray-300 text-xl p-2"
                 aria-label="Download video"
                 title="Download video"
