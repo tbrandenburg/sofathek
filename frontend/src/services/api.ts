@@ -97,6 +97,14 @@ export function getVideoThumbnailUrl(video: Video): string | null {
   return `${API_BASE_URL}/thumbnails/${encodeURIComponent(video.metadata.thumbnail)}`;
 }
 
+export function sanitizeFilename(filename: string): string {
+  return filename
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_+/g, '_')
+    .substring(0, 200);
+}
+
 /**
  * Format file size for display
  */

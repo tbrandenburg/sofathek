@@ -4,6 +4,7 @@ import {
   getVideoById, 
   getVideoStreamUrl, 
   getVideoThumbnailUrl,
+  sanitizeFilename,
   formatFileSize,
   formatDuration,
   ApiError 
@@ -146,6 +147,37 @@ describe('API Service', () => {
 
       const url = getVideoThumbnailUrl(video);
       expect(url).toBeNull();
+    });
+  });
+
+  describe('sanitizeFilename', () => {
+    test('should replace special characters with underscores', () => {
+      expect(sanitizeFilename('video<>:"/\\|?*.mp4')).toBe('video_.mp4');
+    });
+
+    test('should preserve alphanumeric and . - _ characters', () => {
+      expect(sanitizeFilename('my-video_file.MP4')).toBe('my-video_file.MP4');
+    });
+
+    test('should handle empty string', () => {
+      expect(sanitizeFilename('')).toBe('');
+    });
+
+    test('should limit filename length to 200 characters', () => {
+      const longName = 'a'.repeat(300) + '.mp4';
+      expect(sanitizeFilename(longName).length).toBe(200);
+    });
+
+    test('should collapse multiple underscores into one', () => {
+      expect(sanitizeFilename('video   with   spaces.mp4')).toBe('video_with_spaces.mp4');
+    });
+
+    test('should trim leading and trailing whitespace', () => {
+      expect(sanitizeFilename('  video.mp4  ')).toBe('video.mp4');
+    });
+
+    test('should remove path traversal separators', () => {
+      expect(sanitizeFilename('../../etc/passwd.mp4')).toBe('.._.._etc_passwd.mp4');
     });
   });
 
