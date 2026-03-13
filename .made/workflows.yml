@@ -2,7 +2,7 @@ workflows:
 - id: wf_mmozh3te_a0828
   name: Continuous Issue Resolution
   enabled: true
-  schedule: 0 */2 * * *
+  schedule: 0 * * * *
   steps:
   - type: agent
     agent: build
