@@ -81,15 +81,17 @@ function App() {
           />
           <div className="relative bg-black rounded-lg overflow-hidden max-w-4xl w-full mx-4">
             <div className="absolute top-4 right-4 z-10 flex gap-2">
-              <a
-                href={getVideoStreamUrl(selectedVideo.file.name)}
-                download={sanitizeFilename(selectedVideo.file.name)}
-                className="text-white hover:text-gray-300 text-xl p-2"
-                aria-label="Download video"
-                title="Download video"
-              >
-                ↓
-              </a>
+              {selectedVideo.file?.name && (
+                <a
+                  href={getVideoStreamUrl(selectedVideo.file.name)}
+                  download={sanitizeFilename(selectedVideo.file.name)}
+                  className="text-white hover:text-gray-300 text-xl p-2"
+                  aria-label="Download video"
+                  title="Download video"
+                >
+                  ↓
+                </a>
+              )}
               <button 
                 className="text-white hover:text-gray-300 text-2xl font-bold"
                 onClick={handleClosePlayer}
