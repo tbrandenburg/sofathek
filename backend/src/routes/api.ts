@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { config } from '../config';
 import { VideoService } from '../services/videoService';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
@@ -9,10 +10,10 @@ import youtubeRouter from './youtube';
 const router = Router();
 
 // Initialize video service (in production this would come from DI container)
-const videosDirectory = process.env.VIDEOS_PATH || path.join(process.cwd(), 'data', 'videos');
+const videosDirectory = config.videosDir;
 const videoService = new VideoService(videosDirectory);
-const MAX_THUMBNAIL_SIZE = parseInt(process.env.THUMBNAIL_MAX_SIZE || '', 10) || 10 * 1024 * 1024;
-const THUMBNAIL_CACHE_DURATION = parseInt(process.env.THUMBNAIL_CACHE_DURATION || '', 10) || 86400;
+const MAX_THUMBNAIL_SIZE = config.thumbnailMaxSize;
+const THUMBNAIL_CACHE_DURATION = config.thumbnailCacheDuration;
 
 /**
  * GET /api/videos

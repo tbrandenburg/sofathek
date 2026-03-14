@@ -153,14 +153,14 @@ The application stores videos in `backend/data/videos` by default. Create the di
 mkdir -p backend/data/videos
 ```
 
-To customize the video directory, set the `VIDEOS_PATH` environment variable:
+To customize the video directory, set the `VIDEOS_DIR` environment variable:
 
 ```bash
 # Linux/macOS
-export VIDEOS_PATH=/custom/path/to/videos
+export VIDEOS_DIR=/custom/path/to/videos
 
 # Windows (PowerShell)
-$env:VIDEOS_PATH = "C:\custom\path\to\videos"
+$env:VIDEOS_DIR = "C:\custom\path\to\videos"
 ```
 
 ### Docker
@@ -177,7 +177,8 @@ docker run --rm -v sofathek_videos:/data -v $(pwd)/backup:/backup alpine tar czf
 
 ### Environment Variables
 
-Backend environment variables are loaded from `backend/.env` at startup via `backend/src/server.ts` (`import 'dotenv/config'`).
+Backend environment variables are loaded from `backend/.env` at startup and read through centralized config in `backend/src/config.ts`.
+In production mode (`NODE_ENV=production`), startup fails fast if `VIDEOS_DIR` or `TEMP_DIR` is missing.
 Start from the template:
 
 ```bash
@@ -189,9 +190,8 @@ cp backend/.env.example backend/.env
 | `PORT` | `3001` | Backend server port |
 | `NODE_ENV` | `development` | Runtime environment |
 | `LOG_LEVEL` | `info` | Winston logger level |
-| `VIDEOS_PATH` | `backend/data/videos` | Path to video storage directory |
-| `VIDEOS_DIR` | (falls back to `VIDEOS_PATH`) | Alternate env var for videos |
-| `TEMP_DIR` | `backend/data/temp` | Path to temporary/transcoding files |
+| `VIDEOS_DIR` | `/path/to/videos` | Path to video storage directory (required in production) |
+| `TEMP_DIR` | `/path/to/temp` | Path to temporary/transcoding files (required in production) |
 | `ALLOWED_ORIGINS` | `http://localhost:5183` | Comma-separated CORS allowlist for production |
 | `THUMBNAIL_MAX_SIZE` | `10485760` (10MB) | Maximum thumbnail size in bytes; larger files return HTTP 413 |
 | `THUMBNAIL_CACHE_DURATION` | `86400` | Thumbnail cache max-age in seconds |

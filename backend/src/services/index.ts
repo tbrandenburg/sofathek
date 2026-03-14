@@ -4,12 +4,12 @@
 import { YouTubeDownloadService } from './youTubeDownloadService';
 import { DownloadQueueService } from './downloadQueueService';
 import { ThumbnailService } from './thumbnailService';
+import { config } from '../config';
 import { logger } from '../utils/logger';
 import * as path from 'path';
 
-// Environment-based configuration
-const VIDEOS_DIR = process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos');
-const TEMP_DIR = process.env.TEMP_DIR || path.join(process.cwd(), 'data', 'temp');
+const VIDEOS_DIR = config.videosDir;
+const TEMP_DIR = config.tempDir;
 const THUMBNAILS_DIR = path.join(TEMP_DIR, 'thumbnails');
 
 // Initialize services with configured directories

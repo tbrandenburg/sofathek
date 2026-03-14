@@ -3,7 +3,6 @@ import express from 'express';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import healthRouter from '../../../routes/health';
 
 describe('Health Route', () => {
   let app: express.Application;
@@ -22,6 +21,9 @@ describe('Health Route', () => {
       VIDEOS_DIR: videosDir,
       TEMP_DIR: tempDir
     };
+
+    jest.resetModules();
+    const healthRouter = require('../../../routes/health').default;
 
     app = express();
     app.use('/', healthRouter);

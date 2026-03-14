@@ -1,10 +1,11 @@
 import winston from 'winston';
+import { config } from '../config';
 
 /**
  * Winston logger configuration for the application
  */
 export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
+  level: config.logLevel,
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
@@ -21,7 +22,7 @@ export const logger = winston.createLogger({
 
 // If we're not in production then log to the `console` with the format:
 // `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
-if (process.env.NODE_ENV !== 'production') {
+if (config.nodeEnv !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
       winston.format.colorize(),
