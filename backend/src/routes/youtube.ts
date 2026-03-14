@@ -69,10 +69,25 @@ router.get('/queue', catchAsync(async (_req: Request, res: Response) => {
   logger.info('Fetching download queue status');
   
   const queueStatus = downloadQueueService.getQueueStatus();
+
+  const transformedItems = queueStatus.items.map(item => ({
+    ...item,
+    url: item.request.url,
+    title: item.request.title || item.result?.metadata?.title || item.request.url,
+    queuedAt: item.queuedAt instanceof Date ? item.queuedAt.toISOString() : item.queuedAt,
+    startedAt: item.startedAt instanceof Date ? item.startedAt.toISOString() : item.startedAt,
+    completedAt: item.completedAt instanceof Date ? item.completedAt.toISOString() : item.completedAt
+  }));
+
+  const transformedStatus = {
+    ...queueStatus,
+    items: transformedItems,
+    lastUpdated: queueStatus.lastUpdated instanceof Date ? queueStatus.lastUpdated.toISOString() : queueStatus.lastUpdated
+  };
   
   res.json({
     status: 'success',
-    data: queueStatus
+    data: transformedStatus
   });
 }));
 
