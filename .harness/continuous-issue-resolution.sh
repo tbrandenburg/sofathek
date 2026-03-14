@@ -35,8 +35,11 @@ FALLBACK_LOG_FILE="${FALLBACK_LOG_DIR}/${WORKFLOW_SLUG}.log"
 
 LOG_FILE=""
 if { [[ -e "$PREFERRED_LOG_FILE" ]] && [[ -w "$PREFERRED_LOG_FILE" ]]; } || { [[ ! -e "$PREFERRED_LOG_FILE" ]] && [[ -d /var/log ]] && [[ -w /var/log ]]; }; then
-  LOG_FILE="$PREFERRED_LOG_FILE"
-else
+  if : >>"$PREFERRED_LOG_FILE" 2>/dev/null; then
+    LOG_FILE="$PREFERRED_LOG_FILE"
+  fi
+fi
+if [[ -z "$LOG_FILE" ]]; then
   mkdir -p "$FALLBACK_LOG_DIR" 2>/dev/null || true
   if : >>"$FALLBACK_LOG_FILE" 2>/dev/null; then
     LOG_FILE="$FALLBACK_LOG_FILE"
@@ -89,37 +92,37 @@ need_cmd opencode
 
 log INFO "Starting workflow: ${WORKFLOW_NAME}"
 
-# Step 1: agent build
-STEP1_DESCRIPTION="If not on main, switch back to main and do a fresh git pull"
-STEP1_PROMPT="If not on main, switch back to main and do a fresh git pull"
-cmd=(opencode run --format json --agent build)
+# Step 1: bash
+STEP1_DESCRIPTION='git switch main && git pull --rebase --autostash'
+STEP1_PROMPT='git switch main && git pull --rebase --autostash'
+cmd=(opencode run --format json)
 RUN_STEP_PROMPT="$STEP1_PROMPT"
 run_step "$STEP1_DESCRIPTION" "${cmd[@]}"
 
 # Step 2: agent build
-STEP2_DESCRIPTION="Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest open issue on Github and take its investigation comment as the implementation plan"
-STEP2_PROMPT="Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest open issue on Github and take its investigation comment as the implementation plan"
+STEP2_DESCRIPTION='Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest open issue on Github and take its investigation comment as the implementation plan.'
+STEP2_PROMPT='Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest open issue on Github and take its investigation comment as the implementation plan.'
 cmd=(opencode run --format json --agent build)
 RUN_STEP_PROMPT="$STEP2_PROMPT"
 run_step "$STEP2_DESCRIPTION" "${cmd[@]}"
 
 # Step 3: agent build
-STEP3_DESCRIPTION="Follow the instructions in @.opencode/commands/commit-push.md"
-STEP3_PROMPT="Follow the instructions in @.opencode/commands/commit-push.md"
+STEP3_DESCRIPTION='Follow the instructions in @.opencode/commands/commit-push.md'
+STEP3_PROMPT='Follow the instructions in @.opencode/commands/commit-push.md'
 cmd=(opencode run --format json --agent build)
 RUN_STEP_PROMPT="$STEP3_PROMPT"
 run_step "$STEP3_DESCRIPTION" "${cmd[@]}"
 
 # Step 4: agent build
-STEP4_DESCRIPTION="Only if the latest PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md"
-STEP4_PROMPT="Only if the latest PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md"
+STEP4_DESCRIPTION='Only if the latest PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md'
+STEP4_PROMPT='Only if the latest PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md'
 cmd=(opencode run --format json --agent build)
 RUN_STEP_PROMPT="$STEP4_PROMPT"
 run_step "$STEP4_DESCRIPTION" "${cmd[@]}"
 
 # Step 5: agent build
-STEP5_DESCRIPTION="Follow the instructions in @.opencode/commands/prp-review.md for the latest PR."
-STEP5_PROMPT="Follow the instructions in @.opencode/commands/prp-review.md for the latest PR."
+STEP5_DESCRIPTION='Follow the instructions in @.opencode/commands/prp-review.md for the latest PR.'
+STEP5_PROMPT='Follow the instructions in @.opencode/commands/prp-review.md for the latest PR.'
 cmd=(opencode run --format json --agent build)
 RUN_STEP_PROMPT="$STEP5_PROMPT"
 run_step "$STEP5_DESCRIPTION" "${cmd[@]}"
@@ -138,10 +141,10 @@ cmd=(opencode run --format json --agent build)
 RUN_STEP_PROMPT="$STEP7_PROMPT"
 run_step "$STEP7_DESCRIPTION" "${cmd[@]}"
 
-# Step 8: agent build
-STEP8_DESCRIPTION="Switch back to main and do a fresh git pull"
-STEP8_PROMPT="Switch back to main and do a fresh git pull"
-cmd=(opencode run --format json --agent build)
+# Step 8: bash
+STEP8_DESCRIPTION='git switch main && git pull --rebase --autostash'
+STEP8_PROMPT='git switch main && git pull --rebase --autostash'
+cmd=(opencode run --format json)
 RUN_STEP_PROMPT="$STEP8_PROMPT"
 run_step "$STEP8_DESCRIPTION" "${cmd[@]}"
 

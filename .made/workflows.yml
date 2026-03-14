@@ -4,14 +4,13 @@ workflows:
   enabled: true
   schedule: 0 * * * *
   steps:
-  - type: agent
-    agent: build
-    prompt: If not on main, switch back to main and do a fresh git pull
+  - type: bash
+    run: git switch main && git pull --rebase --autostash
   - type: agent
     agent: build
     prompt: Follow the instructions in @.opencode/commands/prp-issue-fix.md for the
       latest open issue on Github and take its investigation comment as the implementation
-      plan
+      plan.
   - type: agent
     agent: build
     prompt: Follow the instructions in @.opencode/commands/commit-push.md
@@ -31,7 +30,6 @@ workflows:
     agent: build
     prompt: Use the `gh` CLI to try to merge the latest PR. If any PR was processed,
       send a telegram message on the outcome.
-  - type: agent
-    agent: build
-    prompt: Switch back to main and do a fresh git pull
+  - type: bash
+    run: git switch main && git pull --rebase --autostash
   shellScriptPath: .harness/continuous-issue-resolution.sh
