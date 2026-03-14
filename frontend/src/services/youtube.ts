@@ -107,10 +107,10 @@ export async function getDownloadQueue(): Promise<QueueStatus> {
 
 /**
  * Get download status for a specific item
- * GET /api/youtube/status/:id
+ * GET /api/youtube/download/:id/status
  */
 export async function getDownloadStatus(itemId: string): Promise<QueueItem> {
-  const response = await youtubeApiFetch<QueueItem>(`/youtube/status/${encodeURIComponent(itemId)}`);
+  const response = await youtubeApiFetch<QueueItem>(`/youtube/download/${encodeURIComponent(itemId)}/status`);
   
   if (response.status !== 'success' || !response.data) {
     throw new ApiError(response.message || `Download item '${itemId}' not found`);
