@@ -119,8 +119,14 @@ jobs:
         run: make playwright-install
         
       - name: Start development servers in background
+        env:
+          VIDEOS_DIR: /tmp/sofathek-videos
+          TEMP_DIR: /tmp/sofathek-temp
         run: |
           echo "Starting servers with Make commands (like local development)..."
+
+          # Create temp directories for health checks
+          mkdir -p /tmp/sofathek-videos /tmp/sofathek-temp
           
           # Use make dev command which works locally
           make dev &
