@@ -77,8 +77,16 @@ export function VideoPlayer({
     onEnded?.();
   };
 
-  // Get streaming URL for the video
-  const streamingUrl = getVideoStreamUrl(video.file.name);
+  // Get streaming URL for the video - defensive check for malformed payloads
+  const hasValidFile = video.file?.name != null;
+  const streamingUrl = hasValidFile ? getVideoStreamUrl(video.file.name) : undefined;
+  const fileSizeText = typeof video.file?.size === 'number'
+    ? `${(video.file.size / (1024 * 1024)).toFixed(1)} MB`
+    : 'Unknown';
+  const formatText = video.metadata.format || (video.file?.extension ? video.file.extension.toUpperCase() : 'Unknown');
+  const lastModifiedText = video.file?.lastModified
+    ? new Date(video.file.lastModified).toLocaleDateString()
+    : 'Unknown';
 
   return (
     <div className={`video-player ${className}`}>
@@ -133,7 +141,8 @@ export function VideoPlayer({
         >
           <p>
             Your browser does not support the video tag. 
-            <a href={streamingUrl} download>Download the video</a> instead.
+            {hasValidFile && <a href={streamingUrl} download>Download the video</a>}
+            {!hasValidFile && <span>Video unavailable</span>} instead.
           </p>
         </video>
 
@@ -155,15 +164,15 @@ export function VideoPlayer({
       <div className="video-metadata">
         <div className="metadata-item">
           <span className="metadata-label">File Size:</span>
-          <span className="metadata-value">{(video.file.size / (1024 * 1024)).toFixed(1)} MB</span>
+          <span className="metadata-value">{fileSizeText}</span>
         </div>
         <div className="metadata-item">
           <span className="metadata-label">Format:</span>
-          <span className="metadata-value">{video.metadata.format || video.file.extension.toUpperCase()}</span>
+          <span className="metadata-value">{formatText}</span>
         </div>
         <div className="metadata-item">
           <span className="metadata-label">Last Modified:</span>
-          <span className="metadata-value">{new Date(video.file.lastModified).toLocaleDateString()}</span>
+          <span className="metadata-value">{lastModifiedText}</span>
         </div>
       </div>
     </div>
