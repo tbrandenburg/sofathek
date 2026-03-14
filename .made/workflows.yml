@@ -25,11 +25,12 @@ workflows:
   - type: agent
     agent: build
     prompt: Raise new Github issues with `gh` CLI if the PR review comments of the
-      latest PR came up with high or critical priority findings.
+      latest PR came up with high or critical priority findings, failing CI or merge
+      blockers.
   - type: agent
     agent: build
-    prompt: Use the `gh` CLI to merge the latest PR if it was approved by the latest
-      comment. If any PR was processed, send a telegram message on the outcome.
+    prompt: Use the `gh` CLI to try to merge the latest PR. If any PR was processed,
+      send a telegram message on the outcome.
   - type: agent
     agent: build
     prompt: Switch back to main and do a fresh git pull
