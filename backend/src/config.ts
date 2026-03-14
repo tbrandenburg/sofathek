@@ -1,34 +1,66 @@
 import 'dotenv/config';
+import path from 'path';
 
-interface Config {
+export interface Config {
   port: number;
   nodeEnv: string;
   logLevel: string;
   videosDir: string;
   tempDir: string;
+  thumbnailsDir: string;
   allowedOrigins: string[];
   thumbnailMaxSize: number;
   thumbnailCacheDuration: number;
+  ffmpegPath: string;
+  ffprobePath: string;
+}
+
+function parseIntOrDefault(value: string | undefined, defaultValue: number): number {
+  if (!value) {
+    return defaultValue;
+  }
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? defaultValue : parsed;
+}
+
+function validateDir(dir: string, name: string): void {
+  if (!dir || typeof dir !== 'string') {
+    throw new Error(`Invalid ${name}: ${dir}`);
+  }
+}
+
+function parseAllowedOrigins(value: string | undefined): string[] {
+  if (!value) {
+    return ['http://localhost:5183'];
+  }
+
+  return value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 }
 
 function getConfig(): Config {
-  const requiredVars = ['VIDEOS_DIR', 'TEMP_DIR'];
-  const missing = requiredVars.filter((v) => !process.env[v]);
-
-  if (missing.length > 0 && process.env.NODE_ENV === 'production') {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-  }
+  const videosDir = process.env.VIDEOS_DIR || process.env.VIDEOS_PATH || path.join(process.cwd(), 'data', 'videos');
+  const tempDir = process.env.TEMP_DIR || path.join(process.cwd(), 'data', 'temp');
 
   return {
-    port: parseInt(process.env.PORT || '3001', 10),
+    port: parseIntOrDefault(process.env.PORT, 3001),
     nodeEnv: process.env.NODE_ENV || 'development',
     logLevel: process.env.LOG_LEVEL || 'info',
-    videosDir: process.env.VIDEOS_DIR || '/path/to/videos',
-    tempDir: process.env.TEMP_DIR || '/path/to/temp',
-    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5183'],
-    thumbnailMaxSize: parseInt(process.env.THUMBNAIL_MAX_SIZE || '', 10) || 10 * 1024 * 1024,
-    thumbnailCacheDuration: parseInt(process.env.THUMBNAIL_CACHE_DURATION || '', 10) || 86400,
+    videosDir,
+    tempDir,
+    thumbnailsDir: path.join(tempDir, 'thumbnails'),
+    allowedOrigins: parseAllowedOrigins(process.env.ALLOWED_ORIGINS),
+    thumbnailMaxSize: parseIntOrDefault(process.env.THUMBNAIL_MAX_SIZE, 10 * 1024 * 1024),
+    thumbnailCacheDuration: parseIntOrDefault(process.env.THUMBNAIL_CACHE_DURATION, 86400),
+    ffmpegPath: process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
+    ffprobePath: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
   };
 }
 
 export const config = getConfig();
+
+validateDir(config.videosDir, 'VIDEOS_DIR');
+validateDir(config.tempDir, 'TEMP_DIR');
+validateDir(config.thumbnailsDir, 'THUMBNAILS_DIR');

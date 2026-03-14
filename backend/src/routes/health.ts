@@ -91,7 +91,7 @@ router.get('/', catchAsync(async (_req: Request, res: Response) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'sofathek-backend',
-    version: process.env.npm_package_version || '1.0.0',
+    version: config.nodeEnv === 'development' ? '1.0.0' : (process.env.npm_package_version || '1.0.0'),
     environment: config.nodeEnv,
     uptime: process.uptime(),
     system: {

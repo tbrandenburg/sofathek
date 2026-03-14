@@ -6,16 +6,11 @@ import { DownloadQueueService } from './downloadQueueService';
 import { ThumbnailService } from './thumbnailService';
 import { config } from '../config';
 import { logger } from '../utils/logger';
-import * as path from 'path';
-
-const VIDEOS_DIR = config.videosDir;
-const TEMP_DIR = config.tempDir;
-const THUMBNAILS_DIR = path.join(TEMP_DIR, 'thumbnails');
 
 // Initialize services with configured directories
-export const thumbnailService = new ThumbnailService(TEMP_DIR, THUMBNAILS_DIR);
-export const youTubeDownloadService = new YouTubeDownloadService(VIDEOS_DIR, TEMP_DIR, thumbnailService);
-export const downloadQueueService = new DownloadQueueService(TEMP_DIR, youTubeDownloadService);
+export const thumbnailService = new ThumbnailService(config.tempDir, config.thumbnailsDir);
+export const youTubeDownloadService = new YouTubeDownloadService(config.videosDir, config.tempDir, thumbnailService);
+export const downloadQueueService = new DownloadQueueService(config.tempDir, youTubeDownloadService);
 
 // Initialize queue service
 downloadQueueService.initialize().catch(error => {
