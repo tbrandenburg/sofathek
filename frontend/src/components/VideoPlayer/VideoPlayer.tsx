@@ -78,15 +78,10 @@ export function VideoPlayer({
   };
 
   // Get streaming URL for the video - defensive check for malformed payloads
-  const hasValidFile = video.file?.name != null;
-  const streamingUrl = hasValidFile ? getVideoStreamUrl(video.file.name) : undefined;
-  const fileSizeText = typeof video.file?.size === 'number'
-    ? `${(video.file.size / (1024 * 1024)).toFixed(1)} MB`
-    : 'Unknown';
-  const formatText = video.metadata.format || (video.file?.extension ? video.file.extension.toUpperCase() : 'Unknown');
-  const lastModifiedText = video.file?.lastModified
-    ? new Date(video.file.lastModified).toLocaleDateString()
-    : 'Unknown';
+  const videoFileName = video.file?.name;
+  const hasValidFile = Boolean(videoFileName);
+  const streamingUrl = videoFileName ? getVideoStreamUrl(videoFileName) : '';
+  const formatText = video.metadata.format || video.file?.extension?.toUpperCase() || 'Unknown';
 
   return (
     <div className={`video-player ${className}`}>
@@ -164,7 +159,9 @@ export function VideoPlayer({
       <div className="video-metadata">
         <div className="metadata-item">
           <span className="metadata-label">File Size:</span>
-          <span className="metadata-value">{fileSizeText}</span>
+          {video.file?.size !== undefined && (
+            <span className="metadata-value">{((video.file.size || 0) / (1024 * 1024)).toFixed(1)} MB</span>
+          )}
         </div>
         <div className="metadata-item">
           <span className="metadata-label">Format:</span>
@@ -172,7 +169,9 @@ export function VideoPlayer({
         </div>
         <div className="metadata-item">
           <span className="metadata-label">Last Modified:</span>
-          <span className="metadata-value">{lastModifiedText}</span>
+          {video.file?.lastModified && (
+            <span className="metadata-value">{new Date(video.file.lastModified).toLocaleDateString()}</span>
+          )}
         </div>
       </div>
     </div>
