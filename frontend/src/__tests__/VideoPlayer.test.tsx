@@ -42,6 +42,9 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
     } as unknown as Video;
 
     expect(() => render(<VideoPlayer video={malformedVideo} />)).not.toThrow();
+
+    const downloadLink = document.querySelector('a[download]');
+    expect(downloadLink?.getAttribute('download')).toBeFalsy();
   });
 
   test('should hide download link when file.name is absent', () => {
@@ -91,5 +94,26 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
 
     const title = screen.getByText('Test Video');
     expect(title).toBeDefined();
+  });
+
+  test('should handle missing optional file properties gracefully', () => {
+    const partialVideo = {
+      id: 'test-video',
+      file: {
+        name: 'test.mp4',
+        size: undefined,
+        path: '/videos/test.mp4',
+        extension: 'mp4',
+        lastModified: undefined
+      },
+      metadata: {
+        title: 'Test Video',
+        width: 1920,
+        height: 1080
+      },
+      viewCount: 0
+    } as unknown as Video;
+
+    expect(() => render(<VideoPlayer video={partialVideo} />)).not.toThrow();
   });
 });
