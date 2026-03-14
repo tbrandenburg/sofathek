@@ -174,6 +174,69 @@ describe('VideoService', () => {
     });
   });
 
+  describe('findThumbnailsBatch', () => {
+    const testVideos = [
+      {
+        path: '/test/videos/movie1.mp4',
+        name: 'movie1.mp4',
+        extension: 'mp4',
+        size: 1000,
+        lastModified: new Date('2024-01-01')
+      },
+      {
+        path: '/test/videos/movie2.mp4',
+        name: 'movie2.mp4',
+        extension: 'mp4',
+        size: 2000,
+        lastModified: new Date('2024-01-01')
+      },
+      {
+        path: '/test/videos/subfolder/movie3.mp4',
+        name: 'movie3.mp4',
+        extension: 'mp4',
+        size: 3000,
+        lastModified: new Date('2024-01-01')
+      }
+    ];
+
+    it('should find thumbnails for videos in same directory', async () => {
+      mockFs.readdir
+        .mockResolvedValueOnce(['movie1.mp4', 'movie1.jpg', 'movie2.png', 'thumb.png'] as any)
+        .mockResolvedValueOnce(['movie3.mp4', 'movie3.webp'] as any);
+
+      const result = await videoService.findThumbnailsBatch(testVideos as any);
+
+      expect(result.get('/test/videos/movie1.mp4')).toBe('movie1.jpg');
+      expect(result.get('/test/videos/movie2.mp4')).toBe('movie2.png');
+      expect(result.get('/test/videos/subfolder/movie3.mp4')).toBe('movie3.webp');
+    });
+
+    it('should cache directory scans', async () => {
+      mockFs.readdir.mockResolvedValue(['movie1.mp4', 'movie1.jpg'] as any);
+
+      await videoService.findThumbnailsBatch(testVideos.slice(0, 1) as any);
+      await videoService.findThumbnailsBatch(testVideos.slice(0, 1) as any);
+
+      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle missing thumbnails gracefully', async () => {
+      mockFs.readdir.mockResolvedValue(['movie1.mp4', 'other.jpg'] as any);
+
+      const result = await videoService.findThumbnailsBatch(testVideos.slice(0, 1) as any);
+
+      expect(result.has('/test/videos/movie1.mp4')).toBe(false);
+    });
+
+    it('should handle directory scan errors gracefully', async () => {
+      mockFs.readdir.mockRejectedValue(new Error('Permission denied'));
+
+      const result = await videoService.findThumbnailsBatch(testVideos.slice(0, 1) as any);
+
+      expect(result.size).toBe(0);
+    });
+  });
+
   describe('Path Resolution', () => {
     const originalCwd = process.cwd;
     const originalEnv = process.env;
