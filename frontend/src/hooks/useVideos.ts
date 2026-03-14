@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getVideos, getVideoById } from '../services/api';
 import { Video, VideoScanResult } from '../types';
 
@@ -6,76 +6,27 @@ import { Video, VideoScanResult } from '../types';
  * Hook for fetching the complete video library
  */
 export function useVideos() {
-  const [data, setData] = useState<VideoScanResult | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchVideos = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const result = await getVideos();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch videos'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchVideos();
-  }, [fetchVideos]);
-
-  return {
-    data,
-    isLoading,
-    error,
-    refetch: fetchVideos,
-  };
+  return useQuery<VideoScanResult>({
+    queryKey: ['videos'],
+    queryFn: getVideos,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: true,
+  });
 }
 
 /**
  * Hook for fetching a specific video by ID
  */
 export function useVideo(id: string) {
-  const [data, setData] = useState<Video | null>(null);
-  const [isLoading, setIsLoading] = useState(!!id);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchVideo = useCallback(async () => {
-    if (!id) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const video = await getVideoById(id);
-      setData(video);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch video'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (id) {
-      fetchVideo();
-    } else {
-      setData(null);
-      setIsLoading(false);
-      setError(null);
-    }
-  }, [id, fetchVideo]);
-
-  return {
-    data,
-    isLoading,
-    error,
-    refetch: fetchVideo,
-  };
+  return useQuery<Video>({
+    queryKey: ['video', id],
+    queryFn: () => getVideoById(id),
+    enabled: !!id,
+    staleTime: 60000,
+    retry: 2,
+  });
 }
 
 /**

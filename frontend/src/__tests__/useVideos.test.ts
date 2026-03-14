@@ -1,5 +1,8 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement } from 'react';
+import type { ReactNode } from 'react';
 import { useVideos, useVideo, useVideoStats } from '../hooks/useVideos';
 import { getVideos, getVideoById } from '../services/api';
 import { VideoScanResult, Video } from '../types';
@@ -12,6 +15,23 @@ vi.mock('../services/api', () => ({
 
 const mockGetVideos = vi.mocked(getVideos);
 const mockGetVideoById = vi.mocked(getVideoById);
+
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+
+  return function QueryWrapper({ children }: { children: ReactNode }) {
+    return createElement(QueryClientProvider, { client: queryClient }, children);
+  };
+}
 
 describe('useVideos Hook', () => {
   beforeEach(() => {
@@ -36,11 +56,11 @@ describe('useVideos Hook', () => {
 
       mockGetVideos.mockResolvedValueOnce(mockVideosResult);
 
-      const { result } = renderHook(() => useVideos());
+      const { result } = renderHook(() => useVideos(), { wrapper: createWrapper() });
 
       // Initially loading
       expect(result.current.isLoading).toBe(true);
-      expect(result.current.data).toBeNull();
+      expect(result.current.data).toBeUndefined();
       expect(result.current.error).toBeNull();
 
       // Wait for resolution
@@ -55,16 +75,20 @@ describe('useVideos Hook', () => {
 
     test('should handle error state', async () => {
       const mockError = new Error('Failed to fetch videos');
-      mockGetVideos.mockRejectedValueOnce(mockError);
+      mockGetVideos.mockRejectedValue(mockError);
 
-      const { result } = renderHook(() => useVideos());
+      const { result } = renderHook(() => useVideos(), { wrapper: createWrapper() });
 
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
+      await waitFor(
+        () => {
+          expect(result.current.isError).toBe(true);
+        },
+        { timeout: 5000 }
+      );
 
-      expect(result.current.data).toBeNull();
+      expect(result.current.data).toBeUndefined();
       expect(result.current.error).toEqual(mockError);
+      expect(mockGetVideos).toHaveBeenCalledTimes(3);
     });
 
     test('should allow refetch', async () => {
@@ -75,7 +99,7 @@ describe('useVideos Hook', () => {
         scannedAt: new Date()
       });
 
-      const { result } = renderHook(() => useVideos());
+      const { result } = renderHook(() => useVideos(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -104,11 +128,11 @@ describe('useVideos Hook', () => {
 
       mockGetVideoById.mockResolvedValueOnce(mockVideo);
 
-      const { result } = renderHook(() => useVideo('test-1'));
+      const { result } = renderHook(() => useVideo('test-1'), { wrapper: createWrapper() });
 
       // Initially loading
       expect(result.current.isLoading).toBe(true);
-      expect(result.current.data).toBeNull();
+      expect(result.current.data).toBeUndefined();
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -120,10 +144,10 @@ describe('useVideos Hook', () => {
     });
 
     test('should not fetch when id is empty', () => {
-      const { result } = renderHook(() => useVideo(''));
+      const { result } = renderHook(() => useVideo(''), { wrapper: createWrapper() });
 
       expect(result.current.isLoading).toBe(false);
-      expect(result.current.data).toBeNull();
+      expect(result.current.data).toBeUndefined();
       expect(result.current.error).toBeNull();
       expect(mockGetVideoById).not.toHaveBeenCalled();
     });
@@ -138,7 +162,7 @@ describe('useVideos Hook', () => {
 
       const { result, rerender } = renderHook(
         ({ id }) => useVideo(id),
-        { initialProps: { id: 'test-1' } }
+        { initialProps: { id: 'test-1' }, wrapper: createWrapper() }
       );
 
       await waitFor(() => {
@@ -181,7 +205,7 @@ describe('useVideos Hook', () => {
 
       mockGetVideos.mockResolvedValueOnce(mockVideos);
 
-      const { result } = renderHook(() => useVideoStats());
+      const { result } = renderHook(() => useVideoStats(), { wrapper: createWrapper() });
 
       // Initially loading
       expect(result.current.isLoading).toBe(true);
@@ -212,7 +236,7 @@ describe('useVideos Hook', () => {
 
       mockGetVideos.mockResolvedValueOnce(mockVideos);
 
-      const { result } = renderHook(() => useVideoStats());
+      const { result } = renderHook(() => useVideoStats(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -226,7 +250,7 @@ describe('useVideos Hook', () => {
     test('should return zero stats when loading', () => {
       mockGetVideos.mockImplementation(() => new Promise(() => {})); // Never resolves
 
-      const { result } = renderHook(() => useVideoStats());
+      const { result } = renderHook(() => useVideoStats(), { wrapper: createWrapper() });
 
       expect(result.current.isLoading).toBe(true);
       expect(result.current.totalVideos).toBe(0);
