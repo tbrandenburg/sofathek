@@ -111,6 +111,59 @@ describe('YouTube Routes', () => {
       expect(response.body.status).toBe('success');
       expect(response.body.data.totalItems).toBe(5);
       expect(response.body.data.processing).toBe(1);
+      expect(response.body.data.lastUpdated).toBe('2026-03-02T20:00:00.000Z');
+    });
+
+    it('should transform queue items with top-level url and title fields', async () => {
+      const mockQueueStatus = {
+        totalItems: 1,
+        processing: 0,
+        completed: 1,
+        failed: 0,
+        pending: 0,
+        cancelled: 0,
+        items: [{
+          id: 'queue-123',
+          request: {
+            url: 'https://www.youtube.com/watch?v=test123',
+            requestedAt: new Date('2026-03-02T20:00:00Z'),
+            requestId: 'req-123'
+          },
+          status: 'completed' as const,
+          progress: 100,
+          currentStep: 'Completed',
+          result: {
+            id: 'download-123',
+            status: 'success' as const,
+            videoPath: '/tmp/test.mp4',
+            metadata: {
+              id: 'test123',
+              title: 'Video From Metadata'
+            },
+            startedAt: new Date('2026-03-02T20:01:00Z'),
+            completedAt: new Date('2026-03-02T20:02:00Z')
+          },
+          queuedAt: new Date('2026-03-02T20:00:00Z'),
+          startedAt: new Date('2026-03-02T20:01:00Z'),
+          completedAt: new Date('2026-03-02T20:02:00Z')
+        }],
+        lastUpdated: new Date('2026-03-02T20:03:00Z')
+      };
+
+      mockDownloadQueueService.getQueueStatus.mockReturnValue(mockQueueStatus);
+
+      const response = await request(app)
+        .get('/api/youtube/queue');
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.items).toHaveLength(1);
+      expect(response.body.data.items[0].url).toBe('https://www.youtube.com/watch?v=test123');
+      expect(response.body.data.items[0].title).toBe('Video From Metadata');
+      expect(response.body.data.items[0].queuedAt).toBe('2026-03-02T20:00:00.000Z');
+      expect(response.body.data.items[0].startedAt).toBe('2026-03-02T20:01:00.000Z');
+      expect(response.body.data.items[0].completedAt).toBe('2026-03-02T20:02:00.000Z');
+      expect(response.body.data.lastUpdated).toBe('2026-03-02T20:03:00.000Z');
     });
   });
 
