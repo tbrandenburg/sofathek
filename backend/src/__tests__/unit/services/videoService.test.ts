@@ -132,6 +132,77 @@ describe('VideoService', () => {
     });
   });
 
+  describe('findThumbnail (case sensitivity)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should find thumbnail with exact case match', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.jpg');
+      expect(mockFs.access).toHaveBeenCalledWith('/test/videos/Video.jpg');
+    });
+
+    it('should find thumbnail with case mismatch (case-insensitive)', async () => {
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockResolvedValue(['video.jpg', 'other.png'] as any);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('video.jpg');
+    });
+
+    it('should prefer exact case match over case-insensitive', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.jpg');
+      expect(mockFs.readdir).not.toHaveBeenCalled();
+    });
+
+    it('should handle all caps video name', async () => {
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockResolvedValue(['video.png', 'other.jpg'] as any);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/VIDEO.AVI');
+
+      expect(result).toBe('video.png');
+    });
+
+    it('should return null when no thumbnail exists', async () => {
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockResolvedValue(['other.jpg', 'readme.txt'] as any);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/MyVideo.mp4');
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle different thumbnail extensions', async () => {
+      mockFs.access
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockResolvedValueOnce(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.png');
+    });
+
+    it('should return null when directory read fails', async () => {
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockRejectedValue(new Error('EACCES'));
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('getVideoMetadata', () => {
     it('should return metadata for valid video file', async () => {
       mockFs.stat.mockResolvedValue({
