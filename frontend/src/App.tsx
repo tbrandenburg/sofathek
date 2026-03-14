@@ -83,8 +83,8 @@ function App() {
             <div className="absolute top-4 right-4 z-10 flex gap-2">
               {selectedVideo.file?.name && (
                 <a
-                  href={selectedVideo.file?.name ? getVideoStreamUrl(selectedVideo.file.name) : '#'}
-                  download={selectedVideo.file?.name ? sanitizeFilename(selectedVideo.file.name) : undefined}
+                  href={getVideoStreamUrl(selectedVideo.file.name)}
+                  download={sanitizeFilename(selectedVideo.file.name)}
                   className="text-white hover:text-gray-300 text-xl p-2"
                   aria-label="Download video"
                   title="Download video"

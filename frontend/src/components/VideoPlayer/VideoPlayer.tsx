@@ -164,22 +164,22 @@ export function VideoPlayer({
       </div>
 
       <div className="video-metadata">
-        <div className="metadata-item">
-          <span className="metadata-label">File Size:</span>
-          {video.file?.size !== undefined && (
-            <span className="metadata-value">{((video.file.size || 0) / (1024 * 1024)).toFixed(1)} MB</span>
-          )}
-        </div>
+        {video.file?.size !== undefined && (
+          <div className="metadata-item">
+            <span className="metadata-label">File Size:</span>
+            <span className="metadata-value">{(video.file.size / (1024 * 1024)).toFixed(1)} MB</span>
+          </div>
+        )}
         <div className="metadata-item">
           <span className="metadata-label">Format:</span>
           <span className="metadata-value">{formatText}</span>
         </div>
-        <div className="metadata-item">
-          <span className="metadata-label">Last Modified:</span>
-          {video.file?.lastModified && (
+        {video.file?.lastModified && (
+          <div className="metadata-item">
+            <span className="metadata-label">Last Modified:</span>
             <span className="metadata-value">{new Date(video.file.lastModified).toLocaleDateString()}</span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -143,4 +143,54 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
 
     expect(() => render(<VideoPlayer video={partialVideo} />)).not.toThrow();
   });
+
+  test('should show Unknown format when metadata format and file extension are missing', () => {
+    const malformedVideo = {
+      id: 'test-video',
+      file: {
+        name: 'test.mp4',
+        size: 1024000,
+        path: '/videos/test.mp4',
+        extension: undefined,
+        lastModified: new Date()
+      },
+      metadata: {
+        title: 'Test Video',
+        width: 1920,
+        height: 1080,
+        format: undefined
+      },
+      viewCount: 0
+    } as unknown as Video;
+
+    render(<VideoPlayer video={malformedVideo} />);
+
+    const formatLabel = screen.getByText('Format:');
+    const formatRow = formatLabel.closest('.metadata-item');
+    expect(formatRow?.textContent).toContain('Unknown');
+  });
+
+  test('should hide file metadata rows when optional file properties are missing', () => {
+    const malformedVideo = {
+      id: 'test-video',
+      file: {
+        name: 'test.mp4',
+        size: undefined,
+        path: '/videos/test.mp4',
+        extension: 'mp4',
+        lastModified: undefined
+      },
+      metadata: {
+        title: 'Test Video',
+        width: 1920,
+        height: 1080
+      },
+      viewCount: 0
+    } as unknown as Video;
+
+    render(<VideoPlayer video={malformedVideo} />);
+
+    expect(screen.queryByText('File Size:')).toBeNull();
+    expect(screen.queryByText('Last Modified:')).toBeNull();
+  });
 });
