@@ -149,6 +149,7 @@ backend/temp/
 data/videos/
 .claude/
 dev/
+.worktrees/
 
 # Build artifacts
 build/
