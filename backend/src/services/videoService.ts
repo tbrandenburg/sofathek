@@ -15,6 +15,9 @@ import {
  */
 export class VideoService {
   private readonly videosDirectory: string;
+  private thumbnailCache: Map<string, { files: string[]; timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 5 * 60 * 1000;
+  private readonly THUMBNAIL_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
 
   constructor(videosDirectory: string) {
     this.videosDirectory = videosDirectory;
@@ -27,6 +30,7 @@ export class VideoService {
     const errors: string[] = [];
     const videos: Video[] = [];
     let totalSize = 0;
+    const videoFiles: VideoFile[] = [];
 
     try {
       // Ensure directory exists
@@ -35,7 +39,7 @@ export class VideoService {
       // Read directory contents
       const files = await fs.readdir(this.videosDirectory);
 
-      // Process each file
+      // First pass: collect all video files
       for (const filename of files) {
         try {
           const filePath = path.join(this.videosDirectory, filename);
@@ -52,16 +56,25 @@ export class VideoService {
 
           // Create video file info
           const videoFile = await this.createVideoFile(filePath, filename, stats);
-          const metadata = await this.extractMetadata(videoFile);
-          const video = this.createVideo(videoFile, metadata);
-
-          videos.push(video);
-          totalSize += videoFile.size;
+          videoFiles.push(videoFile);
 
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           errors.push(`Error processing ${filename}: ${errorMessage}`);
         }
+      }
+
+      // Second pass: resolve thumbnails in batches per directory
+      const thumbnailMap = await this.findThumbnailsBatch(videoFiles);
+
+      // Third pass: create videos with metadata
+      for (const videoFile of videoFiles) {
+        const thumbnail = thumbnailMap.get(videoFile.path) ?? null;
+        const metadata = await this.extractMetadata(videoFile, thumbnail);
+        const video = this.createVideo(videoFile, metadata);
+
+        videos.push(video);
+        totalSize += videoFile.size;
       }
 
     } catch (error) {
@@ -154,7 +167,7 @@ export class VideoService {
    * For Phase 1, we'll use basic filename-based metadata
    * Future phases can integrate ffprobe for detailed video analysis
    */
-  private async extractMetadata(videoFile: VideoFile): Promise<VideoMetadata> {
+  private async extractMetadata(videoFile: VideoFile, existingThumbnail?: string | null): Promise<VideoMetadata> {
     const nameWithoutExt = path.basename(videoFile.name, path.extname(videoFile.name));
     
     const title = nameWithoutExt
@@ -163,7 +176,9 @@ export class VideoService {
       .trim();
 
     // Check for existing thumbnail (jpg, jpeg, png, webp)
-    const thumbnail = await this.findThumbnail(videoFile.path);
+    const thumbnail = existingThumbnail !== undefined
+      ? existingThumbnail
+      : await this.findThumbnail(videoFile.path);
 
     return {
       title,
@@ -179,9 +194,8 @@ export class VideoService {
   private async findThumbnail(videoPath: string): Promise<string | null> {
     const videoDir = path.dirname(videoPath);
     const baseName = path.basename(videoPath, path.extname(videoPath));
-    const extensions = ['.jpg', '.jpeg', '.png', '.webp'];
     
-    for (const ext of extensions) {
+    for (const ext of this.THUMBNAIL_EXTENSIONS) {
       const thumbPath = path.join(videoDir, baseName + ext);
       try {
         await fs.access(thumbPath);
@@ -193,6 +207,66 @@ export class VideoService {
     }
     
     return null;
+  }
+
+  private groupVideosByDirectory(videos: VideoFile[]): Map<string, VideoFile[]> {
+    const groups = new Map<string, VideoFile[]>();
+
+    for (const video of videos) {
+      const dir = path.dirname(video.path);
+      if (!groups.has(dir)) {
+        groups.set(dir, []);
+      }
+      groups.get(dir)!.push(video);
+    }
+
+    return groups;
+  }
+
+  private isImageFile(filename: string): boolean {
+    const ext = path.extname(filename).toLowerCase();
+    return this.THUMBNAIL_EXTENSIONS.includes(ext);
+  }
+
+  private async getOrScanDirectory(dir: string): Promise<string[]> {
+    const cached = this.thumbnailCache.get(dir);
+    const now = Date.now();
+
+    if (cached && (now - cached.timestamp) < this.CACHE_TTL) {
+      return cached.files;
+    }
+
+    try {
+      const files = await fs.readdir(dir);
+      this.thumbnailCache.set(dir, { files, timestamp: now });
+      return files;
+    } catch {
+      return [];
+    }
+  }
+
+  async findThumbnailsBatch(videos: VideoFile[]): Promise<Map<string, string>> {
+    const results = new Map<string, string>();
+    const dirGroups = this.groupVideosByDirectory(videos);
+
+    for (const [dir, videoFiles] of dirGroups) {
+      const files = await this.getOrScanDirectory(dir);
+      const fileSet = new Set(files.filter(file => this.isImageFile(file)));
+
+      for (const videoFile of videoFiles) {
+        const baseName = path.basename(videoFile.path, path.extname(videoFile.path));
+
+        for (const ext of this.THUMBNAIL_EXTENSIONS) {
+          const candidate = baseName + ext;
+          if (fileSet.has(candidate)) {
+            results.set(videoFile.path, candidate);
+            break;
+          }
+        }
+      }
+    }
+
+    return results;
   }
 
   /**
