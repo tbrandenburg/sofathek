@@ -29,7 +29,7 @@ function App() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
 
-  const videos = videosResult?.videos || [];
+  const videos = videosResult?.videos ?? [];
 
   // Handle video selection
   const handleVideoSelect = (video: Video) => {
