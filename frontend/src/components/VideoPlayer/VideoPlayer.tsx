@@ -94,7 +94,7 @@ export function VideoPlayer({
       </div>
 
       <div className="video-container">
-        {isLoading && (
+        {hasValidFile && isLoading && (
           <div className="video-loading">
             <div className="loading-spinner"></div>
             <p>Loading video...</p>
@@ -120,28 +120,35 @@ export function VideoPlayer({
           </div>
         )}
 
-        <video
-          ref={videoRef}
-          src={streamingUrl}
-          controls={controls}
-          autoPlay={autoplay}
-          onLoadStart={handleLoadStart}
-          onLoadedData={handleLoadedData}
-          onError={handleError}
-          onPlay={handlePlay}
-          onPause={handlePause}
-          onEnded={handleEnded}
-          className="video-element"
-          style={{ display: hasError ? 'none' : 'block' }}
-        >
-          <p>
-            Your browser does not support the video tag. 
-            {hasValidFile && <a href={streamingUrl} download>Download the video</a>}
-            {!hasValidFile && <span>Video unavailable</span>} instead.
-          </p>
-        </video>
+        {hasValidFile ? (
+          <video
+            ref={videoRef}
+            src={streamingUrl}
+            controls={controls}
+            autoPlay={autoplay}
+            onLoadStart={handleLoadStart}
+            onLoadedData={handleLoadedData}
+            onError={handleError}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onEnded={handleEnded}
+            className="video-element"
+            style={{ display: hasError ? 'none' : 'block' }}
+          >
+            <p>
+              Your browser does not support the video tag.
+              <a href={streamingUrl} download>Download the video</a> instead.
+            </p>
+          </video>
+        ) : (
+          <div className="video-unavailable">
+            <div className="unavailable-icon">⚠️</div>
+            <p>Video source is not available</p>
+            <p className="unavailable-hint">The video file name is missing or invalid</p>
+          </div>
+        )}
 
-        {!hasError && !isLoading && (
+        {hasValidFile && !hasError && !isLoading && (
           <div className="video-overlay">
             {!isPlaying && (
               <button
