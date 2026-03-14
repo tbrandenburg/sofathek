@@ -1,6 +1,7 @@
 import { FFmpeggy } from 'ffmpeggy';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { config } from '../config';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 
@@ -11,11 +12,11 @@ const ffprobeStatic = require('ffprobe-static');
 // Configure FFmpeg binary paths for FFmpeggy using DefaultConfig with static binaries
 try {
   if (FFmpeggy.DefaultConfig) {
-    FFmpeggy.DefaultConfig = {
-      ...FFmpeggy.DefaultConfig,
-      ffmpegBin: ffmpegBin || process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
-      ffprobeBin: ffprobeStatic.path || process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
-    };
+      FFmpeggy.DefaultConfig = {
+        ...FFmpeggy.DefaultConfig,
+        ffmpegBin: ffmpegBin || config.ffmpegPath,
+        ffprobeBin: ffprobeStatic.path || config.ffprobePath,
+      };
     logger.info('FFmpeggy DefaultConfig configured with static binaries', { 
       ffmpegBin: ffmpegBin || 'system fallback', 
       ffprobeBin: ffprobeStatic.path || 'system fallback' 

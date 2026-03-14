@@ -1,4 +1,5 @@
 jest.mock('dotenv/config', () => ({}));
+import path from 'path';
 
 describe('Config', () => {
   const originalEnv = process.env;
@@ -12,22 +13,27 @@ describe('Config', () => {
     process.env = originalEnv;
   });
 
-  describe('production validation', () => {
-    it('throws when required directories are missing in production', () => {
+  describe('defaults and environment handling', () => {
+    it('uses fallback directories when variables are missing in production', () => {
       process.env.NODE_ENV = 'production';
       delete process.env.VIDEOS_DIR;
+      delete process.env.VIDEOS_PATH;
       delete process.env.TEMP_DIR;
 
-      expect(() => {
-        jest.isolateModules(() => {
-          require('../../config');
-        });
-      }).toThrow('Missing required environment variables');
+      let loadedConfig: any;
+      jest.isolateModules(() => {
+        loadedConfig = require('../../config').config;
+      });
+
+      expect(loadedConfig.nodeEnv).toBe('production');
+      expect(loadedConfig.videosDir).toBe(path.join(process.cwd(), 'data', 'videos'));
+      expect(loadedConfig.tempDir).toBe(path.join(process.cwd(), 'data', 'temp'));
     });
 
-    it('allows missing directories in development', () => {
+    it('uses fallback directories in development', () => {
       process.env.NODE_ENV = 'development';
       delete process.env.VIDEOS_DIR;
+      delete process.env.VIDEOS_PATH;
       delete process.env.TEMP_DIR;
 
       let loadedConfig: any;
@@ -36,8 +42,8 @@ describe('Config', () => {
       });
 
       expect(loadedConfig.nodeEnv).toBe('development');
-      expect(loadedConfig.videosDir).toBe('/path/to/videos');
-      expect(loadedConfig.tempDir).toBe('/path/to/temp');
+      expect(loadedConfig.videosDir).toBe(path.join(process.cwd(), 'data', 'videos'));
+      expect(loadedConfig.tempDir).toBe(path.join(process.cwd(), 'data', 'temp'));
     });
   });
 });
