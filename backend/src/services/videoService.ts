@@ -190,20 +190,35 @@ export class VideoService {
   /**
    * Look for thumbnail file matching the video filename
    * Checks for: video-name.jpg, video-name.jpeg, video-name.png, video-name.webp
+   * First attempts exact case match, then falls back to case-insensitive search
    */
   private async findThumbnail(videoPath: string): Promise<string | null> {
     const videoDir = path.dirname(videoPath);
     const baseName = path.basename(videoPath, path.extname(videoPath));
     
     for (const ext of this.THUMBNAIL_EXTENSIONS) {
-      const thumbPath = path.join(videoDir, baseName + ext);
+      const exactThumbPath = path.join(videoDir, baseName + ext);
       try {
-        await fs.access(thumbPath);
-        // Return just the filename for the metadata
+        await fs.access(exactThumbPath);
         return baseName + ext;
       } catch {
-        // Thumbnail doesn't exist, try next extension
+        // Exact match failed, continue to case-insensitive fallback
       }
+    }
+
+    try {
+      const files = await fs.readdir(videoDir);
+      const lowerBaseName = baseName.toLowerCase();
+
+      for (const ext of this.THUMBNAIL_EXTENSIONS) {
+        const targetFilename = lowerBaseName + ext;
+        const match = files.find(file => file.toLowerCase() === targetFilename);
+        if (match) {
+          return match;
+        }
+      }
+    } catch {
+      // Directory read failed, return null
     }
     
     return null;
