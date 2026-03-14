@@ -47,6 +47,33 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
     expect(downloadLink?.getAttribute('download')).toBeFalsy();
   });
 
+  test('should not render video element with empty src when file.name is missing', () => {
+    const malformedVideo = {
+      id: 'test-video',
+      file: {
+        name: undefined,
+        size: 1024000,
+        path: '/videos/test.mp4',
+        extension: 'mp4',
+        lastModified: new Date()
+      },
+      metadata: {
+        title: 'Test Video',
+        width: 1920,
+        height: 1080
+      },
+      viewCount: 0
+    } as unknown as Video;
+
+    const { container } = render(<VideoPlayer video={malformedVideo} />);
+
+    const videoElement = container.querySelector('video');
+    expect(videoElement).toBeNull();
+
+    const unavailableMessage = screen.getByText(/Video source is not available/i);
+    expect(unavailableMessage).toBeDefined();
+  });
+
   test('should hide download link when file.name is absent', () => {
     const malformedVideo = {
       id: 'test-video',
