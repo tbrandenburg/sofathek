@@ -16,20 +16,21 @@ workflows:
     prompt: Follow the instructions in @.opencode/commands/commit-push.md
   - type: agent
     agent: build
-    prompt: Only if the latest PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md
+    prompt: 'Get the latest issue and its related PR: Only the PR shows merge issues
+      follow the instructions in @.opencode/commands/resolve-ci-errors.md'
   - type: agent
     agent: build
-    prompt: Follow the instructions in @.opencode/commands/prp-review.md for the latest
-      PR.
+    prompt: 'Get the latest issue and its related PR: Follow the instructions in @.opencode/commands/prp-review.md
+      for the PR'
   - type: agent
     agent: build
-    prompt: Raise new Github issues with `gh` CLI if the PR review comments of the
-      latest PR came up with high or critical priority findings, failing CI or merge
-      blockers.
+    prompt: 'Get the latest issue and its related PR: Raise new Github issues with
+      `gh` CLI if the PR review comments came up with high or critical priority findings,
+      failing CI or merge blockers.'
   - type: agent
     agent: build
-    prompt: Use the `gh` CLI to try to merge the latest PR. If any PR was processed,
-      send a telegram message on the outcome.
+    prompt: 'Get the latest issue and its related PR: Use the `gh` CLI to try to merge
+      it. If any PR was processed, send a telegram message on the outcome.'
   - type: bash
     run: git switch main && git pull --rebase --autostash
   shellScriptPath: .harness/continuous-issue-resolution.sh
