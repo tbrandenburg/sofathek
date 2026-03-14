@@ -95,7 +95,7 @@ log INFO "Starting workflow: ${WORKFLOW_NAME}"
 # Step 1: bash
 STEP1_DESCRIPTION='git switch main && git pull --rebase --autostash'
 STEP1_PROMPT='git switch main && git pull --rebase --autostash'
-cmd=(opencode run --format json)
+cmd=(bash -lc "$STEP1_PROMPT")
 RUN_STEP_PROMPT="$STEP1_PROMPT"
 run_step "$STEP1_DESCRIPTION" "${cmd[@]}"
 
@@ -144,7 +144,7 @@ run_step "$STEP7_DESCRIPTION" "${cmd[@]}"
 # Step 8: bash
 STEP8_DESCRIPTION='git switch main && git pull --rebase --autostash'
 STEP8_PROMPT='git switch main && git pull --rebase --autostash'
-cmd=(opencode run --format json)
+cmd=(bash -lc "$STEP8_PROMPT")
 RUN_STEP_PROMPT="$STEP8_PROMPT"
 run_step "$STEP8_DESCRIPTION" "${cmd[@]}"
 
