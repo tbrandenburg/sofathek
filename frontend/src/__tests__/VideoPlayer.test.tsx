@@ -11,23 +11,23 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
   test('should not crash when video.file is undefined', () => {
     const malformedVideo = {
       id: 'test-video',
-      file: undefined as any,
+      file: undefined,
       metadata: {
         title: 'Test Video',
         width: 1920,
         height: 1080
       },
       viewCount: 0
-    };
+    } as unknown as Video;
 
-    expect(() => render(<VideoPlayer video={malformedVideo as any} />)).not.toThrow();
+    expect(() => render(<VideoPlayer video={malformedVideo} />)).not.toThrow();
   });
 
   test('should not crash when video.file.name is missing', () => {
     const malformedVideo = {
       id: 'test-video',
       file: {
-        name: undefined as any,
+        name: undefined,
         size: 1024000,
         path: '/videos/test.mp4',
         extension: 'mp4',
@@ -39,16 +39,16 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
         height: 1080
       },
       viewCount: 0
-    };
+    } as unknown as Video;
 
-    expect(() => render(<VideoPlayer video={malformedVideo as any} />)).not.toThrow();
+    expect(() => render(<VideoPlayer video={malformedVideo} />)).not.toThrow();
   });
 
   test('should hide download link when file.name is absent', () => {
     const malformedVideo = {
       id: 'test-video',
       file: {
-        name: undefined as any,
+        name: undefined,
         size: 1024000,
         path: '/videos/test.mp4',
         extension: 'mp4',
@@ -60,9 +60,9 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
         height: 1080
       },
       viewCount: 0
-    };
+    } as unknown as Video;
 
-    render(<VideoPlayer video={malformedVideo as any} />);
+    render(<VideoPlayer video={malformedVideo} />);
 
     const downloadLink = screen.queryByText('Download the video');
     expect(downloadLink).toBeNull();
