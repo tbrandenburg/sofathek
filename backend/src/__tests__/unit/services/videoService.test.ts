@@ -193,11 +193,60 @@ describe('VideoService', () => {
       expect(result).toBe('Video.png');
     });
 
+    it('should find jpeg thumbnail after jpg misses', async () => {
+      mockFs.access
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockResolvedValueOnce(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.jpeg');
+    });
+
+    it('should find webp thumbnail after other extensions miss', async () => {
+      mockFs.access
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockResolvedValueOnce(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.webp');
+    });
+
+    it('should prefer jpg over jpeg when both are accessible', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.jpg');
+      expect(mockFs.access).toHaveBeenCalledTimes(1);
+    });
+
+    it('should match exact thumbnail filename in fallback search', async () => {
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockResolvedValue(['video-trailer.jpg', 'video.jpg'] as any);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/video.mp4');
+
+      expect(result).toBe('video.jpg');
+    });
+
     it('should return null when directory read fails', async () => {
       mockFs.access.mockRejectedValue(new Error('ENOENT'));
       mockFs.readdir.mockRejectedValue(new Error('EACCES'));
 
       const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when thumbnail directory does not exist', async () => {
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockRejectedValue(new Error('ENOENT: no such file or directory'));
+
+      const result = await (videoService as any).findThumbnail('/nonexistent/dir/video.mp4');
 
       expect(result).toBeNull();
     });
