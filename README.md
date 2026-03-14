@@ -177,10 +177,22 @@ docker run --rm -v sofathek_videos:/data -v $(pwd)/backup:/backup alpine tar czf
 
 ### Environment Variables
 
+Backend environment variables are loaded from `backend/.env` at startup via `backend/src/server.ts` (`import 'dotenv/config'`).
+Start from the template:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `PORT` | `3001` | Backend server port |
+| `NODE_ENV` | `development` | Runtime environment |
+| `LOG_LEVEL` | `info` | Winston logger level |
 | `VIDEOS_PATH` | `backend/data/videos` | Path to video storage directory |
 | `VIDEOS_DIR` | (falls back to `VIDEOS_PATH`) | Alternate env var for videos |
+| `TEMP_DIR` | `backend/data/temp` | Path to temporary/transcoding files |
+| `ALLOWED_ORIGINS` | `http://localhost:5183` | Comma-separated CORS allowlist for production |
 | `THUMBNAIL_MAX_SIZE` | `10485760` (10MB) | Maximum thumbnail size in bytes; larger files return HTTP 413 |
 | `THUMBNAIL_CACHE_DURATION` | `86400` | Thumbnail cache max-age in seconds |
 
