@@ -1,5 +1,6 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
+import { config } from './config';
 import { logger } from './utils/logger';
 import { apiRouter } from './routes/api';
 import healthRouter from './routes/health';
@@ -10,8 +11,8 @@ const app: Application = express();
 
 // Set up CORS - allow all origins in development
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5183']
+  origin: config.nodeEnv === 'production'
+    ? config.allowedOrigins
     : true, // Allow all origins in development
   credentials: true,
   optionsSuccessStatus: 200
@@ -74,7 +75,7 @@ export const startServer = (port: number = 3001): Promise<any> => {
       } else {
         logger.info(`Sofathek backend server is running on port ${port}`, {
           port,
-          environment: process.env.NODE_ENV || 'development',
+          environment: config.nodeEnv,
           cors: corsOptions
         });
         resolve(server);

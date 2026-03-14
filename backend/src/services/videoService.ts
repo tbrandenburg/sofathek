@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { config } from '../config';
 import { logger } from '../utils/logger';
 import { 
   VideoFile, 
@@ -304,5 +305,5 @@ export class VideoService {
  * Uses environment variable or default path
  */
 export const videoService = new VideoService(
-  process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+  config.videosDir
 );

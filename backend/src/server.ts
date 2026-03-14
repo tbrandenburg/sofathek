@@ -1,9 +1,9 @@
 import 'dotenv/config';
+import { config } from './config';
 import { startServer } from './app';
 import { logger } from './utils/logger';
 
-// Get port from environment or default to 3001
-const PORT = parseInt(process.env.PORT || '3001', 10);
+const PORT = config.port;
 
 // Start the server
 startServer(PORT)

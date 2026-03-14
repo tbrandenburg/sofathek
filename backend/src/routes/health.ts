@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { config } from '../config';
 import { catchAsync } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
 
@@ -91,7 +92,7 @@ router.get('/', catchAsync(async (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     service: 'sofathek-backend',
     version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
+    environment: config.nodeEnv,
     uptime: process.uptime(),
     system: {
       platform: os.platform(),
@@ -162,14 +163,14 @@ function getMemoryInfo() {
  * Get videos directory path
  */
 function getVideosDirectory(): string {
-  return process.env.VIDEOS_DIR || process.env.VIDEOS_PATH || path.join(process.cwd(), '..', 'data', 'videos');
+  return config.videosDir;
 }
 
 /**
  * Get temporary directory path
  */
 function getTempDirectory(): string {
-  return process.env.TEMP_DIR || path.join(process.cwd(), '..', 'data', 'temp');
+  return config.tempDir;
 }
 
 /**
