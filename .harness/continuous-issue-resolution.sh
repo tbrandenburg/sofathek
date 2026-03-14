@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_NAME="continuous-issue-resolution.sh"
 WORKFLOW_NAME="Continuous Issue Resolution"
-WORKFLOW_SLUG="continuous-issue-resolution"
 
 DRY_RUN=false
 if [[ $# -eq 1 && "$1" == "--dry-run" ]]; then
@@ -13,15 +13,15 @@ elif [[ $# -gt 0 ]]; then
 fi
 
 LOG_FILE=""
-PREFERRED_LOG_FILE="/var/log/${WORKFLOW_SLUG}.log"
+PREFERRED_LOG_FILE="/var/log/${SCRIPT_NAME%.sh}.log"
 FALLBACK_LOG_DIR="/tmp/made-harness-logs"
-FALLBACK_LOG_FILE="${FALLBACK_LOG_DIR}/${WORKFLOW_SLUG}.log"
+FALLBACK_LOG_FILE="${FALLBACK_LOG_DIR}/${SCRIPT_NAME%.sh}.log"
 
-if : 2>/dev/null >> "$PREFERRED_LOG_FILE"; then
+if : 2>/dev/null >>"$PREFERRED_LOG_FILE"; then
   LOG_FILE="$PREFERRED_LOG_FILE"
 else
   mkdir -p "$FALLBACK_LOG_DIR" 2>/dev/null || true
-  if : 2>/dev/null >> "$FALLBACK_LOG_FILE"; then
+  if : 2>/dev/null >>"$FALLBACK_LOG_FILE"; then
     LOG_FILE="$FALLBACK_LOG_FILE"
   fi
 fi
@@ -29,12 +29,11 @@ fi
 log() {
   local level="$1"
   shift
-  local line
-
-  line="$(printf '%s [%s] %s' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$level" "$*")"
-  printf '%s\n' "$line" >&2 || true
+  local message
+  message=$(printf '%s [%s] %s' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$level" "$*")
+  printf '%s\n' "$message" >&2 || true
   if [[ -n "$LOG_FILE" ]]; then
-    printf '%s\n' "$line" >> "$LOG_FILE" 2>/dev/null || true
+    printf '%s\n' "$message" >>"$LOG_FILE" 2>/dev/null || true
   fi
 }
 
@@ -66,8 +65,8 @@ run_step() {
 run_agent() {
   local prompt="$1"
   local agent="${2:-}"
-
   local cmd=(opencode run --format json)
+
   if [[ -n "$agent" ]]; then
     cmd+=(--agent "$agent")
   fi
@@ -97,25 +96,25 @@ step3() {
 }
 
 step4() {
-  local prompt='Get the latest issue and its related PR: Only the PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md'
+  local prompt='Get the latest open Github issue and its related PR: Only the PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
 step5() {
-  local prompt='Get the latest issue and its related PR: Follow the instructions in @.opencode/commands/prp-review.md for the PR'
+  local prompt='Get the latest open Github issue and its related PR: Follow the instructions in @.opencode/commands/prp-review.md for the PR'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
 step6() {
-  local prompt="Get the latest issue and its related PR: Raise new Github issues with \`gh\` CLI if the PR review comments came up with high or critical priority findings, failing CI or merge blockers."
+  local prompt="Get the latest open Github issue and its related PR: Raise new Github issues with \`gh\` CLI if the PR review comments came up with high or critical priority findings, failing CI or merge blockers."
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
 step7() {
-  local prompt="Get the latest issue and its related PR: Use the \`gh\` CLI to try to merge it. If any PR was processed, send a telegram message on the outcome."
+  local prompt="Get the latest open Github issue and its related PR: Use the \`gh\` CLI to try to merge it. If any PR was processed, send a telegram message on the outcome."
   local agent='build'
   run_agent "$prompt" "$agent"
 }
