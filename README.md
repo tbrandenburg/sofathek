@@ -177,10 +177,12 @@ docker run --rm -v sofathek_videos:/data -v $(pwd)/backup:/backup alpine tar czf
 
 ### Environment Variables
 
-| Variable     | Default                    | Description                    |
-|--------------|----------------------------|--------------------------------|
-| `VIDEOS_PATH` | `backend/data/videos`      | Path to video storage directory|
-| `VIDEOS_DIR`  | (falls back to VIDEOS_PATH)| Alternate env var for videos  |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VIDEOS_PATH` | `backend/data/videos` | Path to video storage directory |
+| `VIDEOS_DIR` | (falls back to `VIDEOS_PATH`) | Alternate env var for videos |
+| `THUMBNAIL_MAX_SIZE` | `10485760` (10MB) | Maximum thumbnail size in bytes; larger files return HTTP 413 |
+| `THUMBNAIL_CACHE_DURATION` | `86400` | Thumbnail cache max-age in seconds |
 
 ## Requirements
 
@@ -227,4 +229,3 @@ These rules are now active for all development work:
 - GitHub issues will be created for rule violations
 
 File saved: .claude/AGENT_ANTI_DECEPTION_RULES.md
-
