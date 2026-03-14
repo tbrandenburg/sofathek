@@ -11,6 +11,8 @@ const router = Router();
 // Initialize video service (in production this would come from DI container)
 const videosDirectory = process.env.VIDEOS_PATH || path.join(process.cwd(), 'data', 'videos');
 const videoService = new VideoService(videosDirectory);
+const MAX_THUMBNAIL_SIZE = parseInt(process.env.THUMBNAIL_MAX_SIZE || '', 10) || 10 * 1024 * 1024;
+const THUMBNAIL_CACHE_DURATION = parseInt(process.env.THUMBNAIL_CACHE_DURATION || '', 10) || 86400;
 
 /**
  * GET /api/videos
@@ -178,13 +180,52 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   }
   
   const stat = fs.statSync(thumbnailPath);
+  if (stat.size > MAX_THUMBNAIL_SIZE) {
+    throw new AppError(`Thumbnail too large: ${stat.size} bytes (max: ${MAX_THUMBNAIL_SIZE})`, 413);
+  }
+  const fileSize = stat.size;
+  const range = req.headers.range;
   
-  res.writeHead(200, {
-    'Content-Length': stat.size,
-    'Content-Type': getThumbnailMimeType(ext)
-  });
-  
-  fs.createReadStream(thumbnailPath).pipe(res);
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const startStr = parts[0];
+    const endStr = parts[1];
+
+    if (!startStr) {
+      throw new AppError('Invalid range header format', 400);
+    }
+
+    const start = parseInt(startStr, 10);
+    const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
+
+    if (start >= fileSize || end >= fileSize) {
+      throw new AppError('Range not satisfiable', 416);
+    }
+
+    const chunkSize = (end - start) + 1;
+    const file = fs.createReadStream(thumbnailPath, { start, end });
+
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': getThumbnailMimeType(ext),
+      'Cache-Control': `public, max-age=${THUMBNAIL_CACHE_DURATION}`,
+      'X-Content-Type-Options': 'nosniff'
+    });
+
+    file.pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Length': fileSize,
+      'Accept-Ranges': 'bytes',
+      'Content-Type': getThumbnailMimeType(ext),
+      'Cache-Control': `public, max-age=${THUMBNAIL_CACHE_DURATION}`,
+      'X-Content-Type-Options': 'nosniff'
+    });
+
+    fs.createReadStream(thumbnailPath).pipe(res);
+  }
 }));
 
 /**

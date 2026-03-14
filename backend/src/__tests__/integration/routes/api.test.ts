@@ -139,4 +139,104 @@ describe('API Routes', () => {
       expect(errorMessage).toBe('Range not satisfiable');
     });
   });
+
+  describe('GET /api/thumbnails/:filename', () => {
+    const mockStat = {
+      size: 1024,
+      isFile: () => true
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockFs.statSync.mockReturnValue(mockStat as fs.Stats);
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.createReadStream.mockImplementation((_filePath: fs.PathLike, options?: any) => {
+        const currentStat = mockFs.statSync.mock.results[mockFs.statSync.mock.results.length - 1]?.value as fs.Stats | undefined;
+        const totalSize = currentStat?.size ?? mockStat.size;
+        const start = typeof options?.start === 'number' ? options.start : 0;
+        const end = typeof options?.end === 'number' ? options.end : totalSize - 1;
+        const length = Math.max(0, end - start + 1);
+
+        return Readable.from([Buffer.alloc(length)]) as any;
+      });
+    });
+
+    it('should return 404 for non-existent thumbnail', async () => {
+      mockFs.existsSync.mockReturnValue(false);
+
+      const response = await request(app)
+        .get('/api/thumbnails/nonexistent.jpg')
+        .expect(404);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('not found');
+    });
+
+    it('should reject thumbnails exceeding size limit', async () => {
+      const largeStat = {
+        ...mockStat,
+        size: 20 * 1024 * 1024
+      };
+      mockFs.statSync.mockReturnValue(largeStat as fs.Stats);
+
+      const response = await request(app)
+        .get('/api/thumbnails/large.jpg')
+        .expect(413);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('too large');
+    });
+
+    it('should serve thumbnails under size limit', async () => {
+      const response = await request(app)
+        .get('/api/thumbnails/test.jpg')
+        .expect(200);
+
+      expect(response.headers['content-type']).toBe('image/jpeg');
+      expect(response.headers['cache-control']).toBe('public, max-age=86400');
+    });
+
+    it('should support range requests', async () => {
+      const response = await request(app)
+        .get('/api/thumbnails/test.jpg')
+        .set('Range', 'bytes=0-511')
+        .expect(206);
+
+      expect(response.headers['content-range']).toMatch(/bytes 0-511\/\d+/);
+      expect(response.headers['content-length']).toBe('512');
+    });
+
+    it('should handle invalid range headers', async () => {
+      const response = await request(app)
+        .get('/api/thumbnails/test.jpg')
+        .set('Range', 'bytes=-')
+        .expect(400);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Invalid range header format');
+    });
+
+    it('should handle range not satisfiable', async () => {
+      const response = await request(app)
+        .get('/api/thumbnails/test.jpg')
+        .set('Range', 'bytes=2000-3000')
+        .expect(416);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toBe('Range not satisfiable');
+    });
+
+    it('should include security headers', async () => {
+      const response = await request(app)
+        .get('/api/thumbnails/test.jpg')
+        .expect(200);
+
+      expect(response.headers['x-content-type-options']).toBe('nosniff');
+      expect(response.headers['accept-ranges']).toBe('bytes');
+    });
+  });
 });
