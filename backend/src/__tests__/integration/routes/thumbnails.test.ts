@@ -1,7 +1,21 @@
 import request from 'supertest';
 import express from 'express';
 import fs from 'fs';
+import path from 'path';
 import { Readable } from 'stream';
+
+const mockVideosDir = '/tmp/mock-videos-dir';
+const mockTempDir = '/tmp/mock-custom-temp-dir';
+
+jest.mock('../../../config', () => ({
+  config: {
+    videosDir: mockVideosDir,
+    tempDir: mockTempDir,
+    thumbnailMaxSize: 10 * 1024 * 1024,
+    thumbnailCacheDuration: 86400
+  }
+}));
+
 import { apiRouter } from '../../../routes/api';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
@@ -65,7 +79,8 @@ describe('GET /api/thumbnails/:filename', () => {
     });
 
     it('should serve thumbnail from temp/thumbnails directory', async () => {
-      mockFs.existsSync.mockImplementation((candidatePath: fs.PathLike) => String(candidatePath).includes('temp/thumbnails'));
+      const tempThumbnailsDir = path.join(mockTempDir, 'thumbnails');
+      mockFs.existsSync.mockImplementation((candidatePath: fs.PathLike) => String(candidatePath).startsWith(tempThumbnailsDir));
       mockFs.statSync.mockReturnValue({ size: 75000, isFile: () => true } as any);
 
       const response = await request(app)
@@ -73,6 +88,19 @@ describe('GET /api/thumbnails/:filename', () => {
         .expect(200);
 
       expect(response.headers['content-type']).toBe('image/png');
+    });
+
+    it('should serve thumbnail from custom TEMP_DIR', async () => {
+      const expectedTempThumbPath = path.join(mockTempDir, 'thumbnails', 'custom-thumb.jpg');
+      mockFs.existsSync.mockImplementation((candidatePath: fs.PathLike) => String(candidatePath) === expectedTempThumbPath);
+      mockFs.statSync.mockReturnValue({ size: 42000, isFile: () => true } as any);
+
+      const response = await request(app)
+        .get('/api/thumbnails/custom-thumb.jpg')
+        .expect(200);
+
+      expect(response.headers['content-type']).toBe('image/jpeg');
+      expect(mockFs.existsSync).toHaveBeenCalledWith(expectedTempThumbPath);
     });
 
     it('should return correct MIME type for jpeg', async () => {

@@ -11,6 +11,7 @@ const router = Router();
 
 // Initialize video service (in production this would come from DI container)
 const videosDirectory = config.videosDir;
+const tempDirectory = config.tempDir;
 const videoService = new VideoService(videosDirectory);
 const MAX_THUMBNAIL_SIZE = config.thumbnailMaxSize;
 const THUMBNAIL_CACHE_DURATION = config.thumbnailCacheDuration;
@@ -150,7 +151,7 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   const videosThumbPath = path.join(videosDirectory, filename);
   
   // Check in temp/thumbnails (generated thumbnails)
-  const tempThumbPath = path.join(process.cwd(), 'data', 'temp', 'thumbnails', filename);
+  const tempThumbPath = path.join(tempDirectory, 'thumbnails', filename);
   
   let thumbnailPath: string | null = null;
   
@@ -168,7 +169,7 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   const resolvedVideosPath = path.resolve(videosThumbPath);
   const resolvedTempPath = path.resolve(tempThumbPath);
   const allowedVideosDir = path.resolve(videosDirectory);
-  const allowedTempDir = path.resolve(process.cwd(), 'data', 'temp', 'thumbnails');
+  const allowedTempDir = path.resolve(tempDirectory, 'thumbnails');
   
   const isInVideosDir = resolvedVideosPath.startsWith(allowedVideosDir);
   const isInTempDir = resolvedTempPath.startsWith(allowedTempDir);
