@@ -10,7 +10,6 @@
     "progress": 100,
     "currentStep": "Download completed",
     "queuedAt": "2026-03-02T22:31:34.574Z",
-    "startedAt": "2026-03-02T22:31:34.582Z",
     "result": {
       "id": "79839989-45dc-456e-8816-8fc420d20da6",
       "status": "success",
@@ -32,6 +31,52 @@
       "completedAt": "2026-03-02T22:31:57.023Z",
       "startedAt": "2026-03-02T22:31:34.590Z"
     },
+    "startedAt": "2026-03-02T22:31:34.582Z",
     "completedAt": "2026-03-02T22:31:57.023Z"
+  },
+  {
+    "id": "7e1334aa-2bea-4d56-bd8e-d6c8d7e821e0",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "requestedAt": "2026-03-15T11:40:18.090Z",
+      "requestId": "2aeb7807-d302-4772-bb86-199061724806"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-15T11:40:18.091Z",
+    "startedAt": "2026-03-15T11:40:18.094Z",
+    "error": "Failed to get video metadata: ",
+    "completedAt": "2026-03-15T11:40:18.117Z"
+  },
+  {
+    "id": "b777e11f-7d9b-493e-9065-879824d15df4",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "requestedAt": "2026-03-15T11:40:21.719Z",
+      "requestId": "8d079e03-9dde-491f-9d91-0386ee5ff23c"
+    },
+    "status": "failed",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-15T11:40:21.719Z",
+    "startedAt": "2026-03-15T11:40:21.721Z",
+    "error": "Failed to get video metadata: ",
+    "completedAt": "2026-03-15T11:40:21.739Z"
+  },
+  {
+    "id": "e6d4d6e4-ffe1-4153-bf4b-090bd7e03d98",
+    "request": {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "requestedAt": "2026-03-15T11:40:25.558Z",
+      "requestId": "2075442d-2a27-46bc-839e-0d3e591788cd"
+    },
+    "status": "cancelled",
+    "progress": 25,
+    "currentStep": "Fetching video metadata",
+    "queuedAt": "2026-03-15T11:40:25.558Z",
+    "startedAt": "2026-03-15T11:40:25.570Z",
+    "error": "Cancelled by user",
+    "completedAt": "2026-03-15T11:40:25.639Z"
   }
 ]
