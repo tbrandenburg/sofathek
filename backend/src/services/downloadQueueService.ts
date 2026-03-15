@@ -1,10 +1,11 @@
-import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 import { DownloadRequest, QueueItem, QueueStatus } from '../types/youtube';
 import { YouTubeDownloadService } from './youTubeDownloadService';
+import { loadQueue, saveQueue } from './queuePersistence';
+import { processQueue } from './queueScheduler';
 
 /**
  * Queue management for YouTube download operations
@@ -13,7 +14,7 @@ export class DownloadQueueService {
   private readonly queueFilePath: string;
   private readonly youtubeDownloadService: YouTubeDownloadService;
   private queue: QueueItem[] = [];
-  private isProcessing: boolean = false;
+  private isProcessing = false;
 
   constructor(
     tempDirectory: string,
@@ -65,7 +66,7 @@ export class DownloadQueueService {
 
       // Start processing if not already running
       if (!this.isProcessing) {
-        this.processQueue().catch(error => {
+        this.runQueueProcessor().catch(error => {
           logger.error('Queue processing error', {
             error: error instanceof Error ? error.message : String(error)
           });
@@ -148,10 +149,7 @@ export class DownloadQueueService {
     }
   }
 
-  /**
-   * Process queue items sequentially
-   */
-  private async processQueue(): Promise<void> {
+  private async runQueueProcessor(): Promise<void> {
     if (this.isProcessing) {
       return;
     }
@@ -159,19 +157,7 @@ export class DownloadQueueService {
     this.isProcessing = true;
     
     try {
-      logger.info('Starting queue processing', { queueSize: this.queue.length });
-
-      while (true) {
-        // Find next pending item
-        const nextItem = this.queue.find(item => item.status === 'pending');
-        
-        if (!nextItem) {
-          logger.info('No pending items in queue, stopping processing');
-          break;
-        }
-
-        await this.processQueueItem(nextItem);
-      }
+      await processQueue(this.queue, this.youtubeDownloadService, () => this.saveQueue());
 
     } catch (error) {
       logger.error('Queue processing failed', {
@@ -184,132 +170,17 @@ export class DownloadQueueService {
   }
 
   /**
-   * Process individual queue item
-   */
-  private async processQueueItem(item: QueueItem): Promise<void> {
-    try {
-      logger.info('Processing queue item', {
-        queueItemId: item.id,
-        url: item.request.url
-      });
-
-      // Update item status
-      item.status = 'processing';
-      item.startedAt = new Date();
-      item.progress = 0;
-      item.currentStep = 'Starting download';
-      await this.saveQueue();
-
-      // Update progress
-      item.progress = 25;
-      item.currentStep = 'Fetching video metadata';
-      await this.saveQueue();
-
-      // Process download
-      const result = await this.youtubeDownloadService.downloadVideo(item.request);
-
-      // Update based on result
-      if (result.status === 'success') {
-        item.status = 'completed';
-        item.progress = 100;
-        item.currentStep = 'Download completed';
-        item.result = result;
-        item.completedAt = new Date();
-        
-        logger.info('Queue item completed successfully', {
-          queueItemId: item.id,
-          videoPath: result.videoPath
-        });
-      } else {
-        item.status = 'failed';
-        item.error = result.error || 'Download failed';
-        item.completedAt = new Date();
-        
-        logger.error('Queue item failed', {
-          queueItemId: item.id,
-          error: item.error
-        });
-      }
-
-      await this.saveQueue();
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      item.status = 'failed';
-      item.error = errorMessage;
-      item.completedAt = new Date();
-      
-      await this.saveQueue();
-
-      logger.error('Queue item processing failed', {
-        queueItemId: item.id,
-        error: errorMessage
-      });
-    }
-  }
-
-  /**
    * Load queue from persistent storage
    */
   private async loadQueue(): Promise<void> {
-    try {
-      const queueData = await fs.readFile(this.queueFilePath, 'utf-8');
-      const parsedQueue = JSON.parse(queueData);
-      
-      // Convert date strings back to Date objects
-      this.queue = parsedQueue.map((item: any) => ({
-        ...item,
-        queuedAt: new Date(item.queuedAt),
-        startedAt: item.startedAt ? new Date(item.startedAt) : undefined,
-        completedAt: item.completedAt ? new Date(item.completedAt) : undefined,
-        request: {
-          ...item.request,
-          requestedAt: new Date(item.request.requestedAt)
-        }
-      }));
-
-      logger.info('Queue loaded from storage', {
-        queueSize: this.queue.length,
-        filePath: this.queueFilePath
-      });
-
-    } catch (error) {
-      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-        // File doesn't exist yet, start with empty queue
-        this.queue = [];
-      } else {
-        throw error;
-      }
-    }
+    this.queue = await loadQueue(this.queueFilePath);
   }
 
   /**
    * Save queue to persistent storage
    */
   private async saveQueue(): Promise<void> {
-    try {
-      // Ensure directory exists
-      const queueDir = path.dirname(this.queueFilePath);
-      await fs.mkdir(queueDir, { recursive: true });
-
-      // Write queue to file with atomic operation
-      const tempFilePath = `${this.queueFilePath}.tmp`;
-      await fs.writeFile(tempFilePath, JSON.stringify(this.queue, null, 2), 'utf-8');
-      await fs.rename(tempFilePath, this.queueFilePath);
-
-      logger.debug('Queue saved to storage', {
-        queueSize: this.queue.length,
-        filePath: this.queueFilePath
-      });
-
-    } catch (error) {
-      logger.error('Failed to save queue', {
-        error: error instanceof Error ? error.message : String(error),
-        filePath: this.queueFilePath
-      });
-      throw new AppError('Failed to save download queue', 500);
-    }
+    await saveQueue(this.queueFilePath, this.queue);
   }
 
   /**
