@@ -208,6 +208,38 @@ describe('GET /api/thumbnails/:filename', () => {
       const errorMessage = response.body.error?.message || response.body.message;
       expect(errorMessage).toContain('Permission denied');
     });
+
+    it('should return 403 for EPERM access denied', async () => {
+      mockFs.statSync.mockImplementation(() => {
+        const err = new Error('Operation not permitted') as NodeJS.ErrnoException;
+        err.code = 'EPERM';
+        throw err;
+      });
+
+      const response = await request(app)
+        .get('/api/thumbnails/forbidden-eperm.jpg')
+        .expect(403);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Permission denied');
+    });
+
+    it('should return 403 when stat access is denied with EPERM', async () => {
+      mockFs.statSync.mockImplementation(() => {
+        const err = new Error('Operation not permitted') as NodeJS.ErrnoException;
+        err.code = 'EPERM';
+        throw err;
+      });
+
+      const response = await request(app)
+        .get('/api/thumbnails/forbidden-stat-eperm.jpg')
+        .expect(403);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Permission denied');
+    });
   });
 
   describe('Security Tests', () => {
