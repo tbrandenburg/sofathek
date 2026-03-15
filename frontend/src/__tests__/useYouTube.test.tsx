@@ -93,7 +93,7 @@ describe('YouTube Hooks', () => {
       };
 
       const mockError = new Error('Invalid video URL');
-      mockDownloadVideo.mockRejectedValueOnce(mockError);
+      mockDownloadVideo.mockRejectedValue(mockError);
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useYouTubeDownload(), { wrapper });
@@ -104,9 +104,10 @@ describe('YouTube Hooks', () => {
 
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
-      });
+      }, { timeout: 3000 });
 
       expect(result.current.error).toEqual(mockError);
+      expect(mockDownloadVideo).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -300,7 +301,7 @@ describe('YouTube Hooks', () => {
 
     test('should handle cancel error', async () => {
       const mockError = new Error('Failed to cancel download');
-      mockCancelDownload.mockRejectedValueOnce(mockError);
+      mockCancelDownload.mockRejectedValue(mockError);
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useCancelDownload(), { wrapper });
@@ -311,9 +312,10 @@ describe('YouTube Hooks', () => {
 
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
-      });
+      }, { timeout: 3000 });
 
       expect(result.current.error).toEqual(mockError);
+      expect(mockCancelDownload).toHaveBeenCalledTimes(2);
     });
   });
 

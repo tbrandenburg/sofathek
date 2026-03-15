@@ -15,6 +15,8 @@ export function useYouTubeDownload() {
 
   return useMutation({
     mutationFn: downloadVideo,
+    retry: 2,
+    retryDelay: 500,
     
     // Optimistic update on mutation start
     onMutate: async (newRequest: DownloadRequest) => {
@@ -105,6 +107,8 @@ export function useCancelDownload() {
 
   return useMutation({
     mutationFn: cancelDownload,
+    retry: 1,
+    retryDelay: 500,
     
     // Optimistic update on mutation start
     onMutate: async (itemId: string) => {

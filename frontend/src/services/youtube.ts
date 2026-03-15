@@ -79,16 +79,16 @@ export async function downloadVideo(request: DownloadRequest): Promise<QueueItem
     throw new ApiError('Invalid YouTube URL format', 400);
   }
 
-  const response = await youtubeApiFetch<QueueItem>('/youtube/download', {
+  const response = await youtubeApiFetch<{ queueItem: QueueItem; message?: string }>('/youtube/download', {
     method: 'POST',
     body: JSON.stringify(request),
   });
   
-  if (response.status !== 'success' || !response.data) {
+  if (response.status !== 'success' || !response.data?.queueItem) {
     throw new ApiError(response.message || 'Failed to start YouTube download');
   }
   
-  return response.data;
+  return response.data.queueItem;
 }
 
 /**

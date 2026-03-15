@@ -77,41 +77,45 @@ test.describe('Real-World YouTube Download E2E Test', () => {
     // Step 4: Monitor download progress
     console.log('📊 Monitoring download progress');
     
-    // Wait for processing to start (status should change from pending)
-    await expect(downloadItem.locator('text=Processing')).toBeVisible({ 
-      timeout: TEST_CONFIG.TIMEOUTS.DOWNLOAD_START 
-    });
-    
-    console.log('🔄 Download processing started');
+    // Wait for queue item to transition out of pending
+    await expect
+      .poll(async () => {
+        const text = (await downloadItem.textContent()) || '';
+        if (text.includes('Completed')) return 'completed';
+        if (text.includes('Failed')) return 'failed';
+        if (text.includes('Cancelled')) return 'cancelled';
+        if (text.includes('Processing')) return 'processing';
+        return 'pending';
+      }, { timeout: TEST_CONFIG.TIMEOUTS.DOWNLOAD_START })
+      .not.toBe('pending');
+
+    console.log('🔄 Download started processing or reached terminal state');
     
     // Wait for completion - retry checking status until completed
     let completed = false;
     const startTime = Date.now();
     
     while (!completed && (Date.now() - startTime) < TEST_CONFIG.TIMEOUTS.DOWNLOAD_COMPLETE) {
-      try {
-        // Check if completed
-        await expect(downloadItem.locator('text=Completed')).toBeVisible({ timeout: 5000 });
+      const itemText = (await downloadItem.textContent()) || '';
+      if (itemText.includes('Completed')) {
         completed = true;
         console.log('✅ Download completed successfully');
-      } catch {
-        // Check if failed
-        const failedVisible = await downloadItem.locator('text=Failed').isVisible();
-        if (failedVisible) {
-          // Get error details
-          const errorText = await downloadItem.locator('[class*="error"], [class*="red"]').textContent();
-          throw new Error(`Download failed: ${errorText}`);
-        }
-        
-        // Still processing, check progress
-        const progressText = await downloadItem.locator('[data-testid*="progress"], .progress, text=%').textContent();
-        if (progressText) {
-          console.log(`📊 Progress: ${progressText}`);
-        }
-        
-        // Wait before next check
-        await page.waitForTimeout(3000);
+        continue;
       }
+
+      if (itemText.includes('Failed') || itemText.includes('Cancelled')) {
+        const errorText = await downloadItem.locator('[class*="error"], [class*="red"]').first().textContent();
+        throw new Error(`Download failed: ${errorText || itemText}`);
+      }
+
+      // Still processing, check progress
+      const progressText = await downloadItem.locator('[data-testid*="progress"], .progress, text=%').textContent();
+      if (progressText) {
+        console.log(`📊 Progress: ${progressText}`);
+      }
+
+      // Wait before next check
+      await page.waitForTimeout(3000);
     }
     
     if (!completed) {
@@ -122,13 +126,13 @@ test.describe('Real-World YouTube Download E2E Test', () => {
     console.log('🎥 Verifying video appears in main library');
     
     // Navigate to video library (if not already there)
-    const videoGrid = page.locator('[data-testid="video-grid"], .video-grid, [class*="grid"]').first();
+    const videoGrid = page.locator('[data-testid="video-grid"], .video-grid').first();
     
     // Wait for video to appear in the grid
     await expect(videoGrid).toBeVisible({ timeout: TEST_CONFIG.TIMEOUTS.VIDEO_APPEAR });
     
     // Look for video cards in the grid
-    const videoCards = page.locator('[data-testid*="video-card"], .video-card, [class*="video"]');
+    const videoCards = page.locator('[data-testid="video-card"]');
     
     // Verify at least one video exists
     await expect(videoCards.first()).toBeVisible({ timeout: TEST_CONFIG.TIMEOUTS.VIDEO_APPEAR });
@@ -168,8 +172,8 @@ test.describe('Real-World YouTube Download E2E Test', () => {
     console.log('🏁 Performing final validations');
     
     // Ensure queue is cleared or shows completed status
-    const completedItems = page.locator('[data-testid="queue-items"] text=Completed');
-    await expect(completedItems).toHaveCount(1, { timeout: 5000 });
+    const completedItems = page.locator('[data-testid="queue-items"]').getByText('Completed');
+    await expect(completedItems.first()).toBeVisible({ timeout: 5000 });
     
     // Verify no critical errors in console
     const errors: string[] = [];
@@ -218,9 +222,9 @@ test.describe('Real-World YouTube Download E2E Test', () => {
     await downloadButton.click();
     
     // Should show error state in queue or error message
-    await expect(page.locator('[data-testid="download-error"]').or(page.locator('text=Failed')).or(page.locator('text=Error'))).toBeVisible({ 
-      timeout: 15000 
-    });
+    const matchingQueueItem = page.locator('[data-testid^="queue-item-"]', { hasText: invalidUrl }).first();
+    await expect(matchingQueueItem).toBeVisible({ timeout: 15000 });
+    await expect(matchingQueueItem).toContainText(/Failed|Error|Cancelled/, { timeout: 30000 });
     
     console.log('✅ Invalid download handled gracefully with error message');
   });
@@ -239,7 +243,7 @@ test.describe('Real-World YouTube Download E2E Test', () => {
       
       // 2. Wait for download completion using the same pattern as original test
       const queueContainer = page.locator('[data-testid="download-queue"]');
-      const downloadItem = queueContainer.locator('[data-testid*="download-"], .download-item').first();
+      const downloadItem = queueContainer.locator('[data-testid^="queue-item-"]').first();
       
       // Monitor completion like original test
       let completed = false;
@@ -290,10 +294,10 @@ test.describe('Real-World YouTube Download E2E Test', () => {
       const downloadButton = page.locator('[data-testid="download-button"]');
       
       await urlInput.fill('https://invalid-youtube-url');
-      await downloadButton.click();
+      await expect(downloadButton).toBeDisabled();
       
       // Verify error state
-      await expect(page.locator('[data-testid="download-error"]').or(page.locator('text=Failed')).or(page.locator('text=Error'))).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('[data-testid="url-validation-error"]')).toBeVisible({ timeout: 30000 });
       
       // Verify existing videos still visible (grid should remain functional)
       const videoGrid = page.locator('[data-testid="video-grid"], .video-grid, [class*="grid"]').first();

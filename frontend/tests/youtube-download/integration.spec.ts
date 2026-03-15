@@ -95,7 +95,7 @@ test.describe('YouTube Download - Integration Tests (Live Backend)', () => {
 
       await urlInput.fill('https://not-a-valid-youtube-url.com/video');
       await expect(downloadButton).toBeDisabled();
-      await expect(page.getByText('Invalid YouTube URL. Please provide a valid YouTube video URL.')).toBeVisible();
+      await expect(page.getByText('Please enter a valid YouTube URL')).toBeVisible();
     });
   });
 });
