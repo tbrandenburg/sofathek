@@ -20,7 +20,7 @@ test.describe('YouTube Download - Full Workflow', () => {
       await helpers.mockAPI.mockCancelSuccess();
 
       await helpers.timing.waitForQueuePoll();
-      await helpers.queue.waitForQueueItems(1);
+      await helpers.queue.expectQueueItem(MOCK_QUEUE_ITEMS.PENDING.id, 'pending');
 
       await helpers.queue.cancelDownload(MOCK_QUEUE_ITEMS.PENDING.id);
 

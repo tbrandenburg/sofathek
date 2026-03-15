@@ -217,7 +217,15 @@ export const API_RESPONSES = {
   DOWNLOAD_SUCCESS: {
     status: 'success' as const,
     data: {
-      id: 'new-download-123',
+      queueItem: {
+        id: 'new-download-123',
+        url: generateMockYouTubeUrl(),
+        title: 'YouTube Video',
+        status: 'pending' as const,
+        progress: 0,
+        currentStep: 'Queued',
+        queuedAt: new Date().toISOString(),
+      },
       message: 'Download added to queue successfully'
     }
   },
@@ -266,7 +274,7 @@ export const FORM_TEST_DATA = {
 export const TEST_TIMING = {
   FORM_INTERACTION_DELAY: 100, // ms
   API_RESPONSE_DELAY: 500, // ms
-  QUEUE_POLL_INTERVAL: 1000, // ms
+  QUEUE_POLL_INTERVAL: 3000, // ms
   DOWNLOAD_SIMULATION_DURATION: 3000, // ms
   RETRY_TIMEOUT: 5000, // ms
 } as const;

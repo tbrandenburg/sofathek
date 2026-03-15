@@ -33,20 +33,25 @@ describe('YouTube Service', () => {
         title: 'Test Video'
       };
 
-      const mockResponse: YouTubeApiResponse<QueueItem> = {
+      const queueItem: QueueItem = {
+        id: 'test-download-1',
+        url: request.url,
+        title: 'Test Video',
+        status: 'pending',
+        progress: 0,
+        currentStep: 'Queued for processing',
+        queuedAt: new Date().toISOString(),
+        metadata: {
+          id: 'test123abc',
+          title: 'Test Video'
+        }
+      };
+
+      const mockResponse: YouTubeApiResponse<{ queueItem: QueueItem; message: string }> = {
         status: 'success',
         data: {
-          id: 'test-download-1',
-          url: request.url,
-          title: 'Test Video',
-          status: 'pending',
-          progress: 0,
-          currentStep: 'Queued for processing',
-          queuedAt: new Date().toISOString(),
-          metadata: {
-            id: 'test123abc',
-            title: 'Test Video'
-          }
+          queueItem,
+          message: 'Video added to download queue'
         }
       };
 
@@ -57,7 +62,7 @@ describe('YouTube Service', () => {
 
       const result = await downloadVideo(request);
 
-      expect(result).toEqual(mockResponse.data);
+      expect(result).toEqual(queueItem);
       expect(mockFetch).toHaveBeenCalledWith(
         '/api/youtube/download',
         {

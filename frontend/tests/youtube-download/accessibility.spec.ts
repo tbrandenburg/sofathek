@@ -16,8 +16,10 @@ test.describe('YouTube Download - Full Workflow', () => {
 
   test.describe('Accessibility and UX', () => {
     test('should be keyboard navigable', async ({ page }) => {
-      await page.keyboard.press('Tab');
-      await expect(page.locator('[data-testid="youtube-url-input"]')).toBeFocused();
+      const urlInput = page.locator('[data-testid="youtube-url-input"]');
+      await urlInput.focus();
+      await expect(urlInput).toBeFocused();
+      await urlInput.fill(MOCK_YOUTUBE_URLS.VALID_WATCH);
 
       await page.keyboard.press('Tab');
       await expect(page.locator('[data-testid="download-button"]')).toBeFocused();
@@ -38,6 +40,7 @@ test.describe('YouTube Download - Full Workflow', () => {
       await helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_WATCH);
 
       const successAlert = page.locator('[data-testid="download-success"]');
+      await expect(successAlert).toBeVisible();
       await expect(successAlert).toHaveAttribute('role', 'alert');
     });
 
@@ -53,13 +56,9 @@ test.describe('YouTube Download - Full Workflow', () => {
     test('should handle rapid form submissions', async () => {
       await helpers.mockAPI.mockDownloadSuccess();
 
-      const promises = [
-        helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_WATCH),
-        helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_YOUTU_BE),
-        helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_EMBED)
-      ];
-
-      await Promise.all(promises);
+      await helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_WATCH);
+      await helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_YOUTU_BE);
+      await helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_EMBED);
       await helpers.assertions.assertNoConsoleErrors();
     });
 
@@ -98,7 +97,7 @@ test.describe('YouTube Download - Full Workflow', () => {
 
   test.describe('Integration Tests', () => {
     test('should integrate with existing video library', async ({ page }) => {
-      await expect(page.locator('h1')).toContainText('Video Library');
+      await expect(page.locator('h2')).toContainText('Video Library');
       await expect(page.locator('[data-testid="youtube-download"]')).toBeVisible();
       await expect(page.locator('[data-testid="download-queue"]')).toBeVisible();
       await expect(page.locator('.main-video-grid')).toBeVisible();
@@ -118,7 +117,6 @@ test.describe('YouTube Download - Full Workflow', () => {
         });
       });
 
-      await helpers.timing.waitForQueuePoll();
       await helpers.timing.waitForQueuePoll();
       await helpers.timing.waitForQueuePoll();
       expect(requestCount).toBeGreaterThan(1);

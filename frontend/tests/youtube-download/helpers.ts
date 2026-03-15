@@ -19,8 +19,7 @@ export class NavigationHelpers {
    * Navigate to the home page and wait for it to load
    */
   async goToHomePage() {
-    await this.page.goto('/');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto('/', { waitUntil: 'domcontentloaded' });
     
     // Wait for the main content to be visible
     await expect(this.page.locator('h2')).toContainText('Video Library');
@@ -48,7 +47,10 @@ export class FormHelpers {
     const urlInput = this.page.locator(TEST_SELECTORS.URL_INPUT);
     const submitButton = this.page.locator(TEST_SELECTORS.DOWNLOAD_BUTTON);
 
+    await expect(urlInput).toBeEnabled();
+
     // Fill the form
+    await urlInput.clear();
     await urlInput.fill(url);
     await expect(urlInput).toHaveValue(url);
 
@@ -342,7 +344,7 @@ export class TimingHelpers {
    * Wait for queue polling cycle
    */
   async waitForQueuePoll() {
-    await this.page.waitForTimeout(TEST_TIMING.QUEUE_POLL_INTERVAL);
+    await this.page.waitForTimeout(TEST_TIMING.QUEUE_POLL_INTERVAL + 250);
   }
 
   /**
