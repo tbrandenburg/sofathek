@@ -1,20 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
-import { AppError } from '../middleware/errorHandler';
+import { catchAsync, AppError } from '../middleware/errorHandler';
 import { downloadQueueService, youTubeDownloadService } from '../services/index';
 import { DownloadRequest } from '../types/youtube';
 
 const router = Router();
-
-/**
- * Async error handler wrapper
- */
-const catchAsync = (fn: (req: Request, res: Response, next: any) => Promise<any>) => {
-  return (req: Request, res: Response, next: any) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-};
 
 /**
  * POST /api/youtube/download
