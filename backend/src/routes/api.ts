@@ -169,7 +169,7 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
       if (fsError.code === 'ENOENT') {
         continue;
       }
-      if (fsError.code === 'EACCES') {
+      if (fsError.code === 'EACCES' || fsError.code === 'EPERM') {
         throw new AppError('Permission denied accessing thumbnail', 403);
       }
       throw new AppError('Unable to access thumbnail', 500);
