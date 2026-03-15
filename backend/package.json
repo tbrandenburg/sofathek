@@ -15,6 +15,7 @@
     "test:coverage": "jest --coverage",
     "test:unit": "jest src/__tests__/unit",
     "test:integration": "jest src/__tests__/integration",
+    "test:real-youtube": "RUN_REAL_DOWNLOAD_TESTS=true jest src/__tests__/integration/routes/youtube.integration.test.ts",
     "test:youtube": "ts-node scripts/youtube-integration.ts",
     "test:queue": "ts-node scripts/download-queue.ts"
   },

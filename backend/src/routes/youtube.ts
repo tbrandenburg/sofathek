@@ -102,9 +102,21 @@ router.get('/download/:id/status', catchAsync(async (req: Request, res: Response
     throw new AppError(`Download with ID '${id}' not found`, 404);
   }
   
+  const responseData: any = { ...queueItem };
+  
+  // Add diagnostic context for failed downloads
+  if (queueItem.status === 'failed' && queueItem.error) {
+    responseData.diagnostics = {
+      error: queueItem.error,
+      failedAt: queueItem.completedAt,
+      requestUrl: queueItem.request.url,
+      lastKnownStep: queueItem.currentStep
+    };
+  }
+  
   res.json({
     status: 'success',
-    data: queueItem
+    data: responseData
   });
 }));
 
