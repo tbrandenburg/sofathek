@@ -115,6 +115,7 @@ npm run validate:skip   # Emergency skip
 - `frontend/tests/youtube-download/full-workflow.spec.ts` - mocked UI workflow tests (fast)
 - `frontend/tests/youtube-download/integration.spec.ts` - live frontend-backend integration tests (no external YouTube dependency)
 - `frontend/tests/youtube-download/real-world.spec.ts` - real YouTube download end-to-end tests (slow)
+- `backend/src/__tests__/integration/routes/youtube.integration.test.ts` - real backend API integration tests with actual yt-dlp download (slow)
 
 Additional details: `frontend/tests/README.md`.
 

@@ -20,5 +20,5 @@ module.exports = {
   // Coverage will still be collected but not enforced
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  testTimeout: 10000
+  testTimeout: 120000
 };
