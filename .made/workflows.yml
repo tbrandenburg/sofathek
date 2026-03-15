@@ -2,7 +2,7 @@ workflows:
 - id: wf_mmozh3te_a0828
   name: Continuous Issue Resolution
   enabled: true
-  schedule: 0 * * * *
+  schedule: 0 */3 * * *
   steps:
   - type: bash
     run: git switch main && git pull --rebase --autostash
