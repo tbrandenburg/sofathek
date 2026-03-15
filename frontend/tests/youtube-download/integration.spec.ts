@@ -21,7 +21,7 @@ test.describe('YouTube Download - Integration Tests (Live Backend)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:5183/');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('h2')).toContainText('Video Library');
+    await expect(page.getByRole('heading', { name: 'Video Library' }).first()).toBeVisible();
   });
 
   test.describe('API Integration', () => {
