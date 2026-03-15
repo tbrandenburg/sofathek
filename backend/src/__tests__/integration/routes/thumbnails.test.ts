@@ -67,8 +67,14 @@ describe('GET /api/thumbnails/:filename', () => {
 
   describe('Success Cases', () => {
     it('should serve thumbnail from videos directory', async () => {
-      mockFs.existsSync.mockImplementation((candidatePath: fs.PathLike) => String(candidatePath).includes('videos'));
-      mockFs.statSync.mockReturnValue({ size: 50000, isFile: () => true } as any);
+      mockFs.statSync.mockImplementation((candidatePath: fs.PathLike) => {
+        if (String(candidatePath).includes('videos')) {
+          return { size: 50000, isFile: () => true } as any;
+        }
+        const err = new Error('not found') as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        throw err;
+      });
 
       const response = await request(app)
         .get('/api/thumbnails/test-video.jpg')
@@ -80,8 +86,14 @@ describe('GET /api/thumbnails/:filename', () => {
 
     it('should serve thumbnail from temp/thumbnails directory', async () => {
       const tempThumbnailsDir = path.join(mockTempDir, 'thumbnails');
-      mockFs.existsSync.mockImplementation((candidatePath: fs.PathLike) => String(candidatePath).startsWith(tempThumbnailsDir));
-      mockFs.statSync.mockReturnValue({ size: 75000, isFile: () => true } as any);
+      mockFs.statSync.mockImplementation((candidatePath: fs.PathLike) => {
+        if (String(candidatePath).startsWith(tempThumbnailsDir)) {
+          return { size: 75000, isFile: () => true } as any;
+        }
+        const err = new Error('not found') as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        throw err;
+      });
 
       const response = await request(app)
         .get('/api/thumbnails/generated-thumb.png')
@@ -92,15 +104,21 @@ describe('GET /api/thumbnails/:filename', () => {
 
     it('should serve thumbnail from custom TEMP_DIR', async () => {
       const expectedTempThumbPath = path.join(mockTempDir, 'thumbnails', 'custom-thumb.jpg');
-      mockFs.existsSync.mockImplementation((candidatePath: fs.PathLike) => String(candidatePath) === expectedTempThumbPath);
-      mockFs.statSync.mockReturnValue({ size: 42000, isFile: () => true } as any);
+      mockFs.statSync.mockImplementation((candidatePath: fs.PathLike) => {
+        if (String(candidatePath) === expectedTempThumbPath) {
+          return { size: 42000, isFile: () => true } as any;
+        }
+        const err = new Error('not found') as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        throw err;
+      });
 
       const response = await request(app)
         .get('/api/thumbnails/custom-thumb.jpg')
         .expect(200);
 
       expect(response.headers['content-type']).toBe('image/jpeg');
-      expect(mockFs.existsSync).toHaveBeenCalledWith(expectedTempThumbPath);
+      expect(mockFs.statSync).toHaveBeenCalledWith(expectedTempThumbPath);
     });
 
     it('should return correct MIME type for jpeg', async () => {
@@ -128,7 +146,11 @@ describe('GET /api/thumbnails/:filename', () => {
 
   describe('Error Cases', () => {
     it('should return 404 for non-existent thumbnail', async () => {
-      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockImplementation(() => {
+        const err = new Error('not found') as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        throw err;
+      });
 
       const response = await request(app)
         .get('/api/thumbnails/nonexistent.jpg')
@@ -156,7 +178,7 @@ describe('GET /api/thumbnails/:filename', () => {
     });
 
     it('should return 403 for permission denied access', async () => {
-      mockFs.existsSync.mockImplementation(() => {
+      mockFs.statSync.mockImplementation(() => {
         const err = new Error('Permission denied') as NodeJS.ErrnoException;
         err.code = 'EACCES';
         throw err;
@@ -172,7 +194,6 @@ describe('GET /api/thumbnails/:filename', () => {
     });
 
     it('should return 403 when stat access is denied', async () => {
-      mockFs.existsSync.mockReturnValue(true);
       mockFs.statSync.mockImplementation(() => {
         const err = new Error('Permission denied') as NodeJS.ErrnoException;
         err.code = 'EACCES';
