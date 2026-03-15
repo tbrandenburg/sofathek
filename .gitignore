@@ -146,6 +146,7 @@ backend/logs/
 frontend/dist/
 backend/dist/
 backend/temp/
+backend/data/temp/
 data/videos/
 .claude/
 dev/
