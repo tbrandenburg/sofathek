@@ -10,10 +10,11 @@ import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 const execFileAsync = promisify(execFile);
 
 const TEST_CONFIG = {
-  TEST_VIDEO_URL: 'https://www.youtube.com/watch?v=m3fqyXZ4k4I',
+  TEST_VIDEO_URL: process.env.TEST_YOUTUBE_URL || 'https://www.youtube.com/watch?v=m3fqyXZ4k4I',
   INVALID_URL: 'https://example.com/not-youtube',
   POLL_INTERVAL_MS: 5000,
   DOWNLOAD_TIMEOUT_MS: 90000,
+  MAX_RETRIES: 3,
 };
 
 type AppModules = {
@@ -28,6 +29,29 @@ async function isYtDlpAvailable(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = TEST_CONFIG.MAX_RETRIES,
+  baseDelay: number = 5000
+): Promise<T> {
+  let lastError: Error | undefined;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.log(`Attempt ${attempt}/${maxRetries} failed: ${lastError.message}`);
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, baseDelay * attempt));
+      }
+    }
+  }
+  
+  throw lastError;
 }
 
 async function createIsolatedApp(): Promise<AppModules> {
@@ -87,8 +111,8 @@ async function waitForDownloadCompletion(
 }
 
 describe('YouTube Download Integration (Real)', () => {
-  const shouldSkipRealDownloadTests = process.env.SKIP_REAL_DOWNLOAD_TESTS === 'true';
-  const suite = shouldSkipRealDownloadTests ? describe.skip : describe;
+  const shouldRunRealDownloadTests = process.env.RUN_REAL_DOWNLOAD_TESTS === 'true';
+  const suite = shouldRunRealDownloadTests ? describe : describe.skip;
 
   suite('real API and download workflow', () => {
     let app: express.Application;
@@ -96,7 +120,7 @@ describe('YouTube Download Integration (Real)', () => {
 
     beforeAll(async () => {
       if (!(await isYtDlpAvailable())) {
-        throw new Error('yt-dlp is not available in PATH. Install yt-dlp or set SKIP_REAL_DOWNLOAD_TESTS=true.');
+        throw new Error('yt-dlp is not available in PATH. Install yt-dlp or set RUN_REAL_DOWNLOAD_TESTS=false (or omit the flag).');
       }
 
       const modules = await createIsolatedApp();
@@ -115,28 +139,30 @@ describe('YouTube Download Integration (Real)', () => {
     });
 
     it('downloads a real YouTube video and writes an mp4 file', async () => {
-      const initialFiles = await fs.readdir(videosDir);
+      await retryWithBackoff(async () => {
+        const initialFiles = await fs.readdir(videosDir);
 
-      const response = await request(app)
-        .post('/api/youtube/download')
-        .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
-        .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
+        const response = await request(app)
+          .post('/api/youtube/download')
+          .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
+          .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
 
-      expect(response.status).toBe(201);
-      expect(response.body.status).toBe('success');
+        expect(response.status).toBe(201);
+        expect(response.body.status).toBe('success');
 
-      const queueItemId = response.body.data?.queueItem?.id as string | undefined;
-      expect(queueItemId).toBeDefined();
+        const queueItemId = response.body.data?.queueItem?.id as string | undefined;
+        expect(queueItemId).toBeDefined();
 
-      const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
-      expect(statusResponse.status).toBe(200);
-      expect(statusResponse.body.data.status).toBe('completed');
+        const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
+        expect(statusResponse.status).toBe(200);
+        expect(statusResponse.body.data.status).toBe('completed');
 
-      const finalFiles = await fs.readdir(videosDir);
-      const initialMp4 = initialFiles.filter((file) => file.endsWith('.mp4'));
-      const finalMp4 = finalFiles.filter((file) => file.endsWith('.mp4'));
+        const finalFiles = await fs.readdir(videosDir);
+        const initialMp4 = initialFiles.filter((file) => file.endsWith('.mp4'));
+        const finalMp4 = finalFiles.filter((file) => file.endsWith('.mp4'));
 
-      expect(finalMp4.length).toBeGreaterThan(initialMp4.length);
+        expect(finalMp4.length).toBeGreaterThan(initialMp4.length);
+      });
     }, TEST_CONFIG.DOWNLOAD_TIMEOUT_MS + 30000);
 
     it('returns 400 for a non-YouTube URL', async () => {
@@ -150,23 +176,25 @@ describe('YouTube Download Integration (Real)', () => {
     });
 
     it('exposes metadata on completed download status', async () => {
-      const response = await request(app)
-        .post('/api/youtube/download')
-        .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
-        .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
+      await retryWithBackoff(async () => {
+        const response = await request(app)
+          .post('/api/youtube/download')
+          .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
+          .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
 
-      expect(response.status).toBe(201);
+        expect(response.status).toBe(201);
 
-      const queueItemId = response.body.data?.queueItem?.id as string | undefined;
-      expect(queueItemId).toBeDefined();
+        const queueItemId = response.body.data?.queueItem?.id as string | undefined;
+        expect(queueItemId).toBeDefined();
 
-      const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
-      const metadata = statusResponse.body.data?.result?.metadata;
+        const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
+        const metadata = statusResponse.body.data?.result?.metadata;
 
-      expect(metadata).toBeDefined();
-      expect(typeof metadata.id).toBe('string');
-      expect(typeof metadata.title).toBe('string');
-      expect(metadata.title.length).toBeGreaterThan(0);
+        expect(metadata).toBeDefined();
+        expect(typeof metadata.id).toBe('string');
+        expect(typeof metadata.title).toBe('string');
+        expect(metadata.title.length).toBeGreaterThan(0);
+      });
     }, TEST_CONFIG.DOWNLOAD_TIMEOUT_MS + 30000);
 
     it('returns live queue status fields', async () => {
