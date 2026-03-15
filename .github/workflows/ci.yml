@@ -186,12 +186,20 @@ jobs:
           export CI=true
           export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
           
-          # Run minimal CI test that focuses on server connectivity (more reliable than browser automation in CI)
+          # First: Run minimal connectivity test
           npx playwright test ci-minimal.spec.ts \
             --timeout=60000 \
             --reporter=list \
             --max-failures=1 \
             --retries=1
+
+          # Second: Run integration tests (live backend)
+          echo "Running integration tests against live backend..."
+          npx playwright test youtube-download/integration.spec.ts \
+            --project=integration \
+            --timeout=60000 \
+            --reporter=list \
+            --max-failures=3
           
       - name: Cleanup background servers
         if: always()
