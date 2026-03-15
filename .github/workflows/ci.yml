@@ -184,7 +184,6 @@ jobs:
           
           # Set CI-specific environment variables for Playwright
           export CI=true
-          export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
           
           # First: Run minimal connectivity test
           npx playwright test ci-minimal.spec.ts \
