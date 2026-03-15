@@ -84,7 +84,7 @@ step1() {
 }
 
 step2() {
-  local prompt='Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest open issue on Github and take its investigation comment as the implementation plan.'
+  local prompt='Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest open issue on Github and take its investigation comment as the implementation plan, but also check if there is already a related PR to continue.'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
