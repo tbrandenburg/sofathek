@@ -301,6 +301,31 @@ export class MockAPIHelpers {
 }
 
 /**
+ * Live API helpers - call real backend (for integration tests)
+ */
+export class LiveAPIHelpers {
+  constructor(private page: Page) {}
+
+  async getQueueStatus(): Promise<QueueStatus> {
+    const response = await this.page.request.get('http://localhost:3010/api/youtube/queue');
+    const data = await response.json();
+    return data.data;
+  }
+
+  async startDownload(url: string): Promise<{ id: string }> {
+    const response = await this.page.request.post('http://localhost:3010/api/youtube/download', {
+      data: { url }
+    });
+    const data = await response.json();
+    return { id: data.data.queueItem.id };
+  }
+
+  async cancelDownload(id: string): Promise<void> {
+    await this.page.request.delete(`http://localhost:3010/api/youtube/download/${id}`);
+  }
+}
+
+/**
  * Timing and polling helpers
  */
 export class TimingHelpers {
@@ -370,6 +395,7 @@ export class YouTubeTestHelpers {
   public form: FormHelpers;
   public queue: QueueHelpers;
   public mockAPI: MockAPIHelpers;
+  public liveAPI: LiveAPIHelpers;
   public timing: TimingHelpers;
   public assertions: AssertionHelpers;
 
@@ -378,6 +404,7 @@ export class YouTubeTestHelpers {
     this.form = new FormHelpers(page);
     this.queue = new QueueHelpers(page);
     this.mockAPI = new MockAPIHelpers(page);
+    this.liveAPI = new LiveAPIHelpers(page);
     this.timing = new TimingHelpers(page);
     this.assertions = new AssertionHelpers(page);
   }

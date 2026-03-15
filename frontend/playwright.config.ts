@@ -64,6 +64,15 @@ export default defineConfig({
         },
       },
     },
+    {
+      name: 'integration',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        },
+      },
+    },
   ] : [
     {
       name: 'chromium',

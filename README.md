@@ -111,6 +111,13 @@ npm run validate:fast   # Skip build (~30s)
 npm run validate:skip   # Emergency skip
 ```
 
+### **YouTube E2E Test Tiers**:
+- `frontend/tests/youtube-download/full-workflow.spec.ts` - mocked UI workflow tests (fast)
+- `frontend/tests/youtube-download/integration.spec.ts` - live frontend-backend integration tests (no external YouTube dependency)
+- `frontend/tests/youtube-download/real-world.spec.ts` - real YouTube download end-to-end tests (slow)
+
+Additional details: `frontend/tests/README.md`.
+
 ### **Fix Issues Quickly**:
 ```bash
 npm run lint:fix        # Auto-fix linting issues
