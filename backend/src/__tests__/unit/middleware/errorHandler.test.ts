@@ -133,3 +133,29 @@ describe('Error Handler', () => {
     });
   });
 });
+
+describe('catchAsync', () => {
+  it('should be exported from errorHandler middleware', () => {
+    const errorHandler = require('../../../middleware/errorHandler');
+
+    expect(errorHandler.catchAsync).toBeDefined();
+    expect(typeof errorHandler.catchAsync).toBe('function');
+  });
+
+  it('should catch errors and pass to next middleware', async () => {
+    const { catchAsync } = require('../../../middleware/errorHandler');
+    const mockReq = {} as Request;
+    const mockRes = {} as Response;
+    const mockNext = jest.fn();
+
+    const handler = catchAsync(async () => {
+      throw new Error('Test error');
+    });
+
+    handler(mockReq, mockRes, mockNext);
+
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+  });
+});
