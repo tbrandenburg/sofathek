@@ -152,15 +152,22 @@ export class YouTubeDownloadService {
    * Get video metadata using yt-dlp
    */
   private async getVideoMetadata(url: string): Promise<YouTubeMetadata> {
+    let stderrOutput = '';
+
     try {
       logger.info('Fetching video metadata', { url });
 
-      const metadata = await youtubedl(url, {
+      const subprocess = youtubedl.exec(url, {
         dumpSingleJson: true,
-        noWarnings: true,
         skipDownload: true,
         noCheckCertificates: true
-      }) as any; // Type assertion for youtube-dl-exec response
+      });
+
+      subprocess.stderr?.on('data', (data) => {
+        stderrOutput += data.toString();
+      });
+
+      const metadata = await subprocess as any; // Type assertion for youtube-dl-exec response
 
       return {
         id: metadata.id || uuidv4(),
@@ -178,8 +185,13 @@ export class YouTubeDownloadService {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error('Failed to get video metadata', { url, error: errorMessage });
-      throw new AppError(`Failed to get video metadata: ${errorMessage}`, 500);
+      const stderrMessage = stderrOutput.trim();
+      const detailedMessage = stderrMessage
+        ? `${errorMessage || 'yt-dlp metadata fetch failed'} (stderr: ${stderrMessage})`
+        : errorMessage;
+
+      logger.error('Failed to get video metadata', { url, error: detailedMessage });
+      throw new AppError(`Failed to get video metadata: ${detailedMessage}`, 500);
     }
   }
 
