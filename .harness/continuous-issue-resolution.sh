@@ -108,18 +108,12 @@ step5() {
 }
 
 step6() {
-  local prompt="Get the latest open Github issue and its related PR: Raise new Github issues with \`gh\` CLI if the PR review comments came up with high or critical priority findings, failing CI or merge blockers."
+  local prompt="Get the latest open Github issue and its related PR: Raise new Github issues with \`gh\` CLI if the PR review comments came up with high or critical priority findings, failing CI or merge blockers. Then, try to merge it. If any PR was processed, send a telegram message on the outcome."
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
 step7() {
-  local prompt="Get the latest open Github issue and its related PR: Use the \`gh\` CLI to try to merge it. If any PR was processed, send a telegram message on the outcome."
-  local agent='build'
-  run_agent "$prompt" "$agent"
-}
-
-step8() {
   git switch main && git pull --rebase --autostash
 }
 
@@ -132,6 +126,5 @@ run_step step4
 run_step step5
 run_step step6
 run_step step7
-run_step step8
 
 log INFO "Workflow finished: ${WORKFLOW_NAME}"
