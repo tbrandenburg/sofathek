@@ -154,6 +154,39 @@ describe('GET /api/thumbnails/:filename', () => {
         .get('/api/thumbnails/')
         .expect(404);
     });
+
+    it('should return 403 for permission denied access', async () => {
+      mockFs.existsSync.mockImplementation(() => {
+        const err = new Error('Permission denied') as NodeJS.ErrnoException;
+        err.code = 'EACCES';
+        throw err;
+      });
+
+      const response = await request(app)
+        .get('/api/thumbnails/forbidden.jpg')
+        .expect(403);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Permission denied');
+    });
+
+    it('should return 403 when stat access is denied', async () => {
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockImplementation(() => {
+        const err = new Error('Permission denied') as NodeJS.ErrnoException;
+        err.code = 'EACCES';
+        throw err;
+      });
+
+      const response = await request(app)
+        .get('/api/thumbnails/forbidden-stat.jpg')
+        .expect(403);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Permission denied');
+    });
   });
 
   describe('Security Tests', () => {

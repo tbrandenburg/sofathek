@@ -154,11 +154,19 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   const tempThumbPath = path.join(tempDirectory, 'thumbnails', filename);
   
   let thumbnailPath: string | null = null;
-  
-  if (fs.existsSync(videosThumbPath)) {
-    thumbnailPath = videosThumbPath;
-  } else if (fs.existsSync(tempThumbPath)) {
-    thumbnailPath = tempThumbPath;
+
+  try {
+    if (fs.existsSync(videosThumbPath)) {
+      thumbnailPath = videosThumbPath;
+    } else if (fs.existsSync(tempThumbPath)) {
+      thumbnailPath = tempThumbPath;
+    }
+  } catch (error: unknown) {
+    const fsError = error as NodeJS.ErrnoException;
+    if (fsError.code === 'EACCES') {
+      throw new AppError('Permission denied accessing thumbnail', 403);
+    }
+    throw new AppError('Unable to access thumbnail', 500);
   }
   
   if (!thumbnailPath) {
@@ -181,7 +189,16 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     throw new AppError('Invalid path', 403);
   }
   
-  const stat = fs.statSync(thumbnailPath);
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(thumbnailPath);
+  } catch (error: unknown) {
+    const fsError = error as NodeJS.ErrnoException;
+    if (fsError.code === 'EACCES') {
+      throw new AppError('Permission denied accessing thumbnail', 403);
+    }
+    throw new AppError('Unable to access thumbnail', 500);
+  }
   if (stat.size > MAX_THUMBNAIL_SIZE) {
     throw new AppError(`Thumbnail too large: ${stat.size} bytes (max: ${MAX_THUMBNAIL_SIZE})`, 413);
   }
