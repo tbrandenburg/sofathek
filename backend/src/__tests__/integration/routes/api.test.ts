@@ -162,7 +162,11 @@ describe('API Routes', () => {
     });
 
     it('should return 404 for non-existent thumbnail', async () => {
-      mockFs.existsSync.mockReturnValue(false);
+      mockFs.statSync.mockImplementation(() => {
+        const err = new Error('not found') as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        throw err;
+      });
 
       const response = await request(app)
         .get('/api/thumbnails/nonexistent.jpg')

@@ -250,6 +250,25 @@ describe('VideoService', () => {
 
       expect(result).toBeNull();
     });
+
+    it('should handle special characters in filename', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Movie With Spaces.mp4');
+
+      expect(result).toBe('Movie With Spaces.jpg');
+    });
+
+    it('should return null for permission errors during access checks', async () => {
+      const permissionError = new Error('permission denied') as NodeJS.ErrnoException;
+      permissionError.code = 'EACCES';
+      mockFs.access.mockRejectedValue(permissionError);
+      mockFs.readdir.mockRejectedValue(permissionError);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/movie.mp4');
+
+      expect(result).toBeNull();
+    });
   });
 
   describe('getVideoMetadata', () => {
