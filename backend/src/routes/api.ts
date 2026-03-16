@@ -205,8 +205,8 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   const allowedVideosDir = path.resolve(videosDirectory);
   const allowedTempDir = path.resolve(tempDirectory, 'thumbnails');
   
-  const isInVideosDir = resolvedVideosPath.startsWith(allowedVideosDir);
-  const isInTempDir = resolvedTempPath.startsWith(allowedTempDir);
+  const isInVideosDir = resolvedVideosPath.startsWith(allowedVideosDir + path.sep) || resolvedVideosPath === allowedVideosDir;
+  const isInTempDir = resolvedTempPath.startsWith(allowedTempDir + path.sep) || resolvedTempPath === allowedTempDir;
   
   if (thumbnailPath === videosThumbPath && !isInVideosDir) {
     throw new AppError('Invalid path', 403);
