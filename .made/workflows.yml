@@ -2,7 +2,7 @@ workflows:
 - id: wf_mmozh3te_a0828
   name: Continuous Issue Resolution
   enabled: true
-  schedule: 0 */3 * * *
+  schedule: 0 * * * *
   steps:
   - type: bash
     run: gh issue list --limit 1 --state open | grep -q . || return 42
