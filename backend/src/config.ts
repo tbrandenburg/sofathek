@@ -13,6 +13,8 @@ export interface Config {
   thumbnailCacheDuration: number;
   ffmpegPath: string;
   ffprobePath: string;
+  rateLimitMaxRequests: number;
+  rateLimitWindowMs: number;
 }
 
 function parseIntOrDefault(value: string | undefined, defaultValue: number): number {
@@ -56,6 +58,8 @@ function getConfig(): Config {
     thumbnailCacheDuration: parseIntOrDefault(process.env.THUMBNAIL_CACHE_DURATION, 86400),
     ffmpegPath: process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
     ffprobePath: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
+    rateLimitMaxRequests: parseIntOrDefault(process.env.RATE_LIMIT_MAX_REQUESTS, 5),
+    rateLimitWindowMs: parseIntOrDefault(process.env.RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000), // 1 hour
   };
 }
 
