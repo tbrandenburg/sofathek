@@ -60,10 +60,10 @@ run_agent() {
   local prompt="$1"
   local agent="${2:-}"  # Optional agent parameter with default empty
 
-  local cmd=("opencode" "run" "--format" "json")
+  local cmd=(opencode run --format json)
   if [[ -n "$agent" ]]; then
     # Add agent parameter for opencode CLI
-    cmd+=("--agent" "$agent")
+    cmd+=(--agent "$agent")
   fi
 
   if [[ "$DRY_RUN" == true ]]; then
@@ -76,52 +76,46 @@ run_agent() {
 
 log INFO "Starting workflow: Continuous Issue Resolution"
 
-# Step 1: Check for open issues (bash)
+# Step functions based on workflow YAML
+
 step1() {
   gh issue list --limit 1 --state open | grep -q . || return 42
 }
 
-# Step 2: Switch to main and pull (bash)
 step2() {
   git switch main && git pull --rebase --autostash
 }
 
-# Step 3: Follow issue fix instructions (agent)
 step3() {
   local prompt='Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest open issue on Github and take its investigation comment as the implementation plan, but also check if there is already a related PR to continue.'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
-# Step 4: Follow commit push instructions (agent)
 step4() {
   local prompt='Follow the instructions in @.opencode/commands/commit-push.md'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
-# Step 5: Resolve CI errors if needed (agent)
 step5() {
   local prompt='Get the latest open Github issue and its related PR: Only the PR shows merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
-# Step 6: Follow PR review instructions (agent)
 step6() {
   local prompt='Get the latest open Github issue and its related PR: Follow the instructions in @.opencode/commands/prp-review.md for the PR'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
-# Step 7: Handle review findings and merge (agent)
 step7() {
-  local prompt='Get the latest open Github issue and its related PR: Raise new Github issues with `gh` CLI if the PR review comments came up with high or critical priority findings, failing CI or merge blockers. Then, try to merge it. If any PR was processed, send a telegram message on the outcome.'
+  local prompt='Get the latest open Github issue and its related PR: Raise new Github issues (and check against present ones) with `gh` CLI if the PR review comments came up with high or critical priority findings, failing CI or merge blockers. Then, try to merge it. If any PR was processed, send a telegram message on the outcome.'
   local agent='build'
   run_agent "$prompt" "$agent"
 }
 
-# Step 8: Final sync with main (bash)
 step8() {
   git switch main && git pull --rebase --autostash
 }
