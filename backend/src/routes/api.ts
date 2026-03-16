@@ -83,14 +83,31 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
   });
   
   // Verify file exists and is accessible
-  if (!fs.existsSync(videoPath)) {
-    throw new AppError(`Video file '${filename}' not found`, 404);
+  try {
+    if (!fs.existsSync(videoPath)) {
+      throw new AppError(`Video file '${filename}' not found`, 404);
+    }
+  } catch (error: unknown) {
+    // Re-throw AppErrors as-is
+    if (error instanceof AppError) {
+      throw error;
+    }
+    
+    const fsError = error as NodeJS.ErrnoException;
+    if (fsError.code === 'EACCES' || fsError.code === 'EPERM') {
+      throw new AppError('Permission denied accessing video file', 403);
+    }
+    if (fsError.code === 'ENOENT') {
+      throw new AppError(`Video file '${filename}' not found`, 404);
+    }
+    throw new AppError('Unable to access video file', 500);
   }
   
-  // Security: Verify resolved path is within allowed videos directory
+  // Security: Verify resolved path is within allowed directory
   const resolvedVideoPath = path.resolve(videoPath);
   const allowedVideosDir = path.resolve(videosDirectory);
-  if (!resolvedVideoPath.startsWith(allowedVideosDir + path.sep) && resolvedVideoPath !== allowedVideosDir) {
+  
+  if (!resolvedVideoPath.startsWith(allowedVideosDir)) {
     throw new AppError('Invalid path', 403);
   }
   
