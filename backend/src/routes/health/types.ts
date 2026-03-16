@@ -20,11 +20,11 @@ export interface VideoServiceHealth {
   error?: string;
 }
 
-export interface HealthCheck {
+export interface HealthCheck<T = unknown> {
   name: string;
   status: 'pass' | 'warn' | 'fail';
   message: string;
-  details?: any;
+  details?: T;
 }
 
 export interface HealthStatus {

@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 import { DownloadRequest, DownloadResult, YouTubeMetadata, YOUTUBE_URL_PATTERNS } from '../types/youtube';
 import { ThumbnailService } from './thumbnailService';
+import { validateYtDlpResponse } from '../utils/validation';
 
 /**
  * Core YouTube download functionality using yt-dlp
@@ -167,21 +168,30 @@ export class YouTubeDownloadService {
         stderrOutput += data.toString();
       });
 
-      const metadata = await subprocess as any; // Type assertion for youtube-dl-exec response
+      const rawMetadata = await subprocess;
+      const metadata = validateYtDlpResponse(rawMetadata);
 
-      return {
+      const result: YouTubeMetadata = {
         id: metadata.id || uuidv4(),
-        title: metadata.title || 'Unknown Title',
-        description: metadata.description || undefined,
-        duration: metadata.duration || undefined,
-        uploader: metadata.uploader || metadata.channel || undefined,
-        uploadDate: metadata.upload_date || undefined,
-        viewCount: metadata.view_count || undefined,
-        format: metadata.format || undefined,
-        width: metadata.width || undefined,
-        height: metadata.height || undefined,
-        thumbnailUrl: metadata.thumbnail || undefined
+        title: metadata.title || 'Unknown Title'
       };
+
+      // Only add optional properties if they exist and are not undefined
+      if (metadata.description !== undefined) result.description = metadata.description;
+      if (metadata.duration !== undefined) result.duration = metadata.duration;
+      if (metadata.uploader !== undefined) {
+        result.uploader = metadata.uploader;
+      } else if (metadata.channel !== undefined) {
+        result.uploader = metadata.channel;
+      }
+      if (metadata.upload_date !== undefined) result.uploadDate = metadata.upload_date;
+      if (metadata.view_count !== undefined) result.viewCount = metadata.view_count;
+      if (metadata.format !== undefined) result.format = metadata.format;
+      if (metadata.width !== undefined) result.width = metadata.width;
+      if (metadata.height !== undefined) result.height = metadata.height;
+      if (metadata.thumbnail !== undefined) result.thumbnailUrl = metadata.thumbnail;
+
+      return result;
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
