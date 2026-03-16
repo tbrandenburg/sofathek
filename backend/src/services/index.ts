@@ -2,6 +2,10 @@
  * Service exports and initialization for YouTube integration
  */
 import { YouTubeDownloadService } from './youTubeDownloadService';
+import { YouTubeUrlValidator } from './youTubeUrlValidator';
+import { YouTubeMetadataExtractor } from './youTubeMetadataExtractor';
+import { YouTubeFileDownloader } from './youTubeFileDownloader';
+import { VideoFileManager } from './videoFileManager';
 import { DownloadQueueService } from './downloadQueueService';
 import { ThumbnailService } from './thumbnailService';
 import { config } from '../config';
@@ -18,4 +22,12 @@ downloadQueueService.initialize().catch(error => {
 });
 
 // Export service classes for testing and custom initialization
-export { YouTubeDownloadService, DownloadQueueService, ThumbnailService };
+export { 
+  YouTubeDownloadService, 
+  YouTubeUrlValidator,
+  YouTubeMetadataExtractor,
+  YouTubeFileDownloader,
+  VideoFileManager,
+  DownloadQueueService, 
+  ThumbnailService 
+};
