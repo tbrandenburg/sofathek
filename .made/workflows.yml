@@ -27,9 +27,10 @@ workflows:
   - type: agent
     agent: build
     prompt: 'Get the latest open Github issue and its related PR: Raise new Github
-      issues with `gh` CLI if the PR review comments came up with high or critical
-      priority findings, failing CI or merge blockers. Then, try to merge it. If any
-      PR was processed, send a telegram message on the outcome.'
+      issues (and check against present ones) with `gh` CLI if the PR review comments
+      came up with high or critical priority findings, failing CI or merge blockers.
+      Then, try to merge it. If any PR was processed, send a telegram message on the
+      outcome.'
   - type: bash
     run: git switch main && git pull --rebase --autostash
   shellScriptPath: .harness/continuous-issue-resolution.sh
