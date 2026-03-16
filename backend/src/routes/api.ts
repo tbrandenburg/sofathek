@@ -5,6 +5,7 @@ import { config } from '../config';
 import { VideoService } from '../services/videoService';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
+import { validateVideoFilename, validateImageFilename, validatePathInDirectory } from '../utils/fileValidation';
 import youtubeRouter from './youtube';
 
 const router = Router();
@@ -63,17 +64,8 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
     throw new AppError('Filename parameter is required', 400);
   }
   
-  // Security: Validate filename to prevent directory traversal
-  if (filename.includes('..') || path.isAbsolute(filename)) {
-    throw new AppError('Invalid filename', 400);
-  }
-  
-  // Only allow video file extensions
-  const allowedExtensions = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
-  const ext = path.extname(filename).toLowerCase();
-  if (!allowedExtensions.includes(ext)) {
-    throw new AppError('Invalid file type', 400);
-  }
+  // Security: Validate filename to prevent directory traversal and check extension
+  validateVideoFilename(filename);
   
   const videoPath = path.join(videosDirectory, filename);
   
@@ -107,9 +99,8 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
   const resolvedVideoPath = path.resolve(videoPath);
   const allowedVideosDir = path.resolve(videosDirectory);
   
-  if (!resolvedVideoPath.startsWith(allowedVideosDir + path.sep) && resolvedVideoPath !== allowedVideosDir) {
-    throw new AppError('Invalid path', 403);
-  }
+  // Validate path is in allowed directory
+  validatePathInDirectory(resolvedVideoPath, allowedVideosDir);
   
   // Get file stats
   const stat = fs.statSync(videoPath);
@@ -171,17 +162,11 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     throw new AppError('Filename parameter is required', 400);
   }
   
-  // Security: Validate filename to prevent directory traversal
-  if (filename.includes('..') || path.isAbsolute(filename)) {
-    throw new AppError('Invalid filename', 400);
-  }
+  // Security: Validate filename to prevent directory traversal and check extension
+  validateImageFilename(filename);
   
-  // Only allow image file extensions
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+  // Extract extension for MIME type detection
   const ext = path.extname(filename).toLowerCase();
-  if (!allowedExtensions.includes(ext)) {
-    throw new AppError('Invalid file type', 400);
-  }
   
   // Check in videos directory first (user-uploaded thumbnails)
   const videosThumbPath = path.join(videosDirectory, filename);
@@ -217,19 +202,16 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   }
   
   // Security: Verify resolved path is within allowed directories
-  const resolvedVideosPath = path.resolve(videosThumbPath);
-  const resolvedTempPath = path.resolve(tempThumbPath);
   const allowedVideosDir = path.resolve(videosDirectory);
   const allowedTempDir = path.resolve(tempDirectory, 'thumbnails');
   
-  const isInVideosDir = resolvedVideosPath.startsWith(allowedVideosDir + path.sep) || resolvedVideosPath === allowedVideosDir;
-  const isInTempDir = resolvedTempPath.startsWith(allowedTempDir + path.sep) || resolvedTempPath === allowedTempDir;
-  
-  if (thumbnailPath === videosThumbPath && !isInVideosDir) {
-    throw new AppError('Invalid path', 403);
-  }
-  if (thumbnailPath === tempThumbPath && !isInTempDir) {
-    throw new AppError('Invalid path', 403);
+  // Validate path is in allowed directory based on which location was used
+  if (thumbnailPath === videosThumbPath) {
+    const resolvedPath = path.resolve(thumbnailPath);
+    validatePathInDirectory(resolvedPath, allowedVideosDir);
+  } else if (thumbnailPath === tempThumbPath) {
+    const resolvedPath = path.resolve(thumbnailPath);
+    validatePathInDirectory(resolvedPath, allowedTempDir);
   }
   
   if (!stat || stat.size > MAX_THUMBNAIL_SIZE) {

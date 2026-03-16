@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { getErrorMessage } from '../../utils/error';
 import os from 'os';
 import path from 'path';
 import { config } from '../../config';
@@ -117,7 +118,7 @@ export async function getVideoServiceHealth(): Promise<VideoServiceHealth> {
     });
   } catch (error) {
     health.status = 'error';
-    health.error = error instanceof Error ? error.message : 'Unknown error';
+    health.error = getErrorMessage(error);
 
     logger.error('Video service health check failed:', error);
   }

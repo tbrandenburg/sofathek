@@ -1,4 +1,5 @@
 import { Video, VideoScanResult, ApiResponse } from '../types';
+import { getErrorMessage } from '../lib/error';
 
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 
@@ -43,7 +44,7 @@ async function apiFetch<T>(endpoint: string): Promise<ApiResponse<T>> {
     
     // Network or parsing errors
     throw new ApiError(
-      error instanceof Error ? error.message : 'Unknown API error',
+      getErrorMessage(error),
       0
     );
   }

@@ -1,4 +1,5 @@
 import { promises as fs, Stats } from 'fs';
+import { getErrorMessage } from '../utils/error';
 import path from 'path';
 import { config } from '../config';
 import { logger } from '../utils/logger';
@@ -60,7 +61,7 @@ export class VideoService {
           videoFiles.push(videoFile);
 
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage = getErrorMessage(error);
           errors.push(`Error processing ${filename}: ${errorMessage}`);
         }
       }
@@ -79,7 +80,7 @@ export class VideoService {
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       errors.push(`Error reading directory: ${errorMessage}`);
     }
 
