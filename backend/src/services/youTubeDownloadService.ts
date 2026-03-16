@@ -1,19 +1,20 @@
-import youtubedl from 'youtube-dl-exec';
-import * as path from 'path';
-import * as fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
-import { AppError } from '../middleware/errorHandler';
-import { DownloadRequest, DownloadResult, YouTubeMetadata, YOUTUBE_URL_PATTERNS } from '../types/youtube';
+import { DownloadRequest, DownloadResult } from '../types/youtube';
 import { ThumbnailService } from './thumbnailService';
-import { validateYtDlpResponse } from '../utils/validation';
+import { YouTubeUrlValidator } from './youTubeUrlValidator';
+import { YouTubeMetadataExtractor } from './youTubeMetadataExtractor';
+import { YouTubeFileDownloader } from './youTubeFileDownloader';
+import { VideoFileManager } from './videoFileManager';
 
 /**
- * Core YouTube download functionality using yt-dlp
+ * Core YouTube download orchestrator using composed services
  */
 export class YouTubeDownloadService {
-  private readonly videosDirectory: string;
-  private readonly tempDirectory: string;
+  private readonly urlValidator: YouTubeUrlValidator;
+  private readonly metadataExtractor: YouTubeMetadataExtractor;
+  private readonly fileDownloader: YouTubeFileDownloader;
+  private readonly fileManager: VideoFileManager;
   private readonly thumbnailService: ThumbnailService;
 
   constructor(
@@ -21,14 +22,13 @@ export class YouTubeDownloadService {
     tempDirectory: string,
     thumbnailService: ThumbnailService
   ) {
-    this.videosDirectory = videosDirectory;
-    this.tempDirectory = tempDirectory;
+    this.urlValidator = new YouTubeUrlValidator();
+    this.metadataExtractor = new YouTubeMetadataExtractor();
+    this.fileDownloader = new YouTubeFileDownloader(tempDirectory);
+    this.fileManager = new VideoFileManager(videosDirectory, tempDirectory);
     this.thumbnailService = thumbnailService;
   }
 
-  /**
-   * Download YouTube video with metadata and thumbnail generation
-   */
   async downloadVideo(request: DownloadRequest): Promise<DownloadResult> {
     const startedAt = new Date();
     const downloadId = uuidv4();
@@ -40,16 +40,13 @@ export class YouTubeDownloadService {
         requestId: request.requestId
       });
 
-      // Validate YouTube URL
-      if (!await this.validateYouTubeUrl(request.url)) {
-        throw new AppError('Invalid YouTube URL format', 400);
+      if (!await this.urlValidator.validate(request.url)) {
+        throw new Error('Invalid YouTube URL format');
       }
 
-      // Ensure directories exist
-      await this.ensureDirectoriesExist();
+      await this.fileManager.ensureDirectoriesExist();
 
-      // Get video metadata first
-      const metadata = await this.getVideoMetadata(request.url);
+      const metadata = await this.metadataExtractor.extract(request.url);
       logger.info('Retrieved video metadata', {
         downloadId,
         videoId: metadata.id,
@@ -57,14 +54,12 @@ export class YouTubeDownloadService {
         duration: metadata.duration
       });
 
-      // Download video to temp directory
-      const tempVideoPath = await this.downloadVideoFile(request.url, metadata);
+      const tempVideoPath = await this.fileDownloader.download(request.url, metadata);
       logger.info('Video downloaded to temp location', {
         downloadId,
         tempPath: tempVideoPath
       });
 
-      // Generate thumbnail (graceful degradation)
       let thumbnailPath: string | undefined;
       try {
         thumbnailPath = await this.thumbnailService.generateThumbnail(tempVideoPath);
@@ -78,12 +73,10 @@ export class YouTubeDownloadService {
           videoPath: tempVideoPath,
           error: error instanceof Error ? error.message : String(error)
         });
-        // Don't fail the entire download for thumbnail issues
         thumbnailPath = undefined;
       }
 
-      // Move video to final location
-      const finalVideoPath = await this.moveVideoToLibrary(tempVideoPath, metadata);
+      const finalVideoPath = await this.fileManager.moveToLibrary(tempVideoPath, metadata);
       logger.info('Video moved to library', {
         downloadId,
         finalPath: finalVideoPath
@@ -126,230 +119,11 @@ export class YouTubeDownloadService {
     }
   }
 
-  /**
-   * Validate YouTube URL format
-   */
   async validateYouTubeUrl(url: string): Promise<boolean> {
-    try {
-      // Check against known YouTube URL patterns
-      const isValidFormat = YOUTUBE_URL_PATTERNS.some(pattern => pattern.test(url));
-      
-      if (!isValidFormat) {
-        logger.warn('URL does not match YouTube patterns', { url });
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      logger.error('URL validation failed', {
-        url,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return false;
-    }
+    return this.urlValidator.validate(url);
   }
 
-  /**
-   * Get video metadata using yt-dlp
-   */
-  private async getVideoMetadata(url: string): Promise<YouTubeMetadata> {
-    let stderrOutput = '';
-
-    try {
-      logger.info('Fetching video metadata', { url });
-
-      const subprocess = youtubedl.exec(url, {
-        dumpSingleJson: true,
-        skipDownload: true,
-        noCheckCertificates: true
-      });
-
-      subprocess.stderr?.on('data', (data) => {
-        stderrOutput += data.toString();
-      });
-
-      const rawMetadata = await subprocess;
-      const metadata = validateYtDlpResponse(rawMetadata);
-
-      const result: YouTubeMetadata = {
-        id: metadata.id || uuidv4(),
-        title: metadata.title || 'Unknown Title'
-      };
-
-      // Only add optional properties if they exist and are not undefined
-      if (metadata.description !== undefined) result.description = metadata.description;
-      if (metadata.duration !== undefined) result.duration = metadata.duration;
-      if (metadata.uploader !== undefined) {
-        result.uploader = metadata.uploader;
-      } else if (metadata.channel !== undefined) {
-        result.uploader = metadata.channel;
-      }
-      if (metadata.upload_date !== undefined) result.uploadDate = metadata.upload_date;
-      if (metadata.view_count !== undefined) result.viewCount = metadata.view_count;
-      if (metadata.format !== undefined) result.format = metadata.format;
-      if (metadata.width !== undefined) result.width = metadata.width;
-      if (metadata.height !== undefined) result.height = metadata.height;
-      if (metadata.thumbnail !== undefined) result.thumbnailUrl = metadata.thumbnail;
-
-      return result;
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const stderrMessage = stderrOutput.trim();
-      const detailedMessage = stderrMessage
-        ? `${errorMessage || 'yt-dlp metadata fetch failed'} (stderr: ${stderrMessage})`
-        : errorMessage;
-
-      logger.error('Failed to get video metadata', { url, error: detailedMessage });
-      throw new AppError(`Failed to get video metadata: ${detailedMessage}`, 500);
-    }
-  }
-
-  /**
-   * Download video file using yt-dlp
-   */
-  private async downloadVideoFile(url: string, metadata: YouTubeMetadata): Promise<string> {
-    try {
-      // Create safe filename
-      const safeTitle = this.createSafeFilename(metadata.title);
-      const outputTemplate = path.join(this.tempDirectory, `${safeTitle}-${metadata.id}.%(ext)s`);
-
-      logger.info('Starting video file download', {
-        url,
-        outputTemplate,
-        videoId: metadata.id
-      });
-
-      // Execute download with progress tracking
-      const subprocess = youtubedl.exec(url, {
-        output: outputTemplate,
-        format: 'best[ext=mp4]/best',
-        noPlaylist: true,
-        restrictFilenames: true,
-        noWarnings: true
-      });
-
-      // Log download progress
-      subprocess.stdout?.on('data', (data) => {
-        const output = data.toString();
-        if (output.includes('[download]')) {
-          logger.debug('Download progress', { 
-            videoId: metadata.id,
-            progress: output.trim()
-          });
-        }
-      });
-
-      // Wait for download to complete
-      await subprocess;
-
-      // Find the downloaded file (yt-dlp determines the actual extension)
-      const tempFiles = await fs.readdir(this.tempDirectory);
-      const downloadedFile = tempFiles.find(file => 
-        file.startsWith(`${safeTitle}-${metadata.id}`)
-      );
-
-      if (!downloadedFile) {
-        throw new AppError('Downloaded video file not found', 500);
-      }
-
-      const downloadedPath = path.join(this.tempDirectory, downloadedFile);
-      logger.info('Video file download completed', {
-        downloadedPath,
-        videoId: metadata.id
-      });
-
-      return downloadedPath;
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error('Video file download failed', { url, error: errorMessage });
-      throw new AppError(`Failed to download video file: ${errorMessage}`, 500);
-    }
-  }
-
-  /**
-   * Move video from temp to final library location
-   */
-  private async moveVideoToLibrary(tempPath: string, metadata: YouTubeMetadata): Promise<string> {
-    try {
-      const extension = path.extname(tempPath);
-      const safeTitle = this.createSafeFilename(metadata.title);
-      const finalFilename = `${safeTitle}-${metadata.id}${extension}`;
-      const finalPath = path.join(this.videosDirectory, finalFilename);
-
-      // Ensure videos directory exists
-      await fs.mkdir(this.videosDirectory, { recursive: true });
-
-      // Move file from temp to final location
-      await fs.rename(tempPath, finalPath);
-
-      logger.info('Video moved to library', {
-        tempPath,
-        finalPath,
-        videoId: metadata.id
-      });
-
-      return finalPath;
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error('Failed to move video to library', { 
-        tempPath, 
-        error: errorMessage 
-      });
-      throw new AppError(`Failed to move video to library: ${errorMessage}`, 500);
-    }
-  }
-
-  /**
-   * Create filesystem-safe filename from title
-   */
-  private createSafeFilename(title: string): string {
-    return title
-      .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
-      .replace(/\s+/g, '_') // Replace spaces with underscores
-      .substring(0, 200) // Limit length
-      .trim();
-  }
-
-  /**
-   * Ensure required directories exist
-   */
-  private async ensureDirectoriesExist(): Promise<void> {
-    try {
-      await fs.access(this.videosDirectory);
-    } catch {
-      await fs.mkdir(this.videosDirectory, { recursive: true });
-      logger.info('Created videos directory', { path: this.videosDirectory });
-    }
-
-    try {
-      await fs.access(this.tempDirectory);
-    } catch {
-      await fs.mkdir(this.tempDirectory, { recursive: true });
-      logger.info('Created temp directory', { path: this.tempDirectory });
-    }
-  }
-
-  /**
-   * Clean up failed download files
-   */
   async cleanupFailedDownload(videoId: string): Promise<void> {
-    try {
-      const tempFiles = await fs.readdir(this.tempDirectory);
-      const filesToCleanup = tempFiles.filter(file => file.includes(videoId));
-
-      for (const file of filesToCleanup) {
-        const filePath = path.join(this.tempDirectory, file);
-        await fs.unlink(filePath);
-        logger.info('Cleaned up failed download file', { filePath });
-      }
-    } catch (error) {
-      logger.warn('Failed to cleanup failed download files', {
-        videoId,
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
+    return this.fileManager.cleanupFailedDownload(videoId);
   }
 }
