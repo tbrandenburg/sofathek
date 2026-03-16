@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { downloadQueueService, youTubeDownloadService } from '../services/index';
-import { DownloadRequest } from '../types/youtube';
+import { DownloadRequest, QueueItem } from '../types/youtube';
 import { createRateLimiter, rateLimitMiddleware } from '../middleware/rateLimiter';
 import { config } from '../config';
 
@@ -109,7 +109,7 @@ router.get('/download/:id/status', catchAsync(async (req: Request, res: Response
     throw new AppError(`Download with ID '${id}' not found`, 404);
   }
   
-  const responseData: any = { ...queueItem };
+  const responseData: QueueItem & { diagnostics?: any } = { ...queueItem };
   
   // Add diagnostic context for failed downloads
   if (queueItem.status === 'failed' && queueItem.error) {

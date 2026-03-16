@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import { promises as fs, Stats } from 'fs';
 import path from 'path';
 import { config } from '../config';
 import { logger } from '../utils/logger';
@@ -152,7 +152,7 @@ export class VideoService {
   private async createVideoFile(
     filePath: string, 
     filename: string, 
-    stats: any
+    stats: Stats
   ): Promise<VideoFile> {
     return {
       path: filePath,
