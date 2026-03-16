@@ -138,6 +138,46 @@ describe('API Routes', () => {
       const errorMessage = response.body.error?.message || response.body.message;
       expect(errorMessage).toBe('Range not satisfiable');
     });
+
+    it('should reject path traversal attempts', async () => {
+      const response = await request(app)
+        .get('/api/stream/..%2F..%2F..%2Fetc%2Fpasswd')  // URL encoded ../../../etc/passwd
+        .expect(400);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Invalid filename');
+    });
+
+    it('should reject absolute paths', async () => {
+      const response = await request(app)
+        .get('/api/stream/%2Fetc%2Fpasswd')  // URL encoded /etc/passwd
+        .expect(400);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Invalid filename');
+    });
+
+    it('should reject non-video file extensions', async () => {
+      const response = await request(app)
+        .get('/api/stream/malicious.exe')
+        .expect(400);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Invalid file type');
+    });
+
+    it('should reject files with no extension', async () => {
+      const response = await request(app)
+        .get('/api/stream/README')
+        .expect(400);
+
+      expect(response.body.status).toBe('error');
+      const errorMessage = response.body.error?.message || response.body.message;
+      expect(errorMessage).toContain('Invalid file type');
+    });
   });
 
   describe('GET /api/thumbnails/:filename', () => {

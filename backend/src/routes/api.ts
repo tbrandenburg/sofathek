@@ -63,6 +63,18 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
     throw new AppError('Filename parameter is required', 400);
   }
   
+  // Security: Validate filename to prevent directory traversal
+  if (filename.includes('..') || path.isAbsolute(filename)) {
+    throw new AppError('Invalid filename', 400);
+  }
+  
+  // Only allow video file extensions
+  const allowedExtensions = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
+  const ext = path.extname(filename).toLowerCase();
+  if (!allowedExtensions.includes(ext)) {
+    throw new AppError('Invalid file type', 400);
+  }
+  
   const videoPath = path.join(videosDirectory, filename);
   
   logger.info(`Streaming video: ${filename}`, {
@@ -73,6 +85,13 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
   // Verify file exists and is accessible
   if (!fs.existsSync(videoPath)) {
     throw new AppError(`Video file '${filename}' not found`, 404);
+  }
+  
+  // Security: Verify resolved path is within allowed videos directory
+  const resolvedVideoPath = path.resolve(videoPath);
+  const allowedVideosDir = path.resolve(videosDirectory);
+  if (!resolvedVideoPath.startsWith(allowedVideosDir + path.sep) && resolvedVideoPath !== allowedVideosDir) {
+    throw new AppError('Invalid path', 403);
   }
   
   // Get file stats
