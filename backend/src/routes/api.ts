@@ -107,7 +107,7 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
   const resolvedVideoPath = path.resolve(videoPath);
   const allowedVideosDir = path.resolve(videosDirectory);
   
-  if (!resolvedVideoPath.startsWith(allowedVideosDir)) {
+  if (!resolvedVideoPath.startsWith(allowedVideosDir + path.sep) && resolvedVideoPath !== allowedVideosDir) {
     throw new AppError('Invalid path', 403);
   }
   
