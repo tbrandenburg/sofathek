@@ -190,11 +190,11 @@ describe('API Routes', () => {
         // Mock to simulate a scenario where allowedVideosDir is '/data/videos' 
         // and we're trying to access '/data/videos-backup/malicious.mp4'
         path.resolve = jest.fn((inputPath) => {
-          if (inputPath.includes('videos-backup')) {
-            return '/data/videos-backup/malicious.mp4';
-          }
           if (inputPath.includes('test.mp4')) {
             return '/data/videos-backup/test.mp4'; // Simulating directory boundary attack
+          }
+          if (inputPath.endsWith('data/videos') || inputPath === 'data/videos') {
+            return '/data/videos'; // Return the videos directory
           }
           return originalResolve(inputPath);
         });
@@ -218,6 +218,9 @@ describe('API Routes', () => {
         path.resolve = jest.fn((inputPath) => {
           if (inputPath.includes('test.mp4')) {
             return '/data/videos/test.mp4'; // Valid path within allowed directory
+          }
+          if (inputPath.endsWith('data/videos') || inputPath === 'data/videos') {
+            return '/data/videos'; // Return the videos directory
           }
           return originalResolve(inputPath);
         });
