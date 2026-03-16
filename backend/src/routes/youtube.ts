@@ -4,14 +4,21 @@ import { logger } from '../utils/logger';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { downloadQueueService, youTubeDownloadService } from '../services/index';
 import { DownloadRequest } from '../types/youtube';
+import { createRateLimiter, rateLimitMiddleware } from '../middleware/rateLimiter';
+import { config } from '../config';
 
 const router = Router();
+
+const downloadRateLimiter = createRateLimiter(
+  config.rateLimitMaxRequests,
+  config.rateLimitWindowMs
+);
 
 /**
  * POST /api/youtube/download
  * Add YouTube video to download queue
  */
-router.post('/download', catchAsync(async (req: Request, res: Response) => {
+router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(async (req: Request, res: Response) => {
   const { url, title } = req.body;
   
   if (!url) {
