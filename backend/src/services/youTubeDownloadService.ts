@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
+import { getErrorMessage } from '../utils/error';
 import { DownloadRequest, DownloadResult } from '../types/youtube';
 import { ThumbnailService } from './thumbnailService';
 import { YouTubeUrlValidator } from './youTubeUrlValidator';
@@ -71,7 +72,7 @@ export class YouTubeDownloadService {
         logger.warn('Thumbnail generation failed, continuing without thumbnail', {
           downloadId,
           videoPath: tempVideoPath,
-          error: error instanceof Error ? error.message : String(error)
+          error: getErrorMessage(error)
         });
         thumbnailPath = undefined;
       }
@@ -101,7 +102,7 @@ export class YouTubeDownloadService {
       return result;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       logger.error('YouTube download failed', {
         downloadId,
         url: request.url,

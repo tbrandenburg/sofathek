@@ -1,4 +1,5 @@
 import youtubedl from 'youtube-dl-exec';
+import { getErrorMessage } from '../utils/error';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { logger } from '../utils/logger';
@@ -61,7 +62,7 @@ export class YouTubeFileDownloader {
       return downloadedPath;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       logger.error('Video file download failed', { url, error: errorMessage });
       throw new AppError(`Failed to download video file: ${errorMessage}`, 500);
     }

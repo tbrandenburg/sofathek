@@ -1,4 +1,5 @@
 import youtubedl from 'youtube-dl-exec';
+import { getErrorMessage } from '../utils/error';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
@@ -48,7 +49,7 @@ export class YouTubeMetadataExtractor {
       return result;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       const stderrMessage = stderrOutput.trim();
       const detailedMessage = stderrMessage
         ? `${errorMessage || 'yt-dlp metadata fetch failed'} (stderr: ${stderrMessage})`

@@ -8,6 +8,8 @@ import {
 
 // Import base API utilities
 import { ApiError, API_BASE_URL } from './api';
+import { getErrorMessage } from '../lib/error';
+import { getStatusColor } from '../lib/status';
 
 /**
  * Generic fetch wrapper for YouTube API calls with error handling
@@ -62,7 +64,7 @@ async function youtubeApiFetch<T>(
     
     // Network or parsing errors
     throw new ApiError(
-      error instanceof Error ? error.message : 'Unknown YouTube API error',
+      getErrorMessage(error),
       0
     );
   }
@@ -209,17 +211,5 @@ export function formatQueueItemTitle(item: QueueItem): string {
   return videoId ? `YouTube Video (${videoId})` : 'YouTube Video';
 }
 
-/**
- * Get status badge color class for UI
- */
-export function getStatusColor(status: QueueItem['status']): string {
-  const colorMap = {
-    pending: 'bg-gray-100 text-gray-800',
-    processing: 'bg-blue-100 text-blue-800',
-    completed: 'bg-green-100 text-green-800',
-    failed: 'bg-red-100 text-red-800',
-    cancelled: 'bg-orange-100 text-orange-800',
-  };
-  
-  return colorMap[status] || 'bg-gray-100 text-gray-800';
-}
+// Re-export status color utility for backward compatibility
+export { getStatusColor };

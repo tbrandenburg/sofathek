@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises';
+import { getErrorMessage } from '../utils/error';
 import * as path from 'path';
 import { AppError } from '../middleware/errorHandler';
 import { QueueItem } from '../types/youtube';
@@ -68,7 +69,7 @@ export async function saveQueue(queueFilePath: string, queue: QueueItem[]): Prom
     });
   } catch (error) {
     logger.error('Failed to save queue', {
-      error: error instanceof Error ? error.message : String(error),
+      error: getErrorMessage(error),
       filePath: queueFilePath
     });
     throw new AppError('Failed to save download queue', 500);

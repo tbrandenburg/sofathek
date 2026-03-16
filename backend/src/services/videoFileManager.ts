@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { getErrorMessage } from '../utils/error';
 import * as fs from 'fs/promises';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
@@ -32,7 +33,7 @@ export class VideoFileManager {
       return finalPath;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       logger.error('Failed to move video to library', { 
         tempPath, 
         error: errorMessage 
@@ -70,7 +71,7 @@ export class VideoFileManager {
     } catch (error) {
       logger.warn('Failed to cleanup failed download files', {
         videoId,
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     }
   }

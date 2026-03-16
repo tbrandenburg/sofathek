@@ -1,4 +1,5 @@
 import { QueueItem } from '../types/youtube';
+import { getErrorMessage } from '../utils/error';
 import { logger } from '../utils/logger';
 import { YouTubeDownloadService } from './youTubeDownloadService';
 
@@ -70,7 +71,7 @@ export async function processQueueItem(
 
     await saveQueue();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
 
     item.status = 'failed';
     item.error = errorMessage;

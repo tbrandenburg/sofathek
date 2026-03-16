@@ -1,4 +1,5 @@
 import { FFmpeggy } from 'ffmpeggy';
+import { getErrorMessage } from '../utils/error';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { config } from '../config';
@@ -27,7 +28,7 @@ try {
 } catch (error) {
   // Fallback for older versions or test environments
   logger.warn('Could not configure FFmpeggy DefaultConfig, using fallback method', {
-    error: error instanceof Error ? error.message : String(error)
+    error: getErrorMessage(error)
   });
 }
 
@@ -89,7 +90,7 @@ export class ThumbnailService {
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       logger.error('Thumbnail generation failed', {
         videoPath,
         error: errorMessage
@@ -165,7 +166,7 @@ export class ThumbnailService {
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       logger.error('Thumbnail generation with progress failed', {
         videoPath,
         error: errorMessage
@@ -243,7 +244,7 @@ export class ThumbnailService {
         } catch (error) {
           logger.warn('Failed to clean up temp file', { 
             filename, 
-            error: error instanceof Error ? error.message : String(error)
+            error: getErrorMessage(error)
           });
         }
       }
@@ -256,7 +257,7 @@ export class ThumbnailService {
       return cleanedCount;
     } catch (error) {
       logger.error('Failed to cleanup thumbnail temp files', {
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
       return 0;
     }
