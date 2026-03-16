@@ -5,6 +5,8 @@ workflows:
   schedule: 0 */3 * * *
   steps:
   - type: bash
+    run: gh issue list --limit 1 --state open | grep -q . || return 42
+  - type: bash
     run: git switch main && git pull --rebase --autostash
   - type: agent
     agent: build
