@@ -178,6 +178,62 @@ describe('API Routes', () => {
       const errorMessage = response.body.error?.message || response.body.message;
       expect(errorMessage).toContain('Invalid file type');
     });
+
+    // Security regression tests for directory boundary validation
+    describe('Path validation security', () => {
+      it('should reject path traversal to sibling directory', async () => {
+        // This tests the specific regression from PR #117
+        // Mock path.resolve to simulate the security issue scenario
+        const path = require('path');
+        const originalResolve = path.resolve;
+        
+        // Mock to simulate a scenario where allowedVideosDir is '/data/videos' 
+        // and we're trying to access '/data/videos-backup/malicious.mp4'
+        path.resolve = jest.fn((inputPath) => {
+          if (inputPath.includes('videos-backup')) {
+            return '/data/videos-backup/malicious.mp4';
+          }
+          if (inputPath.includes('test.mp4')) {
+            return '/data/videos-backup/test.mp4'; // Simulating directory boundary attack
+          }
+          return originalResolve(inputPath);
+        });
+
+        const response = await request(app)
+          .get('/api/stream/test.mp4')
+          .expect(403);
+
+        expect(response.body.status).toBe('error');
+        expect(response.body.error?.message || response.body.message).toContain('Invalid path');
+
+        // Restore original path.resolve
+        path.resolve = originalResolve;
+      });
+
+      it('should accept valid filename within videos directory', async () => {
+        const path = require('path');
+        const originalResolve = path.resolve;
+        
+        // Mock to simulate valid path resolution within allowed directory
+        path.resolve = jest.fn((inputPath) => {
+          if (inputPath.includes('test.mp4')) {
+            return '/data/videos/test.mp4'; // Valid path within allowed directory
+          }
+          return originalResolve(inputPath);
+        });
+
+        // This should not return 403 (Invalid path), but 404 since file doesn't exist
+        const response = await request(app)
+          .get('/api/stream/test.mp4')
+          .expect(404);
+
+        expect(response.body.status).toBe('error');
+        expect(response.body.error?.message || response.body.message).toContain('not found');
+
+        // Restore original path.resolve
+        path.resolve = originalResolve;
+      });
+    });
   });
 
   describe('GET /api/thumbnails/:filename', () => {
