@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, afterEach, afterAll } from '@jest/globals';
 
 // Mock external dependencies globally
 jest.mock('fs/promises', () => ({
@@ -28,9 +28,22 @@ global.console = {
   error: jest.fn(),
 };
 
-// Global cleanup for rate limiters to prevent Jest hanging
+// Force clear all timers after each test to prevent lingering setTimeout/setInterval
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+// Cleanup after all tests - force exit any remaining handles
 afterAll(async () => {
-  // Import and clean up all rate limiters
+  // Cleanup all RateLimiter instances to prevent open handles
+  try {
+    const { cleanupAllRateLimiters } = await import('../middleware/rateLimiter');
+    cleanupAllRateLimiters();
+  } catch (error) {
+    // Ignore if import fails
+  }
+  
+  // Also try specific downloadRateLimiter cleanup for backward compatibility
   try {
     const { downloadRateLimiter } = await import('../routes/youtube');
     if (downloadRateLimiter && typeof downloadRateLimiter.destroy === 'function') {
@@ -39,4 +52,13 @@ afterAll(async () => {
   } catch (error) {
     // Rate limiter may not be imported in some test suites
   }
+  
+  // Ensure all timers are cleared
+  jest.useRealTimers();
+  
+  // Clear any pending promises by resolving them
+  jest.restoreAllMocks();
+  
+  // Give any async cleanup a chance to complete
+  await new Promise(resolve => setTimeout(resolve, 100));
 });

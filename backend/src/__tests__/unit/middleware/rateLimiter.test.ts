@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { createRateLimiter, rateLimitMiddleware } from '../../../middleware/rateLimiter';
+import { createRateLimiter, rateLimitMiddleware, RateLimiter } from '../../../middleware/rateLimiter';
 
 describe('RateLimiter', () => {
   let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
   let mockNext: jest.MockedFunction<NextFunction>;
-  let createdLimiters: any[] = [];
+  let testLimiters: RateLimiter[] = [];
 
   beforeEach(() => {
     mockReq = {
@@ -17,23 +17,23 @@ describe('RateLimiter', () => {
     };
     mockRes = {};
     mockNext = jest.fn();
-    createdLimiters = [];
   });
 
   afterEach(() => {
-    // Clean up all rate limiters created in tests
-    createdLimiters.forEach(limiter => {
-      if (limiter && typeof limiter.destroy === 'function') {
-        limiter.destroy();
-      }
-    });
-    createdLimiters = [];
+    // Clean up any test rate limiters
+    testLimiters.forEach(limiter => limiter.close());
+    testLimiters = [];
   });
+
+  const createTestLimiter = (maxRequests: number, windowMs: number): RateLimiter => {
+    const limiter = createRateLimiter(maxRequests, windowMs);
+    testLimiters.push(limiter);
+    return limiter;
+  };
 
   describe('within limit', () => {
     it('should allow requests under the limit', () => {
-      const limiter = createRateLimiter(5, 60000);
-      createdLimiters.push(limiter);
+      const limiter = createTestLimiter(5, 60000);
       const middleware = rateLimitMiddleware(limiter);
 
       middleware(mockReq as Request, mockRes as Response, mockNext);
@@ -44,8 +44,7 @@ describe('RateLimiter', () => {
 
   describe('exceeding limit', () => {
     it('should block requests over the limit with 429', () => {
-      const limiter = createRateLimiter(2, 60000);
-      createdLimiters.push(limiter);
+      const limiter = createTestLimiter(2, 60000);
       const middleware = rateLimitMiddleware(limiter);
 
       // Make 2 requests (at limit)
@@ -64,8 +63,7 @@ describe('RateLimiter', () => {
 
   describe('different IPs', () => {
     it('should track limits separately per IP', () => {
-      const limiter = createRateLimiter(1, 60000);
-      createdLimiters.push(limiter);
+      const limiter = createTestLimiter(1, 60000);
       const middleware = rateLimitMiddleware(limiter);
 
       // First IP makes request
@@ -78,6 +76,32 @@ describe('RateLimiter', () => {
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('cleanup', () => {
+    it('should clear interval on close', () => {
+      const limiter = createTestLimiter(5, 60000);
+      
+      // Verify interval is created
+      expect((limiter as any).cleanupIntervalId).not.toBeNull();
+      
+      // Close the limiter
+      limiter.close();
+      
+      // Verify interval is cleared
+      expect((limiter as any).cleanupIntervalId).toBeNull();
+    });
+
+    it('should handle multiple close calls safely', () => {
+      const limiter = createTestLimiter(5, 60000);
+      
+      // First close
+      limiter.close();
+      expect((limiter as any).cleanupIntervalId).toBeNull();
+      
+      // Second close should not throw
+      expect(() => limiter.close()).not.toThrow();
     });
   });
 });

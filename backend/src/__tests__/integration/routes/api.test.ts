@@ -230,6 +230,9 @@ describe('API Routes', () => {
         const originalResolve = path.resolve;
         
         try {
+          // Mock file as NOT existing to match expected 404 response
+          mockFs.existsSync.mockReturnValue(false);
+          
           // Mock to simulate valid path resolution within allowed directory
           path.resolve = jest.fn((inputPath) => {
             if (inputPath.includes('test.mp4')) {
@@ -257,7 +260,8 @@ describe('API Routes', () => {
           expect(response.body.status).toBe('error');
           expect(response.body.error?.message || response.body.message).toContain('not found');
         } finally {
-          // Always restore original path.resolve
+          // Always restore original mocks
+          mockFs.existsSync.mockReturnValue(true);
           path.resolve = originalResolve;
         }
       });

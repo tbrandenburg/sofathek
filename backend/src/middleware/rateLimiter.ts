@@ -11,7 +11,7 @@ class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map();
   private readonly maxRequests: number;
   private readonly windowMs: number;
-  private cleanupTimer: NodeJS.Timeout | null = null;
+  private cleanupIntervalId: NodeJS.Timeout | null = null;
 
   constructor(maxRequests: number, windowMs: number) {
     this.maxRequests = maxRequests;
@@ -20,7 +20,7 @@ class RateLimiter {
   }
 
   private cleanupInterval(): void {
-    this.cleanupTimer = setInterval(() => {
+    this.cleanupIntervalId = setInterval(() => {
       const now = Date.now();
       for (const [key, entry] of this.store.entries()) {
         if (entry.resetTime < now) {
@@ -31,11 +31,18 @@ class RateLimiter {
   }
 
   destroy(): void {
-    if (this.cleanupTimer) {
-      clearInterval(this.cleanupTimer);
-      this.cleanupTimer = null;
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
     }
     this.store.clear();
+  }
+
+  close(): void {
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
   }
 
   private getIdentifier(req: Request): string {
@@ -82,10 +89,22 @@ class RateLimiter {
   }
 }
 
+// Global registry for tracking all RateLimiter instances
+const rateLimiterInstances: Set<RateLimiter> = new Set();
+
 export const createRateLimiter = (maxRequests: number, windowMs: number): RateLimiter => {
-  return new RateLimiter(maxRequests, windowMs);
+  const limiter = new RateLimiter(maxRequests, windowMs);
+  rateLimiterInstances.add(limiter);
+  return limiter;
 };
 
+// Global cleanup function for Jest teardown
+export const cleanupAllRateLimiters = (): void => {
+  for (const limiter of rateLimiterInstances) {
+    limiter.close();
+  }
+  rateLimiterInstances.clear();
+};
 export { RateLimiter };
 
 export const rateLimitMiddleware = (rateLimiter: RateLimiter) => {
