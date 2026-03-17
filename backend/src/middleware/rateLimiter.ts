@@ -11,6 +11,7 @@ class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map();
   private readonly maxRequests: number;
   private readonly windowMs: number;
+  private cleanupIntervalId: NodeJS.Timeout | null = null;
 
   constructor(maxRequests: number, windowMs: number) {
     this.maxRequests = maxRequests;
@@ -19,7 +20,7 @@ class RateLimiter {
   }
 
   private cleanupInterval(): void {
-    setInterval(() => {
+    this.cleanupIntervalId = setInterval(() => {
       const now = Date.now();
       for (const [key, entry] of this.store.entries()) {
         if (entry.resetTime < now) {
@@ -27,6 +28,13 @@ class RateLimiter {
         }
       }
     }, this.windowMs);
+  }
+
+  close(): void {
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
   }
 
   private getIdentifier(req: Request): string {
@@ -76,6 +84,8 @@ class RateLimiter {
 export const createRateLimiter = (maxRequests: number, windowMs: number): RateLimiter => {
   return new RateLimiter(maxRequests, windowMs);
 };
+
+export { RateLimiter };
 
 export const rateLimitMiddleware = (rateLimiter: RateLimiter) => {
   return (req: Request, _res: Response, next: NextFunction): void => {

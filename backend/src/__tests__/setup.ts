@@ -34,10 +34,13 @@ afterEach(() => {
 });
 
 // Cleanup after all tests - force exit any remaining handles
-afterAll(() => {
+afterAll(async () => {
   // Ensure all timers are cleared
   jest.useRealTimers();
   
   // Clear any pending promises by resolving them
   jest.restoreAllMocks();
+  
+  // Give any async cleanup a chance to complete
+  await new Promise(resolve => setTimeout(resolve, 100));
 });
