@@ -95,12 +95,9 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
     throw new AppError('Unable to access video file', 500);
   }
   
-  // Security: Verify resolved path is within allowed directory
-  const resolvedVideoPath = path.resolve(videoPath);
+  // Security: Validate path is within allowed directory (function handles normalization internally)
   const allowedVideosDir = path.resolve(videosDirectory);
-  
-  // Validate path is in allowed directory
-  validatePathInDirectory(resolvedVideoPath, allowedVideosDir);
+  validatePathInDirectory(videoPath, allowedVideosDir);
   
   // Get file stats
   const stat = fs.statSync(videoPath);
@@ -207,11 +204,9 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   
   // Validate path is in allowed directory based on which location was used
   if (thumbnailPath === videosThumbPath) {
-    const resolvedPath = path.resolve(thumbnailPath);
-    validatePathInDirectory(resolvedPath, allowedVideosDir);
+    validatePathInDirectory(thumbnailPath, allowedVideosDir);
   } else if (thumbnailPath === tempThumbPath) {
-    const resolvedPath = path.resolve(thumbnailPath);
-    validatePathInDirectory(resolvedPath, allowedTempDir);
+    validatePathInDirectory(thumbnailPath, allowedTempDir);
   }
   
   if (!stat || stat.size > MAX_THUMBNAIL_SIZE) {
