@@ -121,8 +121,9 @@ jobs:
 
       - name: Install yt-dlp system binary
         run: |
-          sudo apt-get update
-          sudo apt-get install -y yt-dlp
+          pip install --upgrade pip
+          pip install yt-dlp
+        timeout-minutes: 5
         
       - name: Install Playwright browsers
         run: make playwright-install
@@ -255,8 +256,9 @@ jobs:
 
       - name: Install yt-dlp system binary
         run: |
-          sudo apt-get update
-          sudo apt-get install -y yt-dlp
+          pip install --upgrade pip
+          pip install yt-dlp
+        timeout-minutes: 5
         
       - name: Build for production
         run: make build
