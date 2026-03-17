@@ -17,10 +17,16 @@ jest.mock('fs/promises', () => ({
 
 const mockFFmpeggyRun = jest.fn();
 const mockFFmpeggyDone = jest.fn();
+const mockFFmpeggyOn = jest.fn();
+const mockFFmpeggyOff = jest.fn();
+const mockFFmpeggyRemoveListener = jest.fn();
 jest.mock('ffmpeggy', () => ({
   FFmpeggy: jest.fn().mockImplementation(() => ({
     run: mockFFmpeggyRun,
-    done: mockFFmpeggyDone
+    done: mockFFmpeggyDone,
+    on: mockFFmpeggyOn,
+    off: mockFFmpeggyOff,
+    removeListener: mockFFmpeggyRemoveListener
   }))
 }));
 
@@ -169,6 +175,114 @@ describe('ThumbnailService - Real FFmpeg Integration', () => {
       // Expected if test video doesn't exist
       expect(error).toBeDefined();
     }
+  });
+});
+
+describe('ThumbnailService - generateThumbnailWithProgress', () => {
+  let service: ThumbnailService;
+
+  beforeEach(() => {
+    service = new ThumbnailService('/test', '/test');
+    jest.clearAllMocks();
+    
+    // Reset fs mocks
+    mockAccess.mockResolvedValue(undefined);
+    mockMkdir.mockResolvedValue(undefined);
+    
+    // Reset FFmpeggy mocks
+    mockFFmpeggyRun.mockResolvedValue(undefined);
+    mockFFmpeggyDone.mockResolvedValue(undefined);
+    mockFFmpeggyOn.mockReturnValue(undefined);
+    mockFFmpeggyRemoveListener.mockReturnValue(undefined);
+  });
+
+  it('should generate thumbnail with progress callback and clean up event listeners', async () => {
+    // Mock progress callback
+    const progressCallback = jest.fn();
+
+    // Execute the method
+    await service.generateThumbnailWithProgress('/test/video.mp4', progressCallback);
+
+    // Verify event listeners were set up
+    expect(mockFFmpeggyOn).toHaveBeenCalledWith('progress', expect.any(Function));
+    expect(mockFFmpeggyOn).toHaveBeenCalledWith('error', expect.any(Function));
+    
+    // Verify event listeners were cleaned up
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledWith('progress', expect.any(Function));
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledWith('error', expect.any(Function));
+  });
+
+  it('should generate thumbnail without progress callback and still clean up error listener', async () => {
+    await service.generateThumbnailWithProgress('/test/video.mp4');
+    
+    // Verify only error listener was set up (no progress listener)
+    expect(mockFFmpeggyOn).not.toHaveBeenCalledWith('progress', expect.any(Function));
+    expect(mockFFmpeggyOn).toHaveBeenCalledWith('error', expect.any(Function));
+    
+    // Verify error listener was cleaned up
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledWith('error', expect.any(Function));
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledTimes(1); // Only error handler
+  });
+
+  it('should clean up event listeners even when FFmpeg fails', async () => {
+    // Mock FFmpeggy to fail
+    mockFFmpeggyRun.mockRejectedValue(new Error('FFmpeg failed'));
+    
+    const progressCallback = jest.fn();
+    
+    try {
+      await service.generateThumbnailWithProgress('/test/video.mp4', progressCallback);
+    } catch (error) {
+      // Expected to fail
+    }
+    
+    // Verify event listeners were still cleaned up despite the error
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledWith('progress', expect.any(Function));
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledWith('error', expect.any(Function));
+  });
+
+  it('should clean up event listeners even when thumbnail file verification fails', async () => {
+    // Mock file access to fail (thumbnail not created)
+    mockAccess.mockRejectedValue(new Error('File not found'));
+    
+    const progressCallback = jest.fn();
+    
+    try {
+      await service.generateThumbnailWithProgress('/test/video.mp4', progressCallback);
+    } catch (error) {
+      // Expected to fail
+    }
+    
+    // Verify event listeners were cleaned up despite verification failure
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledWith('progress', expect.any(Function));
+    expect(mockFFmpeggyRemoveListener).toHaveBeenCalledWith('error', expect.any(Function));
+  });
+
+  it('should handle progress events correctly', async () => {
+    const progressCallback = jest.fn();
+    
+    // Track the progress handler for manual testing
+    let capturedProgressHandler: any;
+    mockFFmpeggyOn.mockImplementation((event: string, handler: any) => {
+      if (event === 'progress') {
+        capturedProgressHandler = handler;
+      }
+    });
+
+    await service.generateThumbnailWithProgress('/test/video.mp4', progressCallback);
+    
+    // Manually trigger the captured progress handler to test the logic
+    expect(capturedProgressHandler).toBeDefined();
+    
+    capturedProgressHandler({ percent: 25.7 }); // Should round to 26
+    capturedProgressHandler({ percent: 50.2 }); // Should round to 50  
+    capturedProgressHandler({ percent: 75.9 }); // Should round to 76
+    capturedProgressHandler({}); // Should be ignored (no percent)
+    
+    expect(progressCallback).toHaveBeenCalledWith(26);
+    expect(progressCallback).toHaveBeenCalledWith(50);
+    expect(progressCallback).toHaveBeenCalledWith(76);
+    expect(progressCallback).toHaveBeenCalledTimes(3);
   });
 });
 
