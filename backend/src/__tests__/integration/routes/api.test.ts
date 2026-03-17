@@ -200,27 +200,29 @@ describe('API Routes', () => {
         const path = require('path');
         const originalResolve = path.resolve;
         
-        // Mock to simulate a scenario where allowedVideosDir is '/data/videos' 
-        // and we're trying to access '/data/videos-backup/malicious.mp4'
-        path.resolve = jest.fn((inputPath) => {
-          if (inputPath.includes('test.mp4')) {
-            return '/data/videos-backup/test.mp4'; // Simulating directory boundary attack
-          }
-          if (inputPath.endsWith('data/videos') || inputPath === 'data/videos') {
-            return '/data/videos'; // Return the videos directory
-          }
-          return originalResolve(inputPath);
-        });
+        try {
+          // Mock to simulate a scenario where allowedVideosDir is '/data/videos' 
+          // and we're trying to access '/data/videos-backup/malicious.mp4'
+          path.resolve = jest.fn((inputPath) => {
+            if (inputPath.includes('test.mp4')) {
+              return '/data/videos-backup/test.mp4'; // Simulating directory boundary attack
+            }
+            if (inputPath.endsWith('data/videos') || inputPath === 'data/videos') {
+              return '/data/videos'; // Return the videos directory
+            }
+            return originalResolve(inputPath);
+          });
 
-        const response = await request(app)
-          .get('/api/stream/test.mp4')
-          .expect(403);
+          const response = await request(app)
+            .get('/api/stream/test.mp4')
+            .expect(403);
 
-        expect(response.body.status).toBe('error');
-        expect(response.body.error?.message || response.body.message).toContain('Invalid path');
-
-        // Restore original path.resolve
-        path.resolve = originalResolve;
+          expect(response.body.status).toBe('error');
+          expect(response.body.error?.message || response.body.message).toContain('Invalid path');
+        } finally {
+          // Always restore original path.resolve
+          path.resolve = originalResolve;
+        }
       });
 
       it('should accept valid filename within videos directory', async () => {
@@ -237,6 +239,14 @@ describe('API Routes', () => {
               return '/tmp/mock-videos-dir'; // Return the videos directory
             }
             return originalResolve(inputPath);
+          });
+
+          // Make the specific test file NOT exist (override global mock)
+          mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+            if (String(filePath).includes('test.mp4')) {
+              return false; // This specific file doesn't exist
+            }
+            return true; // Other files exist
           });
 
           // This should not return 403 (Invalid path), but 404 since file doesn't exist

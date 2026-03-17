@@ -27,3 +27,16 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+// Global cleanup for rate limiters to prevent Jest hanging
+afterAll(async () => {
+  // Import and clean up all rate limiters
+  try {
+    const { downloadRateLimiter } = await import('../routes/youtube');
+    if (downloadRateLimiter && typeof downloadRateLimiter.destroy === 'function') {
+      downloadRateLimiter.destroy();
+    }
+  } catch (error) {
+    // Rate limiter may not be imported in some test suites
+  }
+});
