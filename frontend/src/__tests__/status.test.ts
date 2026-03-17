@@ -24,6 +24,7 @@ describe('frontend status utilities', () => {
     });
 
     test('should return default color for unknown status', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(getStatusColor('unknown' as any)).toBe('bg-gray-100 text-gray-800');
     });
   });
