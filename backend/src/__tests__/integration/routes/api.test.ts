@@ -2,6 +2,19 @@ import request from 'supertest';
 import express from 'express';
 import fs from 'fs';
 import { Readable } from 'stream';
+
+const mockVideosDir = '/tmp/mock-videos-dir';
+const mockTempDir = '/tmp/mock-temp-dir';
+
+jest.mock('../../../config', () => ({
+  config: {
+    videosDir: mockVideosDir,
+    tempDir: mockTempDir,
+    thumbnailMaxSize: 10 * 1024 * 1024,
+    thumbnailCacheDuration: 86400
+  }
+}));
+
 import { apiRouter } from '../../../routes/api';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
@@ -214,27 +227,29 @@ describe('API Routes', () => {
         const path = require('path');
         const originalResolve = path.resolve;
         
-        // Mock to simulate valid path resolution within allowed directory
-        path.resolve = jest.fn((inputPath) => {
-          if (inputPath.includes('test.mp4')) {
-            return '/data/videos/test.mp4'; // Valid path within allowed directory
-          }
-          if (inputPath.endsWith('data/videos') || inputPath === 'data/videos') {
-            return '/data/videos'; // Return the videos directory
-          }
-          return originalResolve(inputPath);
-        });
+        try {
+          // Mock to simulate valid path resolution within allowed directory
+          path.resolve = jest.fn((inputPath) => {
+            if (inputPath.includes('test.mp4')) {
+              return '/tmp/mock-videos-dir/test.mp4'; // Valid path within allowed directory
+            }
+            if (inputPath.includes('mock-videos-dir') || inputPath === mockVideosDir) {
+              return '/tmp/mock-videos-dir'; // Return the videos directory
+            }
+            return originalResolve(inputPath);
+          });
 
-        // This should not return 403 (Invalid path), but 404 since file doesn't exist
-        const response = await request(app)
-          .get('/api/stream/test.mp4')
-          .expect(404);
+          // This should not return 403 (Invalid path), but 404 since file doesn't exist
+          const response = await request(app)
+            .get('/api/stream/test.mp4')
+            .expect(404);
 
-        expect(response.body.status).toBe('error');
-        expect(response.body.error?.message || response.body.message).toContain('not found');
-
-        // Restore original path.resolve
-        path.resolve = originalResolve;
+          expect(response.body.status).toBe('error');
+          expect(response.body.error?.message || response.body.message).toContain('not found');
+        } finally {
+          // Always restore original path.resolve
+          path.resolve = originalResolve;
+        }
       });
     });
   });

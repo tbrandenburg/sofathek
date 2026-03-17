@@ -1,4 +1,5 @@
 import { YOUTUBE_URL_PATTERNS } from '../types/youtube';
+import { getErrorMessage } from '../utils/error';
 import { logger } from '../utils/logger';
 
 export class YouTubeUrlValidator {
@@ -15,7 +16,7 @@ export class YouTubeUrlValidator {
     } catch (error) {
       logger.error('URL validation failed', {
         url,
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
       return false;
     }

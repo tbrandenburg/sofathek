@@ -1,0 +1,4 @@
+// New file - utility for error message extraction
+export function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}

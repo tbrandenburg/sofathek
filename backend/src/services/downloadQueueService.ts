@@ -2,6 +2,7 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
+import { getErrorMessage } from '../utils/error';
 import { DownloadRequest, QueueItem, QueueStatus } from '../types/youtube';
 import { YouTubeDownloadService } from './youTubeDownloadService';
 import { loadQueue, saveQueue } from './queuePersistence';
@@ -35,7 +36,7 @@ export class DownloadQueueService {
       });
     } catch (error) {
       logger.warn('Failed to load existing queue, starting fresh', {
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
       this.queue = [];
     }
@@ -68,7 +69,7 @@ export class DownloadQueueService {
       if (!this.isProcessing) {
         this.runQueueProcessor().catch(error => {
           logger.error('Queue processing error', {
-            error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
           });
         });
       }
@@ -76,7 +77,7 @@ export class DownloadQueueService {
       return queueItem;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       logger.error('Failed to add item to queue', {
         url: request.url,
         error: errorMessage
@@ -143,7 +144,7 @@ export class DownloadQueueService {
     } catch (error) {
       logger.error('Failed to cancel download', {
         queueItemId,
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
       return false;
     }
@@ -161,7 +162,7 @@ export class DownloadQueueService {
 
     } catch (error) {
       logger.error('Queue processing failed', {
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
     } finally {
       this.isProcessing = false;
@@ -214,7 +215,7 @@ export class DownloadQueueService {
 
     } catch (error) {
       logger.error('Failed to cleanup old queue items', {
-        error: error instanceof Error ? error.message : String(error)
+        error: getErrorMessage(error)
       });
       return 0;
     }
