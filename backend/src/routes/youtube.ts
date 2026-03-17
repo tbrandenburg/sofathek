@@ -14,6 +14,8 @@ const downloadRateLimiter = createRateLimiter(
   config.rateLimitWindowMs
 );
 
+export { downloadRateLimiter };
+
 /**
  * POST /api/youtube/download
  * Add YouTube video to download queue

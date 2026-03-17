@@ -43,6 +43,16 @@ afterAll(async () => {
     // Ignore if import fails
   }
   
+  // Also try specific downloadRateLimiter cleanup for backward compatibility
+  try {
+    const { downloadRateLimiter } = await import('../routes/youtube');
+    if (downloadRateLimiter && typeof downloadRateLimiter.destroy === 'function') {
+      downloadRateLimiter.destroy();
+    }
+  } catch (error) {
+    // Rate limiter may not be imported in some test suites
+  }
+  
   // Ensure all timers are cleared
   jest.useRealTimers();
   

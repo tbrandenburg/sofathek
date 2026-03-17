@@ -30,6 +30,14 @@ class RateLimiter {
     }, this.windowMs);
   }
 
+  destroy(): void {
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
+    this.store.clear();
+  }
+
   close(): void {
     if (this.cleanupIntervalId) {
       clearInterval(this.cleanupIntervalId);
@@ -97,7 +105,6 @@ export const cleanupAllRateLimiters = (): void => {
   }
   rateLimiterInstances.clear();
 };
-
 export { RateLimiter };
 
 export const rateLimitMiddleware = (rateLimiter: RateLimiter) => {

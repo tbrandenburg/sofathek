@@ -139,22 +139,33 @@ export class ThumbnailService {
       });
 
       // Set up progress tracking
+      let progressHandler: ((progress: any) => void) | undefined;
       if (progressCallback) {
-        ffmpeggy.on('progress', (progress) => {
+        progressHandler = (progress) => {
           if (progress.percent) {
             progressCallback(Math.round(progress.percent));
           }
-        });
+        };
+        ffmpeggy.on('progress', progressHandler);
       }
 
       // Set up error handling
-      ffmpeggy.on('error', (error) => {
+      const errorHandler = (error: Error) => {
         logger.error('FFmpeg thumbnail error', { error: error.message });
-      });
+      };
+      ffmpeggy.on('error', errorHandler);
 
-      // Run thumbnail generation
-      await ffmpeggy.run();
-      await ffmpeggy.done();
+      try {
+        // Run thumbnail generation
+        await ffmpeggy.run();
+        await ffmpeggy.done();
+      } finally {
+        // Clean up event listeners
+        if (progressHandler) {
+          ffmpeggy.removeListener('progress', progressHandler);
+        }
+        ffmpeggy.removeListener('error', errorHandler);
+      }
 
       // Verify thumbnail was created
       try {
