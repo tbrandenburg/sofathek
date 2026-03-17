@@ -81,8 +81,21 @@ class RateLimiter {
   }
 }
 
+// Global registry for tracking all RateLimiter instances
+const rateLimiterInstances: Set<RateLimiter> = new Set();
+
 export const createRateLimiter = (maxRequests: number, windowMs: number): RateLimiter => {
-  return new RateLimiter(maxRequests, windowMs);
+  const limiter = new RateLimiter(maxRequests, windowMs);
+  rateLimiterInstances.add(limiter);
+  return limiter;
+};
+
+// Global cleanup function for Jest teardown
+export const cleanupAllRateLimiters = (): void => {
+  for (const limiter of rateLimiterInstances) {
+    limiter.close();
+  }
+  rateLimiterInstances.clear();
 };
 
 export { RateLimiter };

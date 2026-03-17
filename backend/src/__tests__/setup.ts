@@ -35,6 +35,14 @@ afterEach(() => {
 
 // Cleanup after all tests - force exit any remaining handles
 afterAll(async () => {
+  // Cleanup all RateLimiter instances to prevent open handles
+  try {
+    const { cleanupAllRateLimiters } = await import('../middleware/rateLimiter');
+    cleanupAllRateLimiters();
+  } catch (error) {
+    // Ignore if import fails
+  }
+  
   // Ensure all timers are cleared
   jest.useRealTimers();
   
