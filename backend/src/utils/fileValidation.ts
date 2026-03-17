@@ -26,8 +26,18 @@ export function validateImageFilename(filename: string): void {
   validateFilename(filename, IMAGE_EXTENSIONS);
 }
 
-export function validatePathInDirectory(resolvedPath: string, allowedDir: string): void {
-  if (!resolvedPath.startsWith(allowedDir + path.sep) && resolvedPath !== allowedDir) {
+/**
+ * Validates that a target path is within an allowed directory.
+ * Internally normalizes the targetPath using path.resolve() for consistent behavior.
+ * 
+ * @param targetPath - The file path to validate (will be normalized internally)
+ * @param allowedDir - The allowed directory path (should be pre-resolved)
+ */
+export function validatePathInDirectory(targetPath: string, allowedDir: string): void {
+  const resolvedPath = path.resolve(targetPath);
+  const resolvedDir = path.resolve(allowedDir);
+  
+  if (!resolvedPath.startsWith(resolvedDir + path.sep) && resolvedPath !== resolvedDir) {
     throw new AppError('Invalid path', 403);
   }
 }
