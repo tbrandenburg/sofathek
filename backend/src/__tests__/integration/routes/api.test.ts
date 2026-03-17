@@ -15,6 +15,9 @@ jest.mock('../../../config', () => ({
   }
 }));
 
+import { cleanupAllRateLimiters } from '../../../middleware/rateLimiter';
+import { downloadRateLimiter } from '../../../routes/youtube';
+
 import { apiRouter } from '../../../routes/api';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
@@ -372,4 +375,11 @@ describe('API Routes', () => {
       expect(response.headers['accept-ranges']).toBe('bytes');
     });
   });
+});
+
+afterAll(() => {
+  // Clean up the rate limiter created by youtube routes
+  downloadRateLimiter.close();
+  // Also clean up any others via the global cleanup
+  cleanupAllRateLimiters();
 });
