@@ -2,6 +2,9 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
+  // Force Jest to exit after tests complete
+  // This fixes the "Jest did not exit one second after the test run has completed" issue
+  forceExit: true,
   testMatch: [
     '**/__tests__/**/*.test.ts',
     '**/*.test.ts',

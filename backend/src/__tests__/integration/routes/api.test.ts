@@ -15,6 +15,9 @@ jest.mock('../../../config', () => ({
   }
 }));
 
+import { cleanupAllRateLimiters } from '../../../middleware/rateLimiter';
+import { downloadRateLimiter } from '../../../routes/youtube';
+
 import { apiRouter } from '../../../routes/api';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
@@ -194,11 +197,21 @@ describe('API Routes', () => {
 
     // Security regression tests for directory boundary validation
     describe('Path validation security', () => {
+      const path = require('path');
+      let originalResolve: typeof path.resolve;
+      
+      beforeEach(() => {
+        originalResolve = path.resolve;
+      });
+      
+      afterEach(() => {
+        // Always restore path.resolve after each test to prevent mock leakage
+        path.resolve = originalResolve;
+      });
+
       it('should reject path traversal to sibling directory', async () => {
         // This tests the specific regression from PR #117
         // Mock path.resolve to simulate the security issue scenario
-        const path = require('path');
-        const originalResolve = path.resolve;
         
         // Mock to simulate a scenario where allowedVideosDir is '/data/videos' 
         // and we're trying to access '/data/videos-backup/malicious.mp4'
@@ -218,38 +231,43 @@ describe('API Routes', () => {
 
         expect(response.body.status).toBe('error');
         expect(response.body.error?.message || response.body.message).toContain('Invalid path');
-
-        // Restore original path.resolve
-        path.resolve = originalResolve;
+        // Note: afterEach will restore path.resolve automatically
       });
 
       it('should accept valid filename within videos directory', async () => {
-        const path = require('path');
-        const originalResolve = path.resolve;
+        // Mock file as NOT existing to match expected 404 response
+        mockFs.existsSync.mockReturnValue(false);
         
-        try {
-          // Mock to simulate valid path resolution within allowed directory
-          path.resolve = jest.fn((inputPath) => {
-            if (inputPath.includes('test.mp4')) {
-              return '/tmp/mock-videos-dir/test.mp4'; // Valid path within allowed directory
-            }
-            if (inputPath.includes('mock-videos-dir') || inputPath === mockVideosDir) {
-              return '/tmp/mock-videos-dir'; // Return the videos directory
-            }
-            return originalResolve(inputPath);
-          });
+        // Mock to simulate valid path resolution within allowed directory
+        path.resolve = jest.fn((inputPath) => {
+          if (inputPath.includes('test.mp4')) {
+            return '/tmp/mock-videos-dir/test.mp4'; // Valid path within allowed directory
+          }
+          if (inputPath.includes('mock-videos-dir') || inputPath === mockVideosDir) {
+            return '/tmp/mock-videos-dir'; // Return the videos directory
+          }
+          return originalResolve(inputPath);
+        });
 
-          // This should not return 403 (Invalid path), but 404 since file doesn't exist
-          const response = await request(app)
-            .get('/api/stream/test.mp4')
-            .expect(404);
+        // Make the specific test file NOT exist (override global mock)
+        mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+          if (String(filePath).includes('test.mp4')) {
+            return false; // This specific file doesn't exist
+          }
+          return true; // Other files exist
+        });
 
-          expect(response.body.status).toBe('error');
-          expect(response.body.error?.message || response.body.message).toContain('not found');
-        } finally {
-          // Always restore original path.resolve
-          path.resolve = originalResolve;
-        }
+        // This should not return 403 (Invalid path), but 404 since file doesn't exist
+        const response = await request(app)
+          .get('/api/stream/test.mp4')
+          .expect(404);
+
+        expect(response.body.status).toBe('error');
+        expect(response.body.error?.message || response.body.message).toContain('not found');
+        
+        // Restore fs mock to global state
+        mockFs.existsSync.mockReturnValue(true);
+        // Note: afterEach will restore path.resolve automatically
       });
     });
   });
@@ -357,4 +375,11 @@ describe('API Routes', () => {
       expect(response.headers['accept-ranges']).toBe('bytes');
     });
   });
+});
+
+afterAll(() => {
+  // Clean up the rate limiter created by youtube routes
+  downloadRateLimiter.close();
+  // Also clean up any others via the global cleanup
+  cleanupAllRateLimiters();
 });

@@ -91,5 +91,18 @@ describe('fileValidation utilities', () => {
       const invalidPath = path.join(tempDir, '..', '..', 'etc', 'passwd');
       expect(() => validatePathInDirectory(invalidPath, allowedDir)).toThrow(AppError);
     });
+
+    it('should normalize paths before validation', () => {
+      const allowedDir = '/allowed/dir';
+      expect(() => validatePathInDirectory('/allowed/dir/./subdir/../file.txt', allowedDir)).not.toThrow();
+    });
+
+    it('should handle relative paths by resolving them', () => {
+      // When we pass a relative path, it gets resolved relative to cwd
+      // This test ensures the function handles this gracefully
+      const relativePath = 'subdir/file.txt';
+      const workingDir = process.cwd();
+      expect(() => validatePathInDirectory(relativePath, workingDir)).not.toThrow();
+    });
   });
 });

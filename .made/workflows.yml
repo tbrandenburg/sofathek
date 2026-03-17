@@ -12,21 +12,21 @@ workflows:
     agent: build
     prompt: Follow the instructions in @.opencode/commands/prp-issue-fix.md for the
       latest open issue on Github and take its investigation comment as the implementation
-      plan, but also check if there is already a related PR to continue.
+      plan, but also check if there is already a linked PR to continue.
   - type: agent
     agent: build
     prompt: Follow the instructions in @.opencode/commands/commit-push.md
   - type: agent
     agent: build
-    prompt: 'Get the latest open Github issue and its related PR: Only the PR shows
+    prompt: 'Get the latest open Github issue and its linked PR: Only the PR shows
       merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md'
   - type: agent
     agent: build
-    prompt: 'Get the latest open Github issue and its related PR: Follow the instructions
-      in @.opencode/commands/prp-review.md for the PR'
+    prompt: 'Get the latest open Github issue and its linked PR: Follow the instructions
+      in @.opencode/commands/prp-review.md for the linked PR'
   - type: agent
     agent: build
-    prompt: 'Get the latest open Github issue and its related PR: Raise new Github
+    prompt: 'Get the latest open Github issue and its linked PR: Raise new Github
       issues (and check against present ones) with `gh` CLI if the PR review comments
       came up with high or critical priority findings, failing CI or merge blockers.
       Then, try to merge it. If any PR was processed, send a telegram message on the
