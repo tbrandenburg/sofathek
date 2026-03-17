@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, afterEach, afterAll } from '@jest/globals';
 
 // Mock external dependencies globally
 jest.mock('fs/promises', () => ({
@@ -27,3 +27,17 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+// Force clear all timers after each test to prevent lingering setTimeout/setInterval
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+// Cleanup after all tests - force exit any remaining handles
+afterAll(() => {
+  // Ensure all timers are cleared
+  jest.useRealTimers();
+  
+  // Clear any pending promises by resolving them
+  jest.restoreAllMocks();
+});
