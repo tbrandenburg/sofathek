@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useBackendHealth } from '../hooks/useBackendHealth';
 import { checkBackendHealth, HealthStatus } from '../services/api';
