@@ -82,7 +82,6 @@ describe('API Service', () => {
         expect((error as ApiError).message).toBe('Network connection failed');
       }
     });
-
     test('should have ErrorStatus constants', () => {
       expect(ErrorStatus.NETWORK).toBe(0);
       expect(ErrorStatus.BAD_REQUEST).toBe(400);
