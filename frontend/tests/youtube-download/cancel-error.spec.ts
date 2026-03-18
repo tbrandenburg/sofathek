@@ -88,5 +88,62 @@ test.describe('YouTube Download - Full Workflow', () => {
       await helpers.form.submitDownloadForm(MOCK_YOUTUBE_URLS.VALID_WATCH);
       await helpers.form.expectFormError(customError);
     });
+
+    test('should handle 404 not found error gracefully', async ({ page }) => {
+      await helpers.mockAPI.mockQueueStatus(MOCK_QUEUE_STATUS.SINGLE_PENDING);
+      
+      // Mock 404 response for cancel
+      await page.route('**/api/youtube/download/*', async route => {
+        if (route.request().method() === 'DELETE') {
+          await route.fulfill({
+            status: 404,
+            contentType: 'application/json',
+            body: JSON.stringify({ 
+              status: 'error', 
+              message: 'Download with ID \'test-id\' not found in queue.' 
+            })
+          });
+        } else {
+          await route.continue();
+        }
+      });
+      
+      await helpers.timing.waitForQueuePoll();
+      await helpers.queue.expectQueueItem(MOCK_QUEUE_ITEMS.PENDING.id, 'pending');
+      
+      // Click cancel and expect error toast
+      await helpers.queue.cancelDownload(MOCK_QUEUE_ITEMS.PENDING.id);
+      
+      // Should show user-friendly error
+      await expect(page.locator('text=This download no longer exists')).toBeVisible();
+    });
+
+    test('should handle 409 already completed error gracefully', async ({ page }) => {
+      await helpers.mockAPI.mockQueueStatus(MOCK_QUEUE_STATUS.SINGLE_PROCESSING);
+      
+      // Mock 409 response for cancel
+      await page.route('**/api/youtube/download/*', async route => {
+        if (route.request().method() === 'DELETE') {
+          await route.fulfill({
+            status: 409,
+            contentType: 'application/json',
+            body: JSON.stringify({ 
+              status: 'error', 
+              message: 'Cannot cancel download - it has already completed.' 
+            })
+          });
+        } else {
+          await route.continue();
+        }
+      });
+      
+      await helpers.timing.waitForQueuePoll();
+      
+      // Click cancel and expect appropriate error
+      await helpers.queue.cancelDownload(MOCK_QUEUE_ITEMS.PROCESSING.id);
+      
+      // Should show user-friendly message about completed download
+      await expect(page.locator('text=already completed')).toBeVisible();
+    });
   });
 });

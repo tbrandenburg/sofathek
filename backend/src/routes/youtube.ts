@@ -142,10 +142,26 @@ router.delete('/download/:id', catchAsync(async (req: Request, res: Response) =>
 
   logger.info('Cancel download request', { queueItemId: id });
   
-  const cancelled = await downloadQueueService.cancelDownload(id);
+  const result = await downloadQueueService.cancelDownload(id);
   
-  if (!cancelled) {
-    throw new AppError(`Could not cancel download with ID '${id}'. It may not exist or already be completed.`, 400);
+  if (!result.success) {
+    // Provide specific error messages based on reason
+    if (result.reason === 'not_found') {
+      throw new AppError(`Download with ID '${id}' not found in queue.`, 404);
+    } else if (result.reason === 'already_completed') {
+      throw new AppError(`Cannot cancel download '${id}' - it has already completed.`, 409);
+    } else if (result.reason === 'already_cancelled') {
+      // Return success instead of error - already cancelled is success
+      res.json({
+        status: 'success',
+        data: {
+          message: 'Download was already cancelled',
+          queueItemId: id
+        }
+      });
+      return;
+    }
+    throw new AppError(`Could not cancel download with ID '${id}': ${result.reason}`, 400);
   }
   
   logger.info('Download cancelled successfully', { queueItemId: id });
