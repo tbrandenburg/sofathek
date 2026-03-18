@@ -1,5 +1,5 @@
 import React from 'react';
-import { getErrorMessage } from '../lib/error';
+import { getUserFriendlyErrorMessage } from '../lib/error';
 import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
@@ -151,7 +151,7 @@ export function DownloadQueue({ className = '' }: DownloadQueueProps) {
           <CardTitle>Download Queue</CardTitle>
           <Alert variant="destructive">
             <AlertDescription>
-              Failed to load download queue: {getErrorMessage(error)}
+              Failed to load download queue: {getUserFriendlyErrorMessage(error)}
             </AlertDescription>
           </Alert>
         </CardHeader>
