@@ -68,6 +68,19 @@ describe('API Service', () => {
       await expect(getVideos()).rejects.toThrow(ApiError);
       await expect(getVideos()).rejects.toThrow('Network error');
     });
+
+    test('should throw ApiError with status 0 for network errors (issue #174)', async () => {
+      mockFetch.mockRejectedValue(new Error('Network connection failed'));
+
+      try {
+        await getVideos();
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ApiError);
+        expect((error as ApiError).status).toBe(0);
+        expect((error as ApiError).message).toBe('Network connection failed');
+      }
+    });
   });
 
   describe('getVideoById', () => {
