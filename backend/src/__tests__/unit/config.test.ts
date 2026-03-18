@@ -43,7 +43,7 @@ describe('config', () => {
 
     jest.isolateModules(() => {
       const { config } = require('../../config');
-      expect(config.port).toBe(3001);
+      expect(config.port).toBe(3010);
     });
   });
 });
