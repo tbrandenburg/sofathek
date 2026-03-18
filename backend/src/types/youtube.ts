@@ -108,6 +108,8 @@ export interface QueueStatus {
   lastUpdated: Date;
 }
 
+const SHELL_METACHARACTERS = /[;&|`$(){}[\]<>]/;
+
 /**
  * Supported YouTube URL patterns for validation
  */
@@ -117,6 +119,10 @@ export const YOUTUBE_URL_PATTERNS = [
   /^https?:\/\/youtu\.be\/[\w-]+/,
   /^https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]+/
 ] as const;
+
+export const containsShellMetacharacters = (url: string): boolean => {
+  return SHELL_METACHARACTERS.test(url);
+};
 
 /**
  * YouTube download quality options
