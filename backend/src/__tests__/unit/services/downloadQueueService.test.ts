@@ -115,12 +115,13 @@ describe('DownloadQueueService', () => {
       const queueItem = await service.addToQueue(request);
       const result = await service.cancelDownload(queueItem.id);
 
-      expect(result).toBe(true);
+      expect(result.success).toBe(true);
     });
 
     it('should return false for non-existent download', async () => {
       const result = await service.cancelDownload('non-existent-id');
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe('not_found');
     });
 
     it('should return false when canceling already completed download', async () => {
@@ -139,7 +140,8 @@ describe('DownloadQueueService', () => {
       }
       
       const result = await service.cancelDownload(queueItem.id);
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe('already_completed');
     });
   });
 

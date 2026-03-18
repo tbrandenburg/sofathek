@@ -235,7 +235,7 @@ describe('YouTube Routes', () => {
 
   describe('DELETE /api/youtube/download/:id', () => {
     it('should successfully cancel download', async () => {
-      mockDownloadQueueService.cancelDownload.mockResolvedValue(true);
+      mockDownloadQueueService.cancelDownload.mockResolvedValue({ success: true });
 
       const response = await request(app)
         .delete('/api/youtube/download/test-id');
@@ -246,15 +246,26 @@ describe('YouTube Routes', () => {
       expect(mockDownloadQueueService.cancelDownload).toHaveBeenCalledWith('test-id');
     });
 
-    it('should return 400 if cancel fails', async () => {
-      mockDownloadQueueService.cancelDownload.mockResolvedValue(false);
+    it('should return 404 if download not found', async () => {
+      mockDownloadQueueService.cancelDownload.mockResolvedValue({ success: false, reason: 'not_found' });
 
       const response = await request(app)
         .delete('/api/youtube/download/test-id');
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(404);
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Could not cancel download');
+      expect(response.body.message).toContain('not found in queue');
+    });
+
+    it('should return 409 if download already completed', async () => {
+      mockDownloadQueueService.cancelDownload.mockResolvedValue({ success: false, reason: 'already_completed' });
+
+      const response = await request(app)
+        .delete('/api/youtube/download/test-id');
+
+      expect(response.status).toBe(409);
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toContain('already completed');
     });
   });
 

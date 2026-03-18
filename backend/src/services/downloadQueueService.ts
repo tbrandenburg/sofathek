@@ -8,6 +8,11 @@ import { YouTubeDownloadService } from './youTubeDownloadService';
 import { loadQueue, saveQueue } from './queuePersistence';
 import { processQueue } from './queueScheduler';
 
+interface CancelResult {
+  success: boolean;
+  reason?: 'not_found' | 'already_completed' | 'already_cancelled' | 'error';
+}
+
 /**
  * Queue management for YouTube download operations
  */
@@ -110,25 +115,36 @@ export class DownloadQueueService {
   /**
    * Cancel download by queue item ID
    */
-  async cancelDownload(queueItemId: string): Promise<boolean> {
+  async cancelDownload(queueItemId: string): Promise<CancelResult> {
     try {
       const itemIndex = this.queue.findIndex(item => item.id === queueItemId);
       
       if (itemIndex === -1) {
         logger.warn('Queue item not found for cancellation', { queueItemId });
-        return false;
+        return { success: false, reason: 'not_found' };
       }
 
       const item = this.queue[itemIndex];
       
       if (!item) {
         logger.warn('Queue item is undefined', { queueItemId, itemIndex });
-        return false;
+        return { success: false, reason: 'not_found' };
       }
       
       if (item.status === 'completed') {
-        logger.warn('Cannot cancel completed download', { queueItemId });
-        return false;
+        logger.warn('Cannot cancel completed download', { queueItemId, status: item.status });
+        return { success: false, reason: 'already_completed' };
+      }
+
+      if (item.status === 'cancelled') {
+        logger.info('Download already cancelled', { queueItemId, status: item.status });
+        return { success: true, reason: 'already_cancelled' };
+      }
+
+      // Allow cancellation of 'pending' and 'processing' items
+      if (item.status !== 'pending' && item.status !== 'processing') {
+        logger.warn('Cannot cancel download with status', { queueItemId, status: item.status });
+        return { success: false, reason: 'error' };
       }
 
       // Update item status
@@ -139,14 +155,14 @@ export class DownloadQueueService {
       await this.saveQueue();
 
       logger.info('Download cancelled', { queueItemId });
-      return true;
+      return { success: true };
 
     } catch (error) {
       logger.error('Failed to cancel download', {
         queueItemId,
         error: getErrorMessage(error)
       });
-      return false;
+      return { success: false, reason: 'error' };
     }
   }
 

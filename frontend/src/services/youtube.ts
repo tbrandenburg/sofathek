@@ -123,7 +123,7 @@ export async function getDownloadStatus(itemId: string): Promise<QueueItem> {
 
 /**
  * Cancel a download
- * DELETE /api/youtube/cancel/:id
+ * DELETE /api/youtube/download/:id
  */
 export async function cancelDownload(itemId: string): Promise<{ message: string; queueItemId: string }> {
   const response = await youtubeApiFetch<{ message: string; queueItemId: string }>(`/youtube/download/${encodeURIComponent(itemId)}`, {
@@ -131,7 +131,19 @@ export async function cancelDownload(itemId: string): Promise<{ message: string;
   });
   
   if (response.status !== 'success' || !response.data) {
-    throw new ApiError(response.message || `Failed to cancel download '${itemId}'`);
+    const errorMessage = response.message || `Failed to cancel download '${itemId}'`;
+    
+    // Provide user-friendly messages for specific error cases
+    if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+      throw new ApiError('This download no longer exists in the queue. It may have been removed.', 404);
+    } else if (errorMessage.includes('already completed') || errorMessage.includes('409')) {
+      throw new ApiError('This download has already completed and cannot be cancelled.', 409);
+    } else if (errorMessage.includes('already cancelled')) {
+      // This is actually OK - the item is cancelled
+      return { message: 'Download was already cancelled', queueItemId: itemId };
+    }
+    
+    throw new ApiError(errorMessage, 400);
   }
   
   return response.data;
