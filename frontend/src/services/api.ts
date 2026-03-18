@@ -143,3 +143,34 @@ export function formatDuration(seconds?: number): string {
 
 // Export the ApiError for use in components
 export { ApiError };
+
+/**
+ * Backend health status response
+ */
+export interface HealthStatus {
+  status: 'healthy' | 'warning' | 'critical';
+  timestamp: string;
+  service: string;
+  version: string;
+  environment: string;
+  uptime: number;
+}
+
+/**
+ * Check if backend is available
+ * GET /health
+ * Returns true if backend responds successfully (status < 500)
+ */
+export async function checkBackendHealth(): Promise<HealthStatus | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`);
+    
+    if (!response.ok && response.status < 500) {
+      return null;
+    }
+    
+    return await response.json() as HealthStatus;
+  } catch {
+    return null;
+  }
+}

@@ -7,6 +7,7 @@ import {
   sanitizeFilename,
   formatFileSize,
   formatDuration,
+  checkBackendHealth,
   ApiError 
 } from '../services/api';
 import { Video } from '../types';
@@ -223,6 +224,69 @@ describe('API Service', () => {
     test('should default to status 500', () => {
       const error = new ApiError('Test error');
       expect(error.status).toBe(500);
+    });
+  });
+
+  describe('checkBackendHealth', () => {
+    test('should return health status when backend is available', async () => {
+      const mockHealth = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'sofathek-backend',
+        version: '1.0.0',
+        environment: 'test',
+        uptime: 100,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockHealth
+      });
+
+      const result = await checkBackendHealth();
+
+      expect(result).toEqual(mockHealth);
+      expect(mockFetch).toHaveBeenCalledWith('/api/health');
+    });
+
+    test('should return null when backend is unavailable', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
+
+      const result = await checkBackendHealth();
+
+      expect(result).toBeNull();
+    });
+
+    test('should return null when backend returns 4xx error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found'
+      });
+
+      const result = await checkBackendHealth();
+
+      expect(result).toBeNull();
+    });
+
+    test('should return health status when backend returns warning', async () => {
+      const mockHealth = {
+        status: 'warning',
+        timestamp: new Date().toISOString(),
+        service: 'sofathek-backend',
+        version: '1.0.0',
+        environment: 'test',
+        uptime: 100,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockHealth
+      });
+
+      const result = await checkBackendHealth();
+
+      expect(result).toEqual(mockHealth);
     });
   });
 });
