@@ -16,7 +16,8 @@ export class YouTubeMetadataExtractor {
       const subprocess = youtubedl.exec(url, {
         dumpSingleJson: true,
         skipDownload: true,
-        noCheckCertificates: true
+        noCheckCertificates: true,
+        jsRuntimes: 'node'
       });
 
       subprocess.stderr?.on('data', (data) => {

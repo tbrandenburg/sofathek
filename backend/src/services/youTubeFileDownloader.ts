@@ -29,7 +29,8 @@ export class YouTubeFileDownloader {
         format: 'best[ext=mp4]/best',
         noPlaylist: true,
         restrictFilenames: true,
-        noWarnings: true
+        noWarnings: true,
+        jsRuntimes: 'node'
       });
 
       subprocess.stdout?.on('data', (data) => {
