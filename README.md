@@ -209,7 +209,7 @@ cp backend/.env.example backend/.env
 
 ## Requirements
 
-- **Node.js 18+** (for development)
+- **Node.js 18+** (for development and yt-dlp JavaScript runtime)
 - **Make** (for using the Makefile commands)  
 - **Docker and Docker Compose** (for containerized deployment)
 - **Python 3** (for serving production frontend)

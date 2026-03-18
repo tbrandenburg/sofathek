@@ -35,6 +35,15 @@ describe('YouTubeMetadataExtractor', () => {
 
       const result = await extractor.extract('https://www.youtube.com/watch?v=test123');
 
+      expect(mockExec).toHaveBeenCalledWith(
+        'https://www.youtube.com/watch?v=test123',
+        expect.objectContaining({
+          dumpSingleJson: true,
+          skipDownload: true,
+          noCheckCertificates: true,
+          jsRuntimes: 'node'
+        })
+      );
       expect(result.id).toBe('test123');
       expect(result.title).toBe('Test Video');
       expect(result.description).toBe('Test description');
