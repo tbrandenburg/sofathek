@@ -1,6 +1,7 @@
 import React from 'react';
 import { ThemeProvider } from "@/components/theme-provider"
 import { ModeToggle } from "@/components/mode-toggle"
+import { ConnectionStatus } from "@/components/ConnectionStatus"
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -32,6 +33,9 @@ export function Layout({ children, className = '' }: LayoutProps) {
             </nav>
           </div>
         </header>
+        
+        {/* Connection Status Banner */}
+        <ConnectionStatus />
 
         {/* Main content area */}
         <main className="flex-1">
