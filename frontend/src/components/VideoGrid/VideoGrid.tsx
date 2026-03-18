@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { getUserFriendlyErrorMessage } from '../../lib/error';
 
 export function VideoGrid({ 
   videos, 
@@ -42,7 +43,7 @@ export function VideoGrid({
           <Alert variant="destructive" className="max-w-md">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription data-testid="error-message">
-              Error loading videos: {error}
+              Error loading videos: {getUserFriendlyErrorMessage(error)}
             </AlertDescription>
           </Alert>
           <Button 

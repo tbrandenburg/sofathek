@@ -9,7 +9,7 @@ export const API_BASE_URL = (configuredApiBaseUrl || '/api').replace(/\/$/, '');
 /**
  * Custom error class for API errors
  */
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     message: string,
     public status: number = 500,
@@ -19,6 +19,15 @@ class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
+
+export const ErrorStatus = {
+  NETWORK: 0,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  SERVER_ERROR: 500,
+} as const;
 
 /**
  * Generic fetch wrapper with error handling
@@ -140,9 +149,6 @@ export function formatDuration(seconds?: number): string {
 
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
-
-// Export the ApiError for use in components
-export { ApiError };
 
 /**
  * Backend health status response

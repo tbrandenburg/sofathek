@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
 import { useYouTubeDownload } from '../hooks/useYouTube';
 import { validateYouTubeUrl } from '../services/youtube';
+import { getUserFriendlyErrorMessage } from '../lib/error';
 
 interface YouTubeDownloadProps {
   className?: string;
@@ -90,9 +91,7 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
           {downloadMutation.isError && (
             <Alert variant="destructive" data-testid="download-error">
               <AlertDescription>
-                {downloadMutation.error instanceof Error 
-                  ? downloadMutation.error.message 
-                  : 'Failed to start download. Please check the URL and try again.'}
+                {getUserFriendlyErrorMessage(downloadMutation.error)}
               </AlertDescription>
             </Alert>
           )}
