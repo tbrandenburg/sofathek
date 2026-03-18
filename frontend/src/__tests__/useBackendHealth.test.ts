@@ -11,12 +11,7 @@ const mockCheckBackendHealth = checkBackendHealth as ReturnType<typeof vi.fn>;
 
 describe('useBackendHealth Hook', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
     mockCheckBackendHealth.mockReset();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   test('should indicate healthy when backend responds', async () => {
@@ -65,8 +60,8 @@ describe('useBackendHealth Hook', () => {
       expect(result.current.retryCount).toBe(1);
     });
     
-    act(() => {
-      vi.runAllTimers();
+    await act(async () => {
+      result.current.manualCheck();
     });
     
     await waitFor(() => {
