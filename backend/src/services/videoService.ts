@@ -17,12 +17,14 @@ import {
  */
 export class VideoService {
   private readonly videosDirectory: string;
+  private readonly thumbnailsDirectory: string;
   private thumbnailCache: Map<string, { files: string[]; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000;
   private readonly THUMBNAIL_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
 
-  constructor(videosDirectory: string) {
+  constructor(videosDirectory: string, thumbnailsDirectory: string) {
     this.videosDirectory = videosDirectory;
+    this.thumbnailsDirectory = thumbnailsDirectory;
   }
 
   /**
@@ -198,8 +200,17 @@ export class VideoService {
     const videoDir = path.dirname(videoPath);
     const baseName = path.basename(videoPath, path.extname(videoPath));
     
+    const thumbnail = await this.findThumbnailInDirectory(videoDir, baseName);
+    if (thumbnail) {
+      return thumbnail;
+    }
+
+    return this.findThumbnailInDirectory(this.thumbnailsDirectory, baseName);
+  }
+
+  private async findThumbnailInDirectory(directory: string, baseName: string): Promise<string | null> {
     for (const ext of this.THUMBNAIL_EXTENSIONS) {
-      const exactThumbPath = path.join(videoDir, baseName + ext);
+      const exactThumbPath = path.join(directory, baseName + ext);
       try {
         await fs.access(exactThumbPath);
         return baseName + ext;
@@ -209,7 +220,7 @@ export class VideoService {
     }
 
     try {
-      const files = await fs.readdir(videoDir);
+      const files = await fs.readdir(directory);
       const lowerBaseName = baseName.toLowerCase();
 
       for (const ext of this.THUMBNAIL_EXTENSIONS) {
@@ -306,5 +317,6 @@ export class VideoService {
  * Uses environment variable or default path
  */
 export const videoService = new VideoService(
-  config.videosDir
+  config.videosDir,
+  config.thumbnailsDir
 );

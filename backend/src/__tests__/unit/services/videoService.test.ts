@@ -29,9 +29,10 @@ const mockFs = fs as jest.Mocked<typeof fs>;
 describe('VideoService', () => {
   let videoService: VideoService;
   const testVideosDir = '/test/videos';
+  const testThumbnailsDir = '/test/thumbnails';
 
   beforeEach(() => {
-    videoService = new VideoService(testVideosDir);
+    videoService = new VideoService(testVideosDir, testThumbnailsDir);
     jest.clearAllMocks();
   });
 
@@ -393,7 +394,8 @@ describe('VideoService', () => {
 
     it('should use default path when VIDEOS_DIR is not set', () => {
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
+        '/test/thumbnails'
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).toBe(path.join('/mock/cwd', 'data', 'videos', 'test.mp4'));
@@ -402,7 +404,8 @@ describe('VideoService', () => {
     it('should use environment variable override when VIDEOS_DIR is set', () => {
       process.env.VIDEOS_DIR = '/custom/videos';
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
+        '/test/thumbnails'
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).toBe(path.join('/custom/videos', 'test.mp4'));
@@ -410,7 +413,8 @@ describe('VideoService', () => {
 
     it('should produce absolute paths', () => {
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
+        '/test/thumbnails'
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(path.isAbsolute(filePath)).toBe(true);
@@ -419,7 +423,8 @@ describe('VideoService', () => {
     it('should not contain dangerous path traversals in default path', () => {
       delete process.env.VIDEOS_DIR;
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
+        '/test/thumbnails'
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).not.toContain('../');
@@ -427,10 +432,56 @@ describe('VideoService', () => {
 
     it('should handle absolute custom path from environment variable', () => {
       process.env.VIDEOS_DIR = '/absolute/custom/path';
-      const service = new VideoService(process.env.VIDEOS_DIR);
+      const service = new VideoService(process.env.VIDEOS_DIR, '/test/thumbnails');
       const filePath = service.getVideoFilePath('video.mp4');
       expect(filePath).toBe('/absolute/custom/path/video.mp4');
       expect(path.isAbsolute(filePath)).toBe(true);
+    });
+  });
+
+  describe('findThumbnail (thumbnails directory fallback)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should find thumbnail in thumbnails directory when not in video directory', async () => {
+      const serviceWithThumbnails = new VideoService('/test/videos', '/test/thumbnails');
+      
+      mockFs.access
+        .mockRejectedValueOnce(new Error('ENOENT')) // video dir search fails
+        .mockRejectedValueOnce(new Error('ENOENT')) // video dir .jpeg fails
+        .mockRejectedValueOnce(new Error('ENOENT')) // video dir .png fails  
+        .mockRejectedValueOnce(new Error('ENOENT')) // video dir .webp fails
+        .mockRejectedValueOnce(new Error('ENOENT')) // thumbnails dir .jpg fails
+        .mockResolvedValueOnce(undefined); // thumbnails dir .jpeg succeeds
+
+      const result = await (serviceWithThumbnails as any).findThumbnail('/test/videos/video.mp4');
+
+      expect(result).toBe('video.jpeg');
+      expect(mockFs.access).toHaveBeenCalledWith('/test/thumbnails/video.jpeg');
+    });
+
+    it('should prefer thumbnail in video directory over thumbnails directory', async () => {
+      const serviceWithThumbnails = new VideoService('/test/videos', '/test/thumbnails');
+      
+      mockFs.access.mockResolvedValue(undefined);
+
+      const result = await (serviceWithThumbnails as any).findThumbnail('/test/videos/video.mp4');
+
+      expect(result).toBe('video.jpg');
+      expect(mockFs.access).toHaveBeenCalledWith('/test/videos/video.jpg');
+      expect(mockFs.access).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return null when thumbnail not in either directory', async () => {
+      const serviceWithThumbnails = new VideoService('/test/videos', '/test/thumbnails');
+      
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockResolvedValue(['other.jpg'] as any);
+
+      const result = await (serviceWithThumbnails as any).findThumbnail('/test/videos/video.mp4');
+
+      expect(result).toBeNull();
     });
   });
 });

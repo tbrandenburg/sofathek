@@ -13,7 +13,7 @@ const router = Router();
 // Initialize video service (in production this would come from DI container)
 const videosDirectory = config.videosDir;
 const tempDirectory = config.tempDir;
-const videoService = new VideoService(videosDirectory);
+const videoService = new VideoService(videosDirectory, config.thumbnailsDir);
 const MAX_THUMBNAIL_SIZE = config.thumbnailMaxSize;
 const THUMBNAIL_CACHE_DURATION = config.thumbnailCacheDuration;
 
