@@ -55,18 +55,21 @@ test.describe('Video Download - Integration Tests (Live Backend)', () => {
       }
     });
 
-    test('should start download with non-YouTube URL via live backend API', async ({ page }) => {
+    test('should handle non-existent URLs appropriately via live backend API', async ({ page }) => {
+      // Test with a non-existent URL - this should fail gracefully
       const response = await page.request.post(`${BACKEND_URL}/api/youtube/download`, {
         data: { url: 'https://example.com/video.mp4' }
       });
 
-      // Handle both success and rate limiting scenarios
+      // This URL doesn't exist, so it should start the download but the backend will detect failure
+      // The API should accept the request initially but the download should fail during processing
       if (response.status() === 429) {
         // Rate limited - this is expected in integration tests
         const data = await response.json();
         expect(data.status).toBe('error');
         expect(data.message.toLowerCase()).toContain('rate');
       } else {
+        // The request should be accepted (200/202) but the download will fail during processing
         expect(response.ok()).toBe(true);
         const data = await response.json();
         expect(data.status).toBe('success');
