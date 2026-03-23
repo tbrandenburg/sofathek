@@ -47,8 +47,9 @@ test.describe('YouTube Download - Integration Tests (Live Backend)', () => {
     });
 
     test('should handle download errors from live backend', async ({ page }) => {
+      // Use a malformed URL that will fail validation (not a valid URL format)
       const response = await page.request.post(`${BACKEND_URL}/api/youtube/download`, {
-        data: { url: 'https://invalid-url-that-is-not-youtube.com/video' }
+        data: { url: 'not-a-valid-url-at-all' }
       });
 
       expect(response.status()).toBe(400);

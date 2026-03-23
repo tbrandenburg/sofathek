@@ -1,4 +1,4 @@
-import { YOUTUBE_URL_PATTERNS, containsShellMetacharacters } from '../types/youtube';
+import { containsShellMetacharacters } from '../types/youtube';
 import { getErrorMessage } from '../utils/error';
 import { logger } from '../utils/logger';
 
@@ -19,10 +19,22 @@ export class YouTubeUrlValidator {
         return false;
       }
 
-      const isValidFormat = YOUTUBE_URL_PATTERNS.some(pattern => pattern.test(url));
-      
-      if (!isValidFormat) {
-        logger.warn('URL does not match YouTube patterns', { url });
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        logger.warn('URL is not a valid absolute URL', { url });
+        return false;
+      }
+
+      const isHttpProtocol = parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+      if (!isHttpProtocol) {
+        logger.warn('URL must use HTTP or HTTPS protocol', { url, protocol: parsedUrl.protocol });
+        return false;
+      }
+
+      if (!parsedUrl.hostname) {
+        logger.warn('URL must contain a hostname', { url });
         return false;
       }
 

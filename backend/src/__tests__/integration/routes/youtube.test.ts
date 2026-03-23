@@ -74,7 +74,7 @@ describe('YouTube Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('YouTube URL is required');
+      expect(response.body.message).toContain('Video URL is required');
     });
 
     it('should return 400 if URL is invalid', async () => {
@@ -86,7 +86,7 @@ describe('YouTube Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Invalid YouTube URL format');
+      expect(response.body.message).toContain('Invalid video URL format');
     });
   });
 

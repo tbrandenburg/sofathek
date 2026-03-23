@@ -31,7 +31,7 @@ describe('YouTubeDownloadService', () => {
   });
 
   describe('validateYouTubeUrl', () => {
-    it('should validate correct YouTube URLs', async () => {
+    it('should validate supported video URLs', async () => {
       expect(await service.validateYouTubeUrl('https://www.youtube.com/watch?v=test123abc')).toBe(true);
       expect(await service.validateYouTubeUrl('https://youtu.be/test123abc')).toBe(true);
       expect(await service.validateYouTubeUrl('https://youtube.com/watch?v=test123abc')).toBe(true);
@@ -39,9 +39,9 @@ describe('YouTubeDownloadService', () => {
     });
 
     it('should reject invalid URLs', async () => {
-      expect(await service.validateYouTubeUrl('https://example.com')).toBe(false);
+      expect(await service.validateYouTubeUrl('https://example.com')).toBe(true);
       expect(await service.validateYouTubeUrl('not-a-url')).toBe(false);
-      expect(await service.validateYouTubeUrl('https://vimeo.com/123456')).toBe(false);
+      expect(await service.validateYouTubeUrl('ftp://vimeo.com/123456')).toBe(false);
       expect(await service.validateYouTubeUrl('')).toBe(false);
     });
 
@@ -107,7 +107,7 @@ describe('YouTubeDownloadService', () => {
       const result = await service.downloadVideo(mockRequest);
 
       expect(result.status).toBe('error');
-      expect(result.error).toContain('Invalid YouTube URL format');
+      expect(result.error).toContain('Invalid video URL format');
       expect(result.id).toBeDefined();
       expect(result.startedAt).toBeDefined();
       expect(result.completedAt).toBeDefined();
@@ -120,7 +120,7 @@ describe('YouTubeDownloadService', () => {
         'https://youtu.be/',
         'not-a-url-at-all',
         '',
-        'https://vimeo.com/123456'
+        'ftp://vimeo.com/123456'
       ];
       
       for (const url of testCases) {
@@ -139,13 +139,15 @@ describe('YouTubeDownloadService', () => {
   });
   
   describe('validateYouTubeUrl', () => {
-    it('should validate valid YouTube URLs', async () => {
+    it('should validate valid video URLs', async () => {
       const validUrls = [
         'https://www.youtube.com/watch?v=test123abc',
         'https://youtube.com/watch?v=test456def', 
         'https://youtu.be/test789ghi',
         'https://www.youtube.com/embed/testabcjkl',
-        'https://www.youtube.com/v/testmnoxyz'
+        'https://www.youtube.com/v/testmnoxyz',
+        'https://vimeo.com/123456',
+        'https://example.com/video.mp4'
       ];
       
       for (const url of validUrls) {
@@ -154,14 +156,12 @@ describe('YouTubeDownloadService', () => {
       }
     });
     
-    it('should reject invalid YouTube URLs', async () => {
+    it('should reject invalid video URLs', async () => {
       const invalidUrls = [
-        'https://vimeo.com/123456',
-        'https://youtube.com/watch',  // no video id
-        'https://youtu.be/',         // no video id  
+        'ftp://vimeo.com/123456',
+        'file:///tmp/video.mp4',
         'not-a-url',
         '',
-        'https://youtube.com/watch?v=',  // empty video id
       ];
       
       for (const url of invalidUrls) {
