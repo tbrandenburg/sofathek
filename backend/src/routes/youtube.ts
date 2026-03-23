@@ -24,7 +24,7 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
   const { url, title } = req.body;
   
   if (!url) {
-    throw new AppError('YouTube URL is required', 400);
+    throw new AppError('Video URL is required', 400);
   }
 
   logger.info('YouTube download request received', { url, title });
@@ -32,7 +32,7 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
   // Validate URL format
   const isValidUrl = await youTubeDownloadService.validateYouTubeUrl(url);
   if (!isValidUrl) {
-    throw new AppError('Invalid YouTube URL format', 400);
+    throw new AppError('Invalid video URL format', 400);
   }
 
   // Create download request

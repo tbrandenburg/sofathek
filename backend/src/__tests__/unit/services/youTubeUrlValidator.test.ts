@@ -8,7 +8,7 @@ describe('YouTubeUrlValidator', () => {
   });
 
   describe('validate', () => {
-    it('should validate correct YouTube URLs', async () => {
+    it('should validate supported video URLs', async () => {
       expect(await validator.validate('https://www.youtube.com/watch?v=test123abc')).toBe(true);
       expect(await validator.validate('https://youtu.be/test123abc')).toBe(true);
       expect(await validator.validate('https://youtube.com/watch?v=test123abc')).toBe(true);
@@ -16,9 +16,9 @@ describe('YouTubeUrlValidator', () => {
     });
 
     it('should reject invalid URLs', async () => {
-      expect(await validator.validate('https://example.com')).toBe(false);
+      expect(await validator.validate('https://example.com')).toBe(true);
       expect(await validator.validate('not-a-url')).toBe(false);
-      expect(await validator.validate('https://vimeo.com/123456')).toBe(false);
+      expect(await validator.validate('https://vimeo.com/123456')).toBe(true);
       expect(await validator.validate('')).toBe(false);
     });
 
@@ -46,7 +46,7 @@ describe('YouTubeUrlValidator', () => {
     });
 
     it('should reject URLs exceeding maximum length', async () => {
-      const longUrl = 'https://www.youtube.com/watch?v=test' + 'a'.repeat(2000);
+      const longUrl = 'https://example.com/watch?v=test' + 'a'.repeat(2000);
       expect(await validator.validate(longUrl)).toBe(false);
     });
   });

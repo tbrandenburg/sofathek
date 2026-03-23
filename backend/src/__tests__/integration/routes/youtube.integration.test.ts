@@ -165,14 +165,14 @@ describe('YouTube Download Integration (Real)', () => {
       });
     }, TEST_CONFIG.DOWNLOAD_TIMEOUT_MS + 30000);
 
-    it('returns 400 for a non-YouTube URL', async () => {
+    it('accepts a non-YouTube URL when URL format is valid', async () => {
       const response = await request(app)
         .post('/api/youtube/download')
         .send({ url: TEST_CONFIG.INVALID_URL })
         .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Invalid YouTube URL format');
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe('success');
     });
 
     it('exposes metadata on completed download status', async () => {

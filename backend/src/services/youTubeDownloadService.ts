@@ -42,7 +42,7 @@ export class YouTubeDownloadService {
       });
 
       if (!await this.urlValidator.validate(request.url)) {
-        throw new Error('Invalid YouTube URL format');
+        throw new Error('Invalid video URL format');
       }
 
       await this.fileManager.ensureDirectoriesExist();
