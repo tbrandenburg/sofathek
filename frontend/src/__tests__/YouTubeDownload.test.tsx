@@ -52,13 +52,13 @@ describe('YouTubeDownload Component', () => {
     );
 
     expect(screen.getByTestId('youtube-download')).toBeInTheDocument();
-    expect(screen.getByText('Download YouTube Video')).toBeInTheDocument();
-    expect(screen.getByText(/Enter a YouTube URL to download/)).toBeInTheDocument();
-    expect(screen.getByLabelText('YouTube URL')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Download Video' })).toBeInTheDocument();
+    expect(screen.getByText(/Enter a video URL to download/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Video URL')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /download video/i })).toBeInTheDocument();
   });
 
-  test('should validate YouTube URLs correctly', () => {
+  test('should validate video URLs correctly', () => {
     const Wrapper = createWrapper();
     
     render(
@@ -67,7 +67,7 @@ describe('YouTubeDownload Component', () => {
       </Wrapper>
     );
 
-    const input = screen.getByLabelText('YouTube URL');
+    const input = screen.getByLabelText('Video URL');
     const submitButton = screen.getByRole('button', { name: /download video/i });
 
     // Initially disabled
@@ -107,7 +107,7 @@ describe('YouTubeDownload Component', () => {
       </Wrapper>
     );
 
-    const input = screen.getByLabelText('YouTube URL');
+    const input = screen.getByLabelText('Video URL');
     const submitButton = screen.getByRole('button', { name: /download video/i });
     const testUrl = 'https://www.youtube.com/watch?v=test123abc';
 
@@ -140,7 +140,7 @@ describe('YouTubeDownload Component', () => {
       </Wrapper>
     );
 
-    const input = screen.getByLabelText('YouTube URL');
+    const input = screen.getByLabelText('Video URL');
     const submitButton = screen.getByRole('button', { name: /download video/i });
 
     fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=test123abc' } });
@@ -189,7 +189,7 @@ describe('YouTubeDownload Component', () => {
     );
 
     const button = screen.getByTestId('download-button');
-    const input = screen.getByLabelText('YouTube URL');
+    const input = screen.getByLabelText('Video URL');
 
     fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=test123' } });
 
@@ -213,7 +213,7 @@ describe('YouTubeDownload Component', () => {
 
     expect(button).toBeDisabled();
 
-    const input = screen.getByLabelText('YouTube URL');
+    const input = screen.getByLabelText('Video URL');
     fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=test123' } });
 
     expect(button).toBeEnabled();
@@ -338,7 +338,7 @@ describe('YouTubeDownload Component', () => {
     expect(mockMutate).not.toHaveBeenCalled();
 
     // Submit with invalid URL
-    const input = screen.getByLabelText('YouTube URL');
+    const input = screen.getByLabelText('Video URL');
     fireEvent.change(input, { target: { value: 'invalid-url' } });
     fireEvent.submit(form!);
     expect(mockMutate).not.toHaveBeenCalled();
@@ -379,7 +379,7 @@ describe('YouTubeDownload Component', () => {
     );
 
     // Change URL should trigger reset
-    const input = screen.getByLabelText('YouTube URL');
+    const input = screen.getByLabelText('Video URL');
     fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=new' } });
 
     expect(mockReset).toHaveBeenCalled();

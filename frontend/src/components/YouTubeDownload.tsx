@@ -3,7 +3,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
 import { useYouTubeDownload } from '../hooks/useYouTube';
-import { validateYouTubeUrl } from '../services/youtube';
+import { validateVideoUrl } from '../services/youtube';
 import { getUserFriendlyErrorMessage } from '../lib/error';
 
 interface YouTubeDownloadProps {
@@ -30,7 +30,7 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
     }
 
     // Validate YouTube URL using imported utility
-    const validation = validateYouTubeUrl(url.trim());
+    const validation = validateVideoUrl(url.trim());
     if (!validation.isValid) {
       return;
     }
@@ -49,16 +49,16 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
     setUrl(e.target.value);
   };
 
-  const validation = validateYouTubeUrl(url.trim());
+  const validation = validateVideoUrl(url.trim());
   const isValidUrl = url.trim() && validation.isValid;
   const canSubmit = isValidUrl && !downloadMutation.isPending;
 
   return (
     <Card className={`youtube-download ${className}`} data-testid="youtube-download">
       <CardHeader>
-        <CardTitle>Download YouTube Video</CardTitle>
+        <CardTitle>Download Video</CardTitle>
         <CardDescription>
-          Enter a YouTube URL to download the video to your library (downloads best quality MP4)
+          Enter a video URL to download. Supports YouTube and other video platforms.
         </CardDescription>
       </CardHeader>
 
@@ -67,14 +67,14 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
           {/* URL Input */}
           <div className="space-y-2">
             <label htmlFor="youtube-url" className="text-sm font-medium">
-              YouTube URL
+              Video URL
             </label>
             <input
               id="youtube-url"
               type="url"
               value={url}
               onChange={handleUrlChange}
-              placeholder="https://www.youtube.com/watch?v=..."
+              placeholder="https://www.youtube.com/watch?v=... or https://example.com/video.mp4"
               className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={downloadMutation.isPending}
               data-testid="youtube-url-input"
@@ -82,7 +82,7 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
             {/* URL Validation Message */}
             {url.trim() && !validation.isValid && (
               <p className="text-sm text-red-600" data-testid="url-validation-error">
-                Please enter a valid YouTube URL
+                Please enter a valid video URL
               </p>
             )}
           </div>
@@ -126,7 +126,7 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
         {/* URL Validation Hint */}
         {url.trim() && !validation.isValid && (
           <div className="mt-2 text-sm text-muted-foreground">
-            {validation.error || 'Please enter a valid YouTube URL (youtube.com or youtu.be)'}
+            {validation.error || 'Please enter a valid video URL (HTTP or HTTPS)'}
           </div>
         )}
       </div>

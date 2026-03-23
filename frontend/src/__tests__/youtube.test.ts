@@ -4,6 +4,7 @@ import {
   getDownloadQueue, 
   cancelDownload, 
   validateYouTubeUrl,
+  validateVideoUrl,
   extractYouTubeVideoId,
   formatQueueItemTitle,
   getStatusColor
@@ -264,18 +265,43 @@ describe('YouTube Service', () => {
       const invalidUrls = [
         '',
         'not-a-url',
-        'https://example.com',
-        'https://vimeo.com/123456',
-        'https://youtube.com/invalid',
-        'https://www.youtube.com/watch',
-        'https://www.youtube.com/watch?v=',
-        'ftp://youtube.com/watch?v=test'
+        'ftp://youtube.com/watch?v=test', // Non HTTP/HTTPS protocol
+        'javascript:alert(1)', // Security risk
+        'data:text/html,<script>alert(1)</script>' // Security risk  
       ];
 
       invalidUrls.forEach(url => {
         const result = validateYouTubeUrl(url);
         expect(result.isValid).toBe(false);
         expect(result.error).toBeDefined();
+      });
+    });
+
+    test('should accept previously invalid URLs that are now valid with broader validation', () => {
+      const previouslyInvalidNowValidUrls = [
+        'https://youtube.com/invalid', // Generic YouTube domain URL
+        'https://www.youtube.com/watch', // Incomplete YouTube URL but valid HTTP URL
+        'https://www.youtube.com/watch?v=' // Incomplete YouTube URL but valid HTTP URL
+      ];
+
+      previouslyInvalidNowValidUrls.forEach(url => {
+        const result = validateVideoUrl(url);  // Use new broader validation
+        expect(result.isValid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
+    });
+
+    test('should accept valid non-YouTube URLs with new broader validation', () => {
+      const validNonYouTubeUrls = [
+        'https://example.com/video.mp4',
+        'https://vimeo.com/123456',
+        'http://video-site.com/watch/12345'
+      ];
+
+      validNonYouTubeUrls.forEach(url => {
+        const result = validateVideoUrl(url);  // Use new function for broader validation
+        expect(result.isValid).toBe(true);
+        expect(result.error).toBeUndefined();
       });
     });
 

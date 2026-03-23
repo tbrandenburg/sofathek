@@ -2,10 +2,10 @@
 // Mirrors backend/src/types/youtube.ts but adapted for React components
 
 /**
- * YouTube download request for API calls
+ * Video download request for API calls
  */
 export interface DownloadRequest {
-  /** YouTube video URL */
+  /** Video URL (YouTube and other supported URLs) */
   url: string;
   /** Optional custom title override */
   title?: string;
@@ -45,7 +45,7 @@ export interface YouTubeMetadata {
 export interface QueueItem {
   /** Unique queue item identifier */
   id: string;
-  /** YouTube URL being downloaded */
+  /** Video URL being downloaded (YouTube and other supported URLs) */
   url: string;
   /** Video title (from metadata or URL) */
   title: string;
@@ -146,10 +146,10 @@ export interface QueueItemProps {
 // Form Types
 
 /**
- * YouTube URL form data
+ * Video URL form data
  */
 export interface YouTubeFormData {
-  /** YouTube URL input */
+  /** Video URL input (YouTube and other supported URLs) */
   url: string;
 }
 
@@ -166,14 +166,25 @@ export interface FormValidation {
 // Utility Types
 
 /**
- * Supported YouTube URL patterns for validation
+ * Supported video URL patterns for validation
+ * Updated to match backend validation: accepts any valid HTTP/HTTPS URL
+ * Still prioritizes YouTube URLs but now supports broader video URLs
  */
-export const YOUTUBE_URL_PATTERNS = [
+export const VIDEO_URL_PATTERNS = [
+  // YouTube URLs (maintained for compatibility)
   /^https?:\/\/(?:www\.)?youtube\.com\/watch\?v=[\w-]+/,
   /^https?:\/\/(?:www\.)?youtube\.com\/embed\/[\w-]+/,
   /^https?:\/\/youtu\.be\/[\w-]+/,
-  /^https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]+/
+  /^https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]+/,
+  // Generic HTTP/HTTPS URLs (new broader support)
+  /^https?:\/\/[^\s/$.?#].[^\s]*$/
 ] as const;
+
+/**
+ * @deprecated Use VIDEO_URL_PATTERNS instead
+ * Kept for backward compatibility
+ */
+export const YOUTUBE_URL_PATTERNS = VIDEO_URL_PATTERNS;
 
 /**
  * Status colors for UI display

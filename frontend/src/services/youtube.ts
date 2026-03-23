@@ -2,8 +2,7 @@ import {
   DownloadRequest, 
   QueueStatus, 
   QueueItem, 
-  YouTubeApiResponse,
-  YOUTUBE_URL_PATTERNS 
+  YouTubeApiResponse
 } from '../types/youtube';
 
 // Import base API utilities
@@ -71,14 +70,14 @@ async function youtubeApiFetch<T>(
 }
 
 /**
- * Download a YouTube video
+ * Download a video
  * POST /api/youtube/download
  */
 export async function downloadVideo(request: DownloadRequest): Promise<QueueItem> {
-  // Validate URL format
-  const isValidUrl = YOUTUBE_URL_PATTERNS.some(pattern => pattern.test(request.url));
-  if (!isValidUrl) {
-    throw new ApiError('Invalid YouTube URL format', 400);
+  // Validate URL format - now accepts broader URLs beyond YouTube
+  const validation = validateVideoUrl(request.url);
+  if (!validation.isValid) {
+    throw new ApiError(validation.error || 'Invalid video URL format', 400);
   }
 
   const response = await youtubeApiFetch<{ queueItem: QueueItem; message?: string }>('/youtube/download', {
@@ -150,9 +149,10 @@ export async function cancelDownload(itemId: string): Promise<{ message: string;
 }
 
 /**
- * Validate YouTube URL format
+ * Validate video URL format (supports YouTube and other video URLs)
+ * Matches backend validation logic for consistency
  */
-export function validateYouTubeUrl(url: string): { isValid: boolean; error?: string } {
+export function validateVideoUrl(url: string): { isValid: boolean; error?: string } {
   if (!url) {
     return { isValid: false, error: 'URL is required' };
   }
@@ -165,15 +165,65 @@ export function validateYouTubeUrl(url: string): { isValid: boolean; error?: str
     return { isValid: false, error: 'URL is too long' };
   }
 
-  const isValidFormat = YOUTUBE_URL_PATTERNS.some(pattern => pattern.test(url));
-  if (!isValidFormat) {
+  // First check if it matches YouTube patterns (for backward compatibility)
+  const youtubePatterns = [
+    /^https?:\/\/(?:www\.)?youtube\.com\/watch\?v=[\w-]+/,
+    /^https?:\/\/(?:www\.)?youtube\.com\/embed\/[\w-]+/,
+    /^https?:\/\/youtu\.be\/[\w-]+/,
+    /^https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]+/
+  ];
+  
+  const isYouTubeUrl = youtubePatterns.some(pattern => pattern.test(url));
+  if (isYouTubeUrl) {
+    return { isValid: true };
+  }
+
+  // For non-YouTube URLs, use URL constructor validation (same as backend)
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
     return { 
       isValid: false, 
-      error: 'Invalid YouTube URL. Please provide a valid YouTube video URL.' 
+      error: 'Invalid video URL. Please provide a valid video URL (HTTP or HTTPS).' 
+    };
+  }
+
+  // Check protocol (same as backend)
+  const isHttpProtocol = parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+  if (!isHttpProtocol) {
+    return { 
+      isValid: false, 
+      error: 'Invalid video URL. Please provide a valid video URL (HTTP or HTTPS).' 
+    };
+  }
+
+  // Check hostname exists (same as backend)
+  if (!parsedUrl.hostname) {
+    return { 
+      isValid: false, 
+      error: 'Invalid video URL. Please provide a valid video URL (HTTP or HTTPS).' 
+    };
+  }
+
+  // Basic shell metacharacters check (simplified version of backend security check)
+  // Note: & is allowed in URLs for query parameters
+  if (url.includes(';') || url.includes('|') || url.includes('`')) {
+    return { 
+      isValid: false, 
+      error: 'Invalid video URL. Please provide a valid video URL (HTTP or HTTPS).' 
     };
   }
 
   return { isValid: true };
+}
+
+/**
+ * @deprecated Use validateVideoUrl instead
+ * Validate YouTube URL format (kept for backward compatibility)
+ */
+export function validateYouTubeUrl(url: string): { isValid: boolean; error?: string } {
+  return validateVideoUrl(url);
 }
 
 /**

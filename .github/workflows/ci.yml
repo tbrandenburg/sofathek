@@ -226,9 +226,12 @@ jobs:
             --max-failures=1 \
             --retries=1
 
-          # Note: Integration tests temporarily disabled due to PR #185 URL validation changes
-          # TODO: Update integration tests to work with new broader URL validation
-          echo "Integration tests temporarily skipped - need updates for broader URL validation"
+          # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
+          echo "Running integration tests against live backend..."
+          npx playwright test youtube-download/integration.spec.ts \
+            --timeout=60000 \
+            --reporter=list \
+            --max-failures=3
           
       - name: Cleanup background servers
         if: always()
