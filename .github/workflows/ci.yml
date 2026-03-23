@@ -133,15 +133,29 @@ jobs:
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
         run: |
-          echo "Starting servers with Make commands (like local development)..."
+          echo "Starting servers directly for CI background execution..."
 
           # Create temp directories for health checks
           mkdir -p /tmp/sofathek-videos /tmp/sofathek-temp
           
-          # Use make dev command which works locally
-          make dev &
-          SERVER_PID=$!
-          echo "Servers started with PID: $SERVER_PID"
+          # Clean any existing processes on ports 3010 and 5183
+          lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
+          lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
+          sleep 1
+          lsof -ti:3010,5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
+          
+          # Start backend in background
+          echo "Starting backend on port 3010..."
+          cd backend && PORT=3010 npm run dev &
+          BACKEND_PID=$!
+          echo "Backend started with PID: $BACKEND_PID"
+          
+          # Start frontend in background (wait a moment for backend to initialize)
+          sleep 3
+          echo "Starting frontend on port 5183..."
+          cd ../frontend && npm run dev -- --port 5183 &
+          FRONTEND_PID=$!
+          echo "Frontend started with PID: $FRONTEND_PID"
           
           # Wait for services to initialize
           echo "Waiting 20 seconds for services to start..."
