@@ -132,34 +132,44 @@ jobs:
         env:
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
+          NODE_ENV: development
         run: |
           echo "Starting servers directly for CI background execution..."
 
           # Create temp directories for health checks
           mkdir -p /tmp/sofathek-videos /tmp/sofathek-temp
-          
+
           # Clean any existing processes on ports 3010 and 5183
-          lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
-          lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
-          sleep 1
-          lsof -ti:3010,5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
+          echo "Cleaning existing processes..."
+          sudo lsof -ti:3010 2>/dev/null | xargs -r sudo kill -TERM 2>/dev/null || true
+          sudo lsof -ti:5183 2>/dev/null | xargs -r sudo kill -TERM 2>/dev/null || true
+          sleep 2
+          sudo lsof -ti:3010,5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
           
           # Start backend in background
           echo "Starting backend on port 3010..."
-          cd backend && PORT=3010 npm run dev &
+          cd backend
+          nohup npm run dev > ../backend.log 2>&1 &
           BACKEND_PID=$!
           echo "Backend started with PID: $BACKEND_PID"
+          echo $BACKEND_PID > ../backend.pid
+          cd ..
           
-          # Start frontend in background (wait a moment for backend to initialize)
-          sleep 3
+          # Wait and start frontend in background
+          echo "Waiting for backend to initialize..."
+          sleep 5
+          
           echo "Starting frontend on port 5183..."
-          cd ../frontend && npm run dev -- --port 5183 &
+          cd frontend 
+          nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../frontend.log 2>&1 &
           FRONTEND_PID=$!
           echo "Frontend started with PID: $FRONTEND_PID"
+          echo $FRONTEND_PID > ../frontend.pid
+          cd ..
           
           # Wait for services to initialize
-          echo "Waiting 20 seconds for services to start..."
-          sleep 20
+          echo "Waiting 30 seconds for services to fully start..."
+          sleep 30
           
           # Health checks with detailed logging
           echo "Checking backend availability..."
@@ -224,8 +234,23 @@ jobs:
         if: always()
         run: |
           echo "Cleaning up background processes..."
+          # Kill by stored PIDs
+          if [ -f backend.pid ]; then
+            BACKEND_PID=$(cat backend.pid)
+            kill $BACKEND_PID 2>/dev/null || echo "Backend PID $BACKEND_PID not found"
+            rm -f backend.pid
+          fi
+          if [ -f frontend.pid ]; then
+            FRONTEND_PID=$(cat frontend.pid)
+            kill $FRONTEND_PID 2>/dev/null || echo "Frontend PID $FRONTEND_PID not found"  
+            rm -f frontend.pid
+          fi
+          # Fallback cleanup
           pkill -f "PORT=3010" || echo "No backend processes to kill"
           pkill -f "vite.*--port 5183" || echo "No frontend processes to kill"
+          # Final port cleanup
+          sudo lsof -ti:3010 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
+          sudo lsof -ti:5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
           sleep 2
         
       - name: Upload Playwright test results
