@@ -123,6 +123,11 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install yt-dlp
+          # Create symlink for youtube-dl-exec package to find yt-dlp binary
+          mkdir -p backend/node_modules/youtube-dl-exec/bin
+          which yt-dlp
+          ln -sf "$(which yt-dlp)" backend/node_modules/youtube-dl-exec/bin/yt-dlp
+          echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
         timeout-minutes: 5
         
       - name: Install Playwright browsers
@@ -296,6 +301,11 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install yt-dlp
+          # Create symlink for youtube-dl-exec package to find yt-dlp binary
+          mkdir -p backend/node_modules/youtube-dl-exec/bin
+          which yt-dlp
+          ln -sf "$(which yt-dlp)" backend/node_modules/youtube-dl-exec/bin/yt-dlp
+          echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
         timeout-minutes: 5
         
       - name: Build for production
