@@ -108,7 +108,27 @@ export interface QueueStatus {
   lastUpdated: Date;
 }
 
-const SHELL_METACHARACTERS = /[;&|`$(){}[\]<>]/;
+const SHELL_METACHARACTERS = /[;&|`$(){}[\]<>\\\n\x00]/;
+
+const PRIVATE_IP_PATTERNS = [
+  /^127\./,                          // Loopback
+  /^10\./,                           // Class A private
+  /^172\.(1[6-9]|2[0-9]|3[0-1])\./,  // Class B private
+  /^192\.168\./,                      // Class C private
+  /^169\.254\./,                      // Link-local
+  /^0\./,                            // Current network
+  /^224\./,                          // Multicast
+  /^240\./,                          // Reserved
+  /^localhost$/i,                    // localhost hostname
+  /^.*\.local$/i,                   // .local domains
+] as const;
+
+const BLOCKED_HOSTNAMES = [
+  'localhost',
+  'localhost.localdomain',
+  'ip6-localhost',
+  'ip6-loopback',
+] as const;
 
 /**
  * Supported YouTube URL patterns for validation
@@ -121,7 +141,24 @@ export const YOUTUBE_URL_PATTERNS = [
 ] as const;
 
 export const containsShellMetacharacters = (url: string): boolean => {
-  return SHELL_METACHARACTERS.test(url);
+  const decodedUrl = decodeURIComponent(url);
+  return SHELL_METACHARACTERS.test(decodedUrl) || SHELL_METACHARACTERS.test(url);
+};
+
+export const isPrivateNetworkHost = (hostname: string): boolean => {
+  const lowerHost = hostname.toLowerCase();
+  
+  // Check exact blocked hostnames
+  if (BLOCKED_HOSTNAMES.includes(lowerHost as any)) {
+    return true;
+  }
+  
+  // Check for any .local domain or .localdomain
+  if (lowerHost.endsWith('.local') || lowerHost.endsWith('.localdomain')) {
+    return true;
+  }
+  
+  return PRIVATE_IP_PATTERNS.some(pattern => pattern.test(hostname));
 };
 
 /**

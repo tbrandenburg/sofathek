@@ -1,4 +1,4 @@
-import { containsShellMetacharacters } from '../types/youtube';
+import { containsShellMetacharacters, isPrivateNetworkHost } from '../types/youtube';
 import { getErrorMessage } from '../utils/error';
 import { logger } from '../utils/logger';
 
@@ -35,6 +35,11 @@ export class YouTubeUrlValidator {
 
       if (!parsedUrl.hostname) {
         logger.warn('URL must contain a hostname', { url });
+        return false;
+      }
+
+      if (isPrivateNetworkHost(parsedUrl.hostname)) {
+        logger.warn('URL points to private/internal network - SSRF blocked', { url, hostname: parsedUrl.hostname });
         return false;
       }
 
