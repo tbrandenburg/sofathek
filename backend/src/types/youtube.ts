@@ -1,8 +1,8 @@
 /**
- * YouTube download request structure
+ * Video download request structure (supports yt-dlp-compatible URLs)
  */
 export interface DownloadRequest {
-  /** YouTube video URL */
+  /** Video URL (YouTube, Vimeo, Twitter/X, and 1000+ other sites supported) */
   url: string;
   /** Optional custom title override */
   title?: string;
@@ -128,16 +128,6 @@ const BLOCKED_HOSTNAMES = [
   'localhost.localdomain',
   'ip6-localhost',
   'ip6-loopback',
-] as const;
-
-/**
- * Supported YouTube URL patterns for validation
- */
-export const YOUTUBE_URL_PATTERNS = [
-  /^https?:\/\/(?:www\.)?youtube\.com\/watch\?v=[\w-]+/,
-  /^https?:\/\/(?:www\.)?youtube\.com\/embed\/[\w-]+/,
-  /^https?:\/\/youtu\.be\/[\w-]+/,
-  /^https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]+/
 ] as const;
 
 export const containsShellMetacharacters = (url: string): boolean => {

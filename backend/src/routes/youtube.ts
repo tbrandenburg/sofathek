@@ -18,7 +18,7 @@ export { downloadRateLimiter };
 
 /**
  * POST /api/youtube/download
- * Add YouTube video to download queue
+ * Add video to download queue (supports YouTube, Vimeo, Twitter/X, and 1000+ other sites)
  */
 router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(async (req: Request, res: Response) => {
   const { url, title } = req.body;
@@ -27,7 +27,7 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
     throw new AppError('Video URL is required', 400);
   }
 
-  logger.info('YouTube download request received', { url, title });
+  logger.info('Video download request received', { url, title });
 
   // Validate URL format
   const isValidUrl = await youTubeDownloadService.validateYouTubeUrl(url);
@@ -46,7 +46,7 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
   // Add to queue
   const queueItem = await downloadQueueService.addToQueue(downloadRequest);
 
-  logger.info('YouTube video added to download queue', {
+  logger.info('Video added to download queue', {
     queueItemId: queueItem.id,
     url,
     requestId: downloadRequest.requestId
@@ -201,7 +201,7 @@ router.post('/queue/cleanup', catchAsync(async (req: Request, res: Response) => 
  * Health check endpoint for YouTube integration
  */
 router.get('/health', catchAsync(async (_req: Request, res: Response) => {
-  logger.info('YouTube service health check');
+  logger.info('Video download service health check');
   
   // Basic health checks
   const queueStatus = downloadQueueService.getQueueStatus();
