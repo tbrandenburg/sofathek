@@ -76,30 +76,30 @@ dev: ## Start development servers (backend:3010, frontend:5183)
 
 start: build ## Start production servers
 	@echo "🚀 Starting production servers..."
-	@echo "Backend: http://localhost:3010 | Frontend: http://localhost:4173"
+	@echo "Backend: http://localhost:3010 | Frontend: http://localhost:5183"
 	@echo "🧹 Cleaning up any existing processes..."
-	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:4173 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:3010,4173 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=3010\|npm.*preview.*4173" 2>/dev/null || true
+	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:3010,5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=3010\|vite.*--port 5183" 2>/dev/null || true
 	@echo "Starting backend..."
 	@(cd backend && PORT=3010 npm start) &
 	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:3010/health 30 || (echo "❌ Backend failed to start - check logs" && exit 1)
 	@echo "✅ Backend started successfully"
 	@echo "Starting frontend..."
-	@(cd frontend && npm run preview -- --port 4173 --host) &
-	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:4173 10 || (echo "❌ Frontend failed to start" && exit 1)
+	@(cd frontend && npm run preview -- --port 5183 --host) &
+	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:5183 10 || (echo "❌ Frontend failed to start" && exit 1)
 	@echo "✅ Frontend started successfully"
 	@echo ""
 	@echo "🎉 All services started!"
 	@echo "   Backend: http://localhost:3010"
-	@echo "   Frontend: http://localhost:4173"
+	@echo "   Frontend: http://localhost:5183"
 	@echo ""
 	@echo "Press Ctrl+C to stop all servers"
 	@trap 'kill %1 %2 2>/dev/null; exit 0' INT; wait
 
 stop: ## Stop all servers and clean up ports
 	@echo "🛑 Stopping servers..."
-	@bash -c 'for port in 3010 4173; do pids=$$(lsof -ti:$$port 2>/dev/null || true); if [ -n "$$pids" ]; then echo "  Killing processes on port $$port: $$pids"; kill -TERM $$pids 2>/dev/null || true; sleep 0.5; kill -KILL $$pids 2>/dev/null || true; fi; done'
+	@bash -c 'for port in 3010 5183; do pids=$$(lsof -ti:$$port 2>/dev/null || true); if [ -n "$$pids" ]; then echo "  Killing processes on port $$port: $$pids"; kill -TERM $$pids 2>/dev/null || true; sleep 0.5; kill -KILL $$pids 2>/dev/null || true; fi; done'
 	@pkill -f "PORT=3010" 2>/dev/null || true
-	@pkill -f "npm.*preview.*4173" 2>/dev/null || true
+	@pkill -f "vite.*--port 5183" 2>/dev/null || true
 	@echo "✅ All servers stopped and ports cleaned up"
 
 clean: ## Clean build artifacts
