@@ -167,20 +167,23 @@ jobs:
           sudo lsof -ti:3010,5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
           sleep 2
           
-          # Start backend server in background for this step
-          echo "Starting backend server..."
-          cd backend
-          nohup npm run dev > ../e2e-backend.log 2>&1 &
-          BACKEND_PID=$!
-          echo "Backend PID: $BACKEND_PID"
-          cd ../
-          
-          # Start frontend server in background for this step  
-          echo "Starting frontend server..."
-          cd frontend
-          nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../e2e-frontend.log 2>&1 &
-          FRONTEND_PID=$!
-          echo "Frontend PID: $FRONTEND_PID"
+           # Start backend server in background for this step
+           echo "Starting backend server..."
+           cd backend
+           nohup npm run dev > ../e2e-backend.log 2>&1 &
+           BACKEND_PID=$!
+           echo "Backend PID: $BACKEND_PID"
+           echo $BACKEND_PID > ../backend.pid
+           cd ../
+           
+           # Start frontend server in background for this step  
+           echo "Starting frontend server..."
+           cd frontend
+           nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../e2e-frontend.log 2>&1 &
+           FRONTEND_PID=$!
+           echo "Frontend PID: $FRONTEND_PID"
+           echo $FRONTEND_PID > ../frontend.pid
+           cd ../
           
           # Wait for servers to start with health checks
           echo "Waiting for servers to initialize..."
@@ -316,17 +319,18 @@ jobs:
           curl -f http://localhost:3010/health && echo "✅ Backend is responding"
           curl -f -I http://localhost:5183 && echo "✅ Frontend is responding"
           
-          echo "========== STARTING E2E TESTS =========="
-          
-          echo "Running E2E tests..."
-          
-          # Run minimal CI tests first with error handling
-          echo "Starting minimal CI tests..."
-          if ! npx playwright test ci-minimal.spec.ts \
-            --timeout=60000 \
-            --reporter=list \
-            --max-failures=1 \
-            --retries=1; then
+           echo "========== STARTING E2E TESTS =========="
+           
+           echo "Running E2E tests from frontend directory..."
+           cd frontend
+           
+           # Run minimal CI tests first with error handling
+           echo "Starting minimal CI tests..."
+           if ! npx playwright test tests/ci-minimal.spec.ts \
+             --timeout=60000 \
+             --reporter=list \
+             --max-failures=1 \
+             --retries=1; then
               
             echo "❌ CI-minimal tests FAILED! Collecting debug info..."
             
@@ -356,12 +360,12 @@ jobs:
             exit 1
           fi
 
-          # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
-          echo "Running integration tests against live backend..."
-          if ! npx playwright test youtube-download/integration.spec.ts \
-            --timeout=60000 \
-            --reporter=list \
-            --max-failures=3; then
+           # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
+           echo "Running integration tests against live backend..."
+           if ! npx playwright test tests/youtube-download/integration.spec.ts \
+             --timeout=60000 \
+             --reporter=list \
+             --max-failures=3; then
               
             echo "❌ Integration tests FAILED! Debug info already collected above."
             exit 1
@@ -383,7 +387,8 @@ jobs:
             rm -f frontend.pid
           fi
           # Fallback cleanup
-          pkill -f "PORT=3010" || echo "No backend processes to kill"
+          pkill -f "npm run dev" || echo "No npm dev processes to kill"
+          pkill -f "ts-node-dev" || echo "No ts-node-dev processes to kill"
           pkill -f "vite.*--port 5183" || echo "No frontend processes to kill"
           # Final port cleanup
           sudo lsof -ti:3010 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
