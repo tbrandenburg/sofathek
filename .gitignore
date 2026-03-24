@@ -169,3 +169,7 @@ data/videos/*.mp4
 # Data
 data/
 temp/
+
+# Playwright test artifacts
+playwright-videos/
+test_output.zip
