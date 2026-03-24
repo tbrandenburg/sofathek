@@ -228,21 +228,144 @@ jobs:
           # Set CI environment for Playwright
           export CI=true
           
+          echo "========== PRE-TEST SERVER VERIFICATION =========="
+          
+          # Detailed server status check immediately before tests
+          echo "Checking server processes..."
+          ps aux | grep -E "(npm run dev|node.*dev)" | grep -v grep || echo "No dev processes found"
+          
+          echo "Checking port binding..."
+          sudo netstat -tlnp | grep -E ":3010|:5183" || echo "No processes bound to target ports"
+          
+          echo "Checking process tree..."
+          pstree -p $$ || echo "pstree not available"
+          
+          # Environment debugging
+          echo "Environment variables:"
+          env | grep -E "(NODE_|PORT|CI|npm)" | sort
+          
+          # Verify servers are ACTUALLY accessible right now
+          echo "Testing backend connectivity with verbose output..."
+          curl -v -f -m 10 http://localhost:3010/health || {
+            echo "❌ BACKEND UNREACHABLE! Attempting restart..."
+            
+            # Show backend logs
+            echo "Backend log (last 50 lines):"
+            tail -50 ../e2e-backend.log 2>/dev/null || echo "No backend log found"
+            
+            # Restart backend
+            cd backend
+            echo "Restarting backend server..."
+            nohup npm run dev > ../e2e-backend-restart.log 2>&1 &
+            NEW_BACKEND_PID=$!
+            echo "New backend PID: $NEW_BACKEND_PID"
+            cd ../
+            
+            # Wait for restart
+            sleep 15
+            for i in {1..20}; do
+              if curl -f -s http://localhost:3010/health > /dev/null; then
+                echo "✅ Backend restart successful"
+                break
+              fi
+              echo "Backend restart check $i/20..."
+              sleep 3
+              if [ $i -eq 20 ]; then
+                echo "❌ Backend restart failed"
+                echo "Restart log:"
+                tail -20 ../e2e-backend-restart.log 2>/dev/null || echo "No restart log"
+                exit 1
+              fi
+            done
+          }
+          
+          echo "Testing frontend connectivity with verbose output..."
+          curl -v -f -I -m 10 http://localhost:5183 || {
+            echo "❌ FRONTEND UNREACHABLE! Attempting restart..."
+            
+            # Show frontend logs  
+            echo "Frontend log (last 50 lines):"
+            tail -50 ../e2e-frontend.log 2>/dev/null || echo "No frontend log found"
+            
+            # Restart frontend
+            cd frontend
+            echo "Restarting frontend server..."
+            nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../e2e-frontend-restart.log 2>&1 &
+            NEW_FRONTEND_PID=$!
+            echo "New frontend PID: $NEW_FRONTEND_PID"
+            
+            # Wait for restart
+            sleep 15
+            for i in {1..20}; do
+              if curl -f -s -I http://localhost:5183 > /dev/null; then
+                echo "✅ Frontend restart successful"
+                break
+              fi
+              echo "Frontend restart check $i/20..."
+              sleep 3
+              if [ $i -eq 20 ]; then
+                echo "❌ Frontend restart failed"
+                echo "Restart log:"
+                tail -20 ../e2e-frontend-restart.log 2>/dev/null || echo "No restart log"
+                exit 1
+              fi
+            done
+          }
+          
+          echo "Final server verification after restarts..."
+          curl -f http://localhost:3010/health && echo "✅ Backend is responding"
+          curl -f -I http://localhost:5183 && echo "✅ Frontend is responding"
+          
+          echo "========== STARTING E2E TESTS =========="
+          
           echo "Running E2E tests..."
           
-          # Run minimal CI tests first
-          npx playwright test ci-minimal.spec.ts \
+          # Run minimal CI tests first with error handling
+          echo "Starting minimal CI tests..."
+          if ! npx playwright test ci-minimal.spec.ts \
             --timeout=60000 \
             --reporter=list \
             --max-failures=1 \
-            --retries=1
+            --retries=1; then
+              
+            echo "❌ CI-minimal tests FAILED! Collecting debug info..."
+            
+            # Show server status after failure
+            echo "Server processes after test failure:"
+            ps aux | grep -E "(npm run dev|node.*dev)" | grep -v grep || echo "No dev processes found"
+            
+            # Show port status after failure
+            echo "Port status after test failure:"
+            sudo netstat -tlnp | grep -E ":3010|:5183" || echo "No processes bound to target ports"
+            
+            # Test connectivity after failure
+            echo "Testing connectivity after failure..."
+            curl -v -f -m 5 http://localhost:3010/health || echo "Backend unreachable after test failure"
+            curl -v -f -I -m 5 http://localhost:5183 || echo "Frontend unreachable after test failure"
+            
+            # Show logs after failure
+            echo "Backend log (last 30 lines after failure):"
+            tail -30 ../e2e-backend.log 2>/dev/null || echo "No backend log"
+            
+            echo "Frontend log (last 30 lines after failure):"
+            tail -30 ../e2e-frontend.log 2>/dev/null || echo "No frontend log"
+            
+            echo "Playwright debug info:"
+            npx playwright --version
+            
+            exit 1
+          fi
 
           # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
           echo "Running integration tests against live backend..."
-          npx playwright test youtube-download/integration.spec.ts \
+          if ! npx playwright test youtube-download/integration.spec.ts \
             --timeout=60000 \
             --reporter=list \
-            --max-failures=3
+            --max-failures=3; then
+              
+            echo "❌ Integration tests FAILED! Debug info already collected above."
+            exit 1
+          fi
           
       - name: Cleanup background servers
         if: always()
