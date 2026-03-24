@@ -46,7 +46,9 @@ test.describe('Video Download - Integration Tests (Live Backend)', () => {
         // Rate limited - this is expected in integration tests
         const data = await response.json();
         expect(data.status).toBe('error');
-        expect(data.message.toLowerCase()).toContain('rate');
+        // Handle both dev (data.error.message) and prod (data.message) response formats
+        const errorMessage = data.message ?? data.error?.message;
+        expect(errorMessage?.toLowerCase()).toContain('rate');
       } else {
         expect(response.ok()).toBe(true);
         const data = await response.json();
@@ -67,7 +69,9 @@ test.describe('Video Download - Integration Tests (Live Backend)', () => {
         // Rate limited - this is expected in integration tests
         const data = await response.json();
         expect(data.status).toBe('error');
-        expect(data.message.toLowerCase()).toContain('rate');
+        // Handle both dev (data.error.message) and prod (data.message) response formats
+        const errorMessage = data.message ?? data.error?.message;
+        expect(errorMessage?.toLowerCase()).toContain('rate');
       } else {
         // The request should be accepted (200/202) but the download will fail during processing
         expect(response.ok()).toBe(true);
