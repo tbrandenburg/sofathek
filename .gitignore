@@ -159,12 +159,14 @@ dist/
 # Test artifacts
 test-results/
 playwright-report/
+playwright-videos/
 coverage/
 frontend/playwright-report/
 frontend/test-results/
 backend/temp/test-queue/
 backend/data/videos/*.mp4
 data/videos/*.mp4
+*.zip
 
 # Data
 data/
