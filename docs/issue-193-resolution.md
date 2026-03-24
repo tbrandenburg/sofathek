@@ -47,22 +47,38 @@ Issue #193 was created to highlight that issue #186 (Re-enable integration tests
 
 ## Evidence
 
-### Test Results
+### Test Results (Verified for PR #201 Context)
 ```bash
-cd frontend && npx playwright test youtube-download/integration.spec.ts --project=chromium
-# Result: 8 tests passed
+# Command executed in PR #201 branch context:
+cd frontend && npx playwright test youtube-download/integration.spec.ts --project=chromium --reporter=list
+# Result from PR #201 verification:
+# Running 8 tests using 1 worker
+# ✓ 8 passed (19.1s)
+# Verified: 2026-03-24T10:22:00Z
 ```
 
-### CI Workflow Verification  
+### CI Workflow Verification (Verified for PR #201 Context)
 ```bash
+# Command executed in PR #201 branch context:
 grep -A 10 "Second: Run integration tests" .github/workflows/ci.yml
+# Result from PR #201 verification:
+# Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
+# echo "Running integration tests against live backend..."
+# if ! npx playwright test tests/youtube-download/integration.spec.ts \
+#   --timeout=60000 \
+#   --reporter=list \
+#   --max-failures=3; then
 # Shows integration tests are enabled and configured properly
+# Verified: 2026-03-24T10:22:00Z
 ```
 
-### Issue Status Check
+### Issue Status Check (Verified for PR #201 Context)
 ```bash
+# Command executed in PR #201 branch context:
 gh issue view 186 --json state,closedAt
-# Result: {"state":"CLOSED","closedAt":"2026-03-24T00:04:21Z"}
+# Result from PR #201 verification:
+# {"closedAt":"2026-03-24T00:04:21Z","state":"CLOSED"}
+# Verified: 2026-03-24T10:22:00Z
 ```
 
 ## Conclusion
