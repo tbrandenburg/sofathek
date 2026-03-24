@@ -216,10 +216,84 @@ jobs:
           echo "Running minimal CI-focused E2E tests..."
           cd frontend
           
-          # Verify servers are still responding right before tests
-          echo "Final server verification:"
-          curl -f http://localhost:3010/health || (echo "Backend health check failed" && exit 1)
-          curl -f http://localhost:5183 || (echo "Frontend health check failed" && exit 1)
+          # Enhanced server verification with restart capability
+          echo "Checking server status before E2E tests..."
+          
+          # Check if backend is still running
+          if ! curl -f -s http://localhost:3010/health > /dev/null; then
+            echo "❌ Backend not responding, checking process status..."
+            if [ -f ../backend.pid ]; then
+              BACKEND_PID=$(cat ../backend.pid)
+              if ! ps -p "$BACKEND_PID" > /dev/null 2>&1; then
+                echo "Backend process $BACKEND_PID has died, restarting..."
+                cd ../backend
+                nohup npm run dev > ../backend.log 2>&1 &
+                NEW_BACKEND_PID=$!
+                echo $NEW_BACKEND_PID > ../backend.pid
+                cd ../frontend
+                echo "New backend started with PID: $NEW_BACKEND_PID"
+                sleep 10
+              fi
+            else
+              echo "No backend PID file found, restarting backend..."
+              cd ../backend
+              nohup npm run dev > ../backend.log 2>&1 &
+              NEW_BACKEND_PID=$!
+              echo $NEW_BACKEND_PID > ../backend.pid
+              cd ../frontend
+              echo "Backend started with PID: $NEW_BACKEND_PID"
+              sleep 10
+            fi
+          fi
+          
+          # Check if frontend is still running  
+          if ! curl -f -s -I http://localhost:5183 > /dev/null; then
+            echo "❌ Frontend not responding, checking process status..."
+            if [ -f ../frontend.pid ]; then
+              FRONTEND_PID=$(cat ../frontend.pid)
+              if ! ps -p "$FRONTEND_PID" > /dev/null 2>&1; then
+                echo "Frontend process $FRONTEND_PID has died, restarting..."
+                nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../frontend.log 2>&1 &
+                NEW_FRONTEND_PID=$!
+                echo $NEW_FRONTEND_PID > ../frontend.pid
+                echo "New frontend started with PID: $NEW_FRONTEND_PID"
+                sleep 10
+              fi
+            else
+              echo "No frontend PID file found, restarting frontend..."
+              nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../frontend.log 2>&1 &
+              NEW_FRONTEND_PID=$!
+              echo $NEW_FRONTEND_PID > ../frontend.pid
+              echo "Frontend started with PID: $NEW_FRONTEND_PID"
+              sleep 10
+            fi
+          fi
+          
+          # Final verification with detailed logging
+          echo "Final server verification with debug info:"
+          echo "Backend status:"
+          if curl -f -s http://localhost:3010/health; then
+            echo "✅ Backend is responding"
+          else
+            echo "❌ Backend health check failed"
+            echo "Backend log (last 20 lines):"
+            tail -20 ../backend.log 2>/dev/null || echo "No backend log found"
+            echo "Backend process status:"
+            cat ../backend.pid 2>/dev/null | xargs -I {} sh -c 'echo "PID: {}"; ps -p {} || echo "Process not found"'
+            exit 1
+          fi
+          
+          echo "Frontend status:"  
+          if curl -f -s -I http://localhost:5183; then
+            echo "✅ Frontend is responding"
+          else
+            echo "❌ Frontend health check failed" 
+            echo "Frontend log (last 20 lines):"
+            tail -20 ../frontend.log 2>/dev/null || echo "No frontend log found"
+            echo "Frontend process status:"
+            cat ../frontend.pid 2>/dev/null | xargs -I {} sh -c 'echo "PID: {}"; ps -p {} || echo "Process not found"'
+            exit 1
+          fi
           
           # Set CI-specific environment variables for Playwright
           export CI=true
