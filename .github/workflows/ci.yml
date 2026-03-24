@@ -133,110 +133,238 @@ jobs:
       - name: Install Playwright browsers
         run: make playwright-install
         
-      - name: Start development servers in background
+      - name: Prepare for E2E tests
         env:
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
           NODE_ENV: development
         run: |
-          echo "Starting servers directly for CI background execution..."
-
-          # Create temp directories for health checks
+          echo "Preparing environment for E2E tests..."
+          
+          # Create temp directories
           mkdir -p /tmp/sofathek-videos /tmp/sofathek-temp
-
-          # Clean any existing processes on ports 3010 and 5183
+          
+          # Clean any existing processes to prevent conflicts
           echo "Cleaning existing processes..."
-          sudo lsof -ti:3010 2>/dev/null | xargs -r sudo kill -TERM 2>/dev/null || true
-          sudo lsof -ti:5183 2>/dev/null | xargs -r sudo kill -TERM 2>/dev/null || true
+          pkill -f "npm.*3010" 2>/dev/null || true
+          pkill -f "vite.*5183" 2>/dev/null || true
           sleep 2
-          sudo lsof -ti:3010,5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
           
-          # Start backend in background
-          echo "Starting backend on port 3010..."
-          cd backend
-          nohup npm run dev > ../backend.log 2>&1 &
-          BACKEND_PID=$!
-          echo "Backend started with PID: $BACKEND_PID"
-          echo $BACKEND_PID > ../backend.pid
-          cd ..
-          
-          # Wait and start frontend in background
-          echo "Waiting for backend to initialize..."
-          sleep 5
-          
-          echo "Starting frontend on port 5183..."
-          cd frontend 
-          nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../frontend.log 2>&1 &
-          FRONTEND_PID=$!
-          echo "Frontend started with PID: $FRONTEND_PID"
-          echo $FRONTEND_PID > ../frontend.pid
-          cd ..
-          
-          # Wait for services to initialize
-          echo "Waiting 30 seconds for services to fully start..."
-          sleep 30
-          
-          # Health checks with detailed logging
-          echo "Checking backend availability..."
-          for i in {1..15}; do
-            if curl -f -s http://localhost:3010/health > /dev/null; then
-              echo "✅ Backend is responding"
-              curl -s http://localhost:3010/health | head -2
-              break
-            fi
-            echo "Backend check $i/15..."
-            sleep 2
-          done
-          
-          echo "Checking frontend availability..."
-          for i in {1..15}; do  
-            if curl -f -s -I http://localhost:5183 > /dev/null; then
-              echo "✅ Frontend is responding"
-              curl -s -I http://localhost:5183 | head -2
-              break
-            fi
-            echo "Frontend check $i/15..."
-            sleep 2
-          done
-          
-          # Final connectivity test
-          echo "Final server status checks:"
-          echo "Backend:" && timeout 5 curl -s http://localhost:3010/health | head -1 || echo "Backend timeout"
-          echo "Frontend:" && timeout 5 curl -s -I http://localhost:5183 | head -1 || echo "Frontend timeout"
-          
-          echo "Servers are ready. Adding stability wait for E2E tests..."
-          
-          # Brief wait to ensure servers are fully stable for browser automation
-          sleep 3
-          
-          echo "Starting E2E tests with enhanced configuration..."
+          echo "Environment prepared. Servers will be started in E2E test step."
           
       - name: Run Playwright E2E tests
+        env:
+          VIDEOS_DIR: /tmp/sofathek-videos
+          TEMP_DIR: /tmp/sofathek-temp
+          NODE_ENV: development
         run: |
-          echo "Running minimal CI-focused E2E tests..."
-          cd frontend
+          echo "Starting fresh servers for E2E tests..."
           
-          # Verify servers are still responding right before tests
-          echo "Final server verification:"
-          curl -f http://localhost:3010/health || (echo "Backend health check failed" && exit 1)
-          curl -f http://localhost:5183 || (echo "Frontend health check failed" && exit 1)
+          # Create required temp directories
+          mkdir -p /tmp/sofathek-videos /tmp/sofathek-temp
           
-          # Set CI-specific environment variables for Playwright
+          # Clean any existing processes to avoid conflicts
+          echo "Cleaning existing processes..."
+          pkill -f "npm.*3010" 2>/dev/null || true
+          pkill -f "vite.*5183" 2>/dev/null || true
+          sleep 2
+          
+           # Start backend server in background for this step
+           echo "Starting backend server..."
+           cd backend
+           PORT=3010 npm run dev &
+           BACKEND_PID=$!
+           echo "Backend PID: $BACKEND_PID"
+           echo $BACKEND_PID > ../backend.pid
+           cd ../
+           
+           # Start frontend server in background for this step  
+           echo "Starting frontend server..."
+           cd frontend
+           PORT=5183 npm run dev &
+           cd ../
+          
+          # Wait for servers to start with health checks
+          echo "Waiting for servers to initialize..."
+          sleep 10
+          
+          # Backend health check
+          echo "Testing backend connectivity..."
+          for i in {1..30}; do
+            if curl -f -s http://localhost:3010/health > /dev/null; then
+              echo "✅ Backend is responding"
+              break
+            fi
+            echo "Backend check $i/30..."
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend failed to start"
+              echo "Backend log:"
+              tail -20 ../e2e-backend.log 2>/dev/null || echo "No backend log"
+              exit 1
+            fi
+          done
+          
+          # Frontend health check
+          echo "Testing frontend connectivity..."
+          for i in {1..30}; do
+            if curl -f -s -I http://localhost:5183 > /dev/null; then
+              echo "✅ Frontend is responding"
+              break
+            fi
+            echo "Frontend check $i/30..."
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "❌ Frontend failed to start"
+              echo "Frontend log:"
+              tail -20 ../e2e-frontend.log 2>/dev/null || echo "No frontend log"
+              exit 1
+            fi
+          done
+          
+          # Final server verification
+          echo "Final server status:"
+          curl -f http://localhost:3010/health && echo "Backend OK"
+          curl -f -I http://localhost:5183 && echo "Frontend OK"
+          
+          # Set CI environment for Playwright
           export CI=true
           
-           # First: Run minimal connectivity test
-          npx playwright test ci-minimal.spec.ts \
-            --timeout=60000 \
-            --reporter=list \
-            --max-failures=1 \
-            --retries=1
+          echo "========== PRE-TEST SERVER VERIFICATION =========="
+          
+          # Detailed server status check immediately before tests
+          echo "Checking server processes..."
+          ps aux | grep -E "(npm run dev|node.*dev)" | grep -v grep || echo "No dev processes found"
+          
+          echo "Checking port binding..."
+          sudo netstat -tlnp | grep -E ":3010|:5183" || echo "No processes bound to target ports"
+          
+          echo "Checking process tree..."
+          pstree -p $$ || echo "pstree not available"
+          
+          # Environment debugging
+          echo "Environment variables:"
+          env | grep -E "(NODE_|PORT|CI|npm)" | sort
+          
+          # Verify servers are ACTUALLY accessible right now
+          echo "Testing backend connectivity with verbose output..."
+          curl -v -f -m 10 http://localhost:3010/health || {
+            echo "❌ BACKEND UNREACHABLE! Attempting restart..."
+            
+            # Show backend logs
+            echo "Backend log (last 50 lines):"
+            tail -50 ../e2e-backend.log 2>/dev/null || echo "No backend log found"
+            
+            # Restart backend
+            cd backend
+             echo "Restarting backend server..."
+             PORT=3010 npm run dev &
+             cd ../
+            
+            # Wait for restart
+            sleep 15
+            for i in {1..20}; do
+              if curl -f -s http://localhost:3010/health > /dev/null; then
+                echo "✅ Backend restart successful"
+                break
+              fi
+              echo "Backend restart check $i/20..."
+              sleep 3
+              if [ $i -eq 20 ]; then
+                echo "❌ Backend restart failed"
+                echo "Restart log:"
+                tail -20 ../e2e-backend-restart.log 2>/dev/null || echo "No restart log"
+                exit 1
+              fi
+            done
+          }
+          
+          echo "Testing frontend connectivity with verbose output..."
+          curl -v -f -I -m 10 http://localhost:5183 || {
+            echo "❌ FRONTEND UNREACHABLE! Attempting restart..."
+            
+            # Show frontend logs  
+            echo "Frontend log (last 50 lines):"
+            tail -50 ../e2e-frontend.log 2>/dev/null || echo "No frontend log found"
+            
+             # Restart frontend
+             cd frontend
+             echo "Restarting frontend server..."
+             PORT=5183 npm run dev &
+            
+            # Wait for restart
+            sleep 15
+            for i in {1..20}; do
+              if curl -f -s -I http://localhost:5183 > /dev/null; then
+                echo "✅ Frontend restart successful"
+                break
+              fi
+              echo "Frontend restart check $i/20..."
+              sleep 3
+              if [ $i -eq 20 ]; then
+                echo "❌ Frontend restart failed"
+                echo "Restart log:"
+                tail -20 ../e2e-frontend-restart.log 2>/dev/null || echo "No restart log"
+                exit 1
+              fi
+            done
+          }
+          
+          echo "Final server verification after restarts..."
+          curl -f http://localhost:3010/health && echo "✅ Backend is responding"
+          curl -f -I http://localhost:5183 && echo "✅ Frontend is responding"
+          
+           echo "========== STARTING E2E TESTS =========="
+           
+           echo "Running E2E tests from frontend directory..."
+           cd frontend
+           
+           # Run minimal CI tests first with error handling
+           echo "Starting minimal CI tests..."
+           if ! npx playwright test tests/ci-minimal.spec.ts \
+             --timeout=60000 \
+             --reporter=list \
+             --max-failures=1 \
+             --retries=1; then
+              
+            echo "❌ CI-minimal tests FAILED! Collecting debug info..."
+            
+            # Show server status after failure
+            echo "Server processes after test failure:"
+            ps aux | grep -E "(npm run dev|node.*dev)" | grep -v grep || echo "No dev processes found"
+            
+            # Show port status after failure
+            echo "Port status after test failure:"
+            sudo netstat -tlnp | grep -E ":3010|:5183" || echo "No processes bound to target ports"
+            
+            # Test connectivity after failure
+            echo "Testing connectivity after failure..."
+            curl -v -f -m 5 http://localhost:3010/health || echo "Backend unreachable after test failure"
+            curl -v -f -I -m 5 http://localhost:5183 || echo "Frontend unreachable after test failure"
+            
+            # Show logs after failure
+            echo "Backend log (last 30 lines after failure):"
+            tail -30 ../e2e-backend.log 2>/dev/null || echo "No backend log"
+            
+            echo "Frontend log (last 30 lines after failure):"
+            tail -30 ../e2e-frontend.log 2>/dev/null || echo "No frontend log"
+            
+            echo "Playwright debug info:"
+            npx playwright --version
+            
+            exit 1
+          fi
 
-          # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
-          echo "Running integration tests against live backend..."
-          npx playwright test youtube-download/integration.spec.ts \
-            --timeout=60000 \
-            --reporter=list \
-            --max-failures=3
+           # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
+           echo "Running integration tests against live backend..."
+           if ! npx playwright test tests/youtube-download/integration.spec.ts \
+             --timeout=60000 \
+             --reporter=list \
+             --max-failures=3; then
+              
+            echo "❌ Integration tests FAILED! Debug info already collected above."
+            exit 1
+          fi
           
       - name: Cleanup background servers
         if: always()
@@ -254,11 +382,12 @@ jobs:
             rm -f frontend.pid
           fi
           # Fallback cleanup
-          pkill -f "PORT=3010" || echo "No backend processes to kill"
+          pkill -f "npm run dev" || echo "No npm dev processes to kill"
+          pkill -f "ts-node-dev" || echo "No ts-node-dev processes to kill"
           pkill -f "vite.*--port 5183" || echo "No frontend processes to kill"
           # Final port cleanup
-          sudo lsof -ti:3010 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
-          sudo lsof -ti:5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
+          pkill -f "npm.*3010" 2>/dev/null || true
+          pkill -f "vite.*5183" 2>/dev/null || true
           sleep 2
         
       - name: Upload Playwright test results

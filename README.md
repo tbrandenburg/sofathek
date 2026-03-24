@@ -5,7 +5,7 @@ A self-hosted family media center application with Netflix-like interface and br
 ## Features
 
 - **Netflix-like Interface**: Clean, responsive grid layout with dark/light theme toggle
-- **Web Video Integration**: Download videos from YouTube and other supported links via yt-dlp with automatic library integration
+- **Web Video Integration**: Download videos from any HTTP/HTTPS URL via yt-dlp with automatic library integration
 - **Media Library**: File system-based video discovery with thumbnail generation
 - **Video Streaming**: HTTP range request support for efficient video playback
 - **Usage Statistics**: Simple view count tracking stored in JSON files

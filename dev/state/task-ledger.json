@@ -1,46 +1,40 @@
 {
-  "TASK_1_ANALYZE_PR198": {
+  "PR_198_MERGE_CONFLICT_ANALYSIS": {
     "status": "done",
     "evidence": [
-      "gh pr view 198 shows E2E Tests FAILURE on chore/add-test-artifacts branch",
-      "Root cause: Lines 49 and 70 call data.message.toLowerCase() but data.message is undefined",
-      "5xWhy analysis: Different dev/prod response formats, fix exists in fix/issue-196-e2e-test-error-handling branch"
+      "5xWhy analysis completed: Root cause is task ledger design conflict",
+      "Both main and PR branch modified same task-ledger.json file",
+      "PR #198 already has E2E test fixes implemented and pushed",
+      "Merge conflict in dev/state/task-ledger.json resolved"
     ],
-    "last_verified": "2026-03-24T07:35:00Z"
+    "last_verified": "2026-03-24T13:30:00Z"
   },
-  "TASK_2_PLAN_FIX_PR198": {
-    "status": "done",
-    "evidence": [
-      "Plan: Apply same fix as fix/issue-196-e2e-test-error-handling branch",
-      "Change lines 49 and 70: expect(data.message.toLowerCase()) to expect(errorMessage?.toLowerCase())",
-      "Add errorMessage = data.message ?? data.error?.message before toLowerCase() calls"
-    ],
-    "last_verified": "2026-03-24T07:35:00Z"
-  },
-  "TASK_3_IMPLEMENT_FIX_PR198": {
+  "PR_198_E2E_TEST_FIX": {
     "status": "done",
     "evidence": [
       "Fixed frontend/tests/youtube-download/integration.spec.ts lines 49 and 70",
-      "Changed expect(data.message.toLowerCase()) to expect(errorMessage?.toLowerCase())",
-      "Added errorMessage = data.message ?? data.error?.message handling for dev/prod formats"
+      "Changed expect(data.message.toLowerCase()) to expect(errorMessage?.toLowerCase())", 
+      "Added errorMessage = data.message ?? data.error?.message handling for dev/prod formats",
+      "Commit 3567e7c4ebfdcf87517920e5124ba4ac7b473e00 already applied"
     ],
-    "last_verified": "2026-03-24T07:35:00Z"
+    "last_verified": "2026-03-24T13:30:00Z"
   },
-  "TASK_4_COMMIT_PUSH_PR198": {
-    "status": "done",
-    "evidence": [
-      "git commit -m 'fix: E2E test error handling for dev/prod response formats'",
-      "git push completed successfully",
-      "Pre-push validation passed: linting, type checking, and build validation all passed (41s total)"
-    ],
-    "last_verified": "2026-03-24T07:40:00Z"
-  },
-  "TASK_5_OBSERVE_CI_PR198": {
+  "PR_198_RESOLVE_MERGE_CONFLICT": {
     "status": "in_progress",
     "evidence": [
-      "Pushed fix to chore/add-test-artifacts branch",
-      "Waiting for CI pipeline to run and verify E2E tests pass"
+      "git merge main produced conflict in dev/state/task-ledger.json",
+      "Merging task information from both branches"
     ],
-    "last_verified": "2026-03-24T07:40:00Z"
+    "last_verified": "2026-03-24T13:30:00Z"
+  },
+  "PR_198_COMMIT_MERGE_RESOLUTION": {
+    "status": "pending",
+    "evidence": [],
+    "last_verified": "2026-03-24T13:30:00Z"
+  },
+  "PR_198_PUSH_AND_OBSERVE_CI": {
+    "status": "pending",
+    "evidence": [],
+    "last_verified": "2026-03-24T13:30:00Z"
   }
 }
