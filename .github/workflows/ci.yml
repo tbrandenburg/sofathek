@@ -133,172 +133,104 @@ jobs:
       - name: Install Playwright browsers
         run: make playwright-install
         
-      - name: Start development servers in background
+      - name: Prepare for E2E tests
         env:
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
           NODE_ENV: development
         run: |
-          echo "Starting servers directly for CI background execution..."
-
-          # Create temp directories for health checks
+          echo "Preparing environment for E2E tests..."
+          
+          # Create temp directories
           mkdir -p /tmp/sofathek-videos /tmp/sofathek-temp
-
-          # Clean any existing processes on ports 3010 and 5183
+          
+          # Clean any existing processes to prevent conflicts
           echo "Cleaning existing processes..."
-          sudo lsof -ti:3010 2>/dev/null | xargs -r sudo kill -TERM 2>/dev/null || true
-          sudo lsof -ti:5183 2>/dev/null | xargs -r sudo kill -TERM 2>/dev/null || true
-          sleep 2
           sudo lsof -ti:3010,5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
+          sleep 2
           
-          # Start backend in background
-          echo "Starting backend on port 3010..."
-          cd backend
-          nohup npm run dev > ../backend.log 2>&1 &
-          BACKEND_PID=$!
-          echo "Backend started with PID: $BACKEND_PID"
-          echo $BACKEND_PID > ../backend.pid
-          cd ..
-          
-          # Wait and start frontend in background
-          echo "Waiting for backend to initialize..."
-          sleep 5
-          
-          echo "Starting frontend on port 5183..."
-          cd frontend 
-          nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../frontend.log 2>&1 &
-          FRONTEND_PID=$!
-          echo "Frontend started with PID: $FRONTEND_PID"
-          echo $FRONTEND_PID > ../frontend.pid
-          cd ..
-          
-          # Wait for services to initialize
-          echo "Waiting 30 seconds for services to fully start..."
-          sleep 30
-          
-          # Health checks with detailed logging
-          echo "Checking backend availability..."
-          for i in {1..15}; do
-            if curl -f -s http://localhost:3010/health > /dev/null; then
-              echo "✅ Backend is responding"
-              curl -s http://localhost:3010/health | head -2
-              break
-            fi
-            echo "Backend check $i/15..."
-            sleep 2
-          done
-          
-          echo "Checking frontend availability..."
-          for i in {1..15}; do  
-            if curl -f -s -I http://localhost:5183 > /dev/null; then
-              echo "✅ Frontend is responding"
-              curl -s -I http://localhost:5183 | head -2
-              break
-            fi
-            echo "Frontend check $i/15..."
-            sleep 2
-          done
-          
-          # Final connectivity test
-          echo "Final server status checks:"
-          echo "Backend:" && timeout 5 curl -s http://localhost:3010/health | head -1 || echo "Backend timeout"
-          echo "Frontend:" && timeout 5 curl -s -I http://localhost:5183 | head -1 || echo "Frontend timeout"
-          
-          echo "Servers are ready. Adding stability wait for E2E tests..."
-          
-          # Brief wait to ensure servers are fully stable for browser automation
-          sleep 3
-          
-          echo "Starting E2E tests with enhanced configuration..."
+          echo "Environment prepared. Servers will be started in E2E test step."
           
       - name: Run Playwright E2E tests
+        env:
+          VIDEOS_DIR: /tmp/sofathek-videos
+          TEMP_DIR: /tmp/sofathek-temp
+          NODE_ENV: development
         run: |
-          echo "Running minimal CI-focused E2E tests..."
+          echo "Starting fresh servers for E2E tests..."
+          
+          # Create required temp directories
+          mkdir -p /tmp/sofathek-videos /tmp/sofathek-temp
+          
+          # Clean any existing processes to avoid conflicts
+          echo "Cleaning existing processes..."
+          sudo lsof -ti:3010,5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
+          sleep 2
+          
+          # Start backend server in background for this step
+          echo "Starting backend server..."
+          cd backend
+          nohup npm run dev > ../e2e-backend.log 2>&1 &
+          BACKEND_PID=$!
+          echo "Backend PID: $BACKEND_PID"
+          cd ../
+          
+          # Start frontend server in background for this step  
+          echo "Starting frontend server..."
           cd frontend
+          nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../e2e-frontend.log 2>&1 &
+          FRONTEND_PID=$!
+          echo "Frontend PID: $FRONTEND_PID"
           
-          # Enhanced server verification with restart capability
-          echo "Checking server status before E2E tests..."
+          # Wait for servers to start with health checks
+          echo "Waiting for servers to initialize..."
+          sleep 10
           
-          # Check if backend is still running
-          if ! curl -f -s http://localhost:3010/health > /dev/null; then
-            echo "❌ Backend not responding, checking process status..."
-            if [ -f ../backend.pid ]; then
-              BACKEND_PID=$(cat ../backend.pid)
-              if ! ps -p "$BACKEND_PID" > /dev/null 2>&1; then
-                echo "Backend process $BACKEND_PID has died, restarting..."
-                cd ../backend
-                nohup npm run dev > ../backend.log 2>&1 &
-                NEW_BACKEND_PID=$!
-                echo $NEW_BACKEND_PID > ../backend.pid
-                cd ../frontend
-                echo "New backend started with PID: $NEW_BACKEND_PID"
-                sleep 10
-              fi
-            else
-              echo "No backend PID file found, restarting backend..."
-              cd ../backend
-              nohup npm run dev > ../backend.log 2>&1 &
-              NEW_BACKEND_PID=$!
-              echo $NEW_BACKEND_PID > ../backend.pid
-              cd ../frontend
-              echo "Backend started with PID: $NEW_BACKEND_PID"
-              sleep 10
+          # Backend health check
+          echo "Testing backend connectivity..."
+          for i in {1..30}; do
+            if curl -f -s http://localhost:3010/health > /dev/null; then
+              echo "✅ Backend is responding"
+              break
             fi
-          fi
-          
-          # Check if frontend is still running  
-          if ! curl -f -s -I http://localhost:5183 > /dev/null; then
-            echo "❌ Frontend not responding, checking process status..."
-            if [ -f ../frontend.pid ]; then
-              FRONTEND_PID=$(cat ../frontend.pid)
-              if ! ps -p "$FRONTEND_PID" > /dev/null 2>&1; then
-                echo "Frontend process $FRONTEND_PID has died, restarting..."
-                nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../frontend.log 2>&1 &
-                NEW_FRONTEND_PID=$!
-                echo $NEW_FRONTEND_PID > ../frontend.pid
-                echo "New frontend started with PID: $NEW_FRONTEND_PID"
-                sleep 10
-              fi
-            else
-              echo "No frontend PID file found, restarting frontend..."
-              nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../frontend.log 2>&1 &
-              NEW_FRONTEND_PID=$!
-              echo $NEW_FRONTEND_PID > ../frontend.pid
-              echo "Frontend started with PID: $NEW_FRONTEND_PID"
-              sleep 10
+            echo "Backend check $i/30..."
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend failed to start"
+              echo "Backend log:"
+              tail -20 ../e2e-backend.log 2>/dev/null || echo "No backend log"
+              exit 1
             fi
-          fi
+          done
           
-          # Final verification with detailed logging
-          echo "Final server verification with debug info:"
-          echo "Backend status:"
-          if curl -f -s http://localhost:3010/health; then
-            echo "✅ Backend is responding"
-          else
-            echo "❌ Backend health check failed"
-            echo "Backend log (last 20 lines):"
-            tail -20 ../backend.log 2>/dev/null || echo "No backend log found"
-            echo "Backend process status:"
-            cat ../backend.pid 2>/dev/null | xargs -I {} sh -c 'echo "PID: {}"; ps -p {} || echo "Process not found"'
-            exit 1
-          fi
+          # Frontend health check
+          echo "Testing frontend connectivity..."
+          for i in {1..30}; do
+            if curl -f -s -I http://localhost:5183 > /dev/null; then
+              echo "✅ Frontend is responding"
+              break
+            fi
+            echo "Frontend check $i/30..."
+            sleep 2
+            if [ $i -eq 30 ]; then
+              echo "❌ Frontend failed to start"
+              echo "Frontend log:"
+              tail -20 ../e2e-frontend.log 2>/dev/null || echo "No frontend log"
+              exit 1
+            fi
+          done
           
-          echo "Frontend status:"  
-          if curl -f -s -I http://localhost:5183; then
-            echo "✅ Frontend is responding"
-          else
-            echo "❌ Frontend health check failed" 
-            echo "Frontend log (last 20 lines):"
-            tail -20 ../frontend.log 2>/dev/null || echo "No frontend log found"
-            echo "Frontend process status:"
-            cat ../frontend.pid 2>/dev/null | xargs -I {} sh -c 'echo "PID: {}"; ps -p {} || echo "Process not found"'
-            exit 1
-          fi
+          # Final server verification
+          echo "Final server status:"
+          curl -f http://localhost:3010/health && echo "Backend OK"
+          curl -f -I http://localhost:5183 && echo "Frontend OK"
           
-          # Set CI-specific environment variables for Playwright
+          # Set CI environment for Playwright
           export CI=true
           
-           # First: Run minimal connectivity test
+          echo "Running E2E tests..."
+          
+          # Run minimal CI tests first
           npx playwright test ci-minimal.spec.ts \
             --timeout=60000 \
             --reporter=list \
