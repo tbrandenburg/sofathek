@@ -146,7 +146,8 @@ jobs:
           
           # Clean any existing processes to prevent conflicts
           echo "Cleaning existing processes..."
-          sudo lsof -ti:3010,5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
+          pkill -f "npm.*3010" 2>/dev/null || true
+          pkill -f "vite.*5183" 2>/dev/null || true
           sleep 2
           
           echo "Environment prepared. Servers will be started in E2E test step."
@@ -164,13 +165,14 @@ jobs:
           
           # Clean any existing processes to avoid conflicts
           echo "Cleaning existing processes..."
-          sudo lsof -ti:3010,5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
+          pkill -f "npm.*3010" 2>/dev/null || true
+          pkill -f "vite.*5183" 2>/dev/null || true
           sleep 2
           
            # Start backend server in background for this step
            echo "Starting backend server..."
            cd backend
-           nohup npm run dev > ../e2e-backend.log 2>&1 &
+           PORT=3010 npm run dev &
            BACKEND_PID=$!
            echo "Backend PID: $BACKEND_PID"
            echo $BACKEND_PID > ../backend.pid
@@ -179,10 +181,7 @@ jobs:
            # Start frontend server in background for this step  
            echo "Starting frontend server..."
            cd frontend
-           nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../e2e-frontend.log 2>&1 &
-           FRONTEND_PID=$!
-           echo "Frontend PID: $FRONTEND_PID"
-           echo $FRONTEND_PID > ../frontend.pid
+           PORT=5183 npm run dev &
            cd ../
           
           # Wait for servers to start with health checks
@@ -258,11 +257,9 @@ jobs:
             
             # Restart backend
             cd backend
-            echo "Restarting backend server..."
-            nohup npm run dev > ../e2e-backend-restart.log 2>&1 &
-            NEW_BACKEND_PID=$!
-            echo "New backend PID: $NEW_BACKEND_PID"
-            cd ../
+             echo "Restarting backend server..."
+             PORT=3010 npm run dev &
+             cd ../
             
             # Wait for restart
             sleep 15
@@ -290,12 +287,10 @@ jobs:
             echo "Frontend log (last 50 lines):"
             tail -50 ../e2e-frontend.log 2>/dev/null || echo "No frontend log found"
             
-            # Restart frontend
-            cd frontend
-            echo "Restarting frontend server..."
-            nohup npm run dev -- --port 5183 --host 0.0.0.0 > ../e2e-frontend-restart.log 2>&1 &
-            NEW_FRONTEND_PID=$!
-            echo "New frontend PID: $NEW_FRONTEND_PID"
+             # Restart frontend
+             cd frontend
+             echo "Restarting frontend server..."
+             PORT=5183 npm run dev &
             
             # Wait for restart
             sleep 15
@@ -391,8 +386,8 @@ jobs:
           pkill -f "ts-node-dev" || echo "No ts-node-dev processes to kill"
           pkill -f "vite.*--port 5183" || echo "No frontend processes to kill"
           # Final port cleanup
-          sudo lsof -ti:3010 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
-          sudo lsof -ti:5183 2>/dev/null | xargs -r sudo kill -KILL 2>/dev/null || true
+          pkill -f "npm.*3010" 2>/dev/null || true
+          pkill -f "vite.*5183" 2>/dev/null || true
           sleep 2
         
       - name: Upload Playwright test results
