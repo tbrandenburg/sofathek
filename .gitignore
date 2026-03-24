@@ -166,6 +166,7 @@ frontend/test-results/
 backend/temp/test-queue/
 backend/data/videos/*.mp4
 data/videos/*.mp4
+*.zip
 
 # Data
 data/
