@@ -1,11 +1,11 @@
-// YouTube types adapted for frontend use
+// Video download types adapted for frontend use
 // Mirrors backend/src/types/youtube.ts but adapted for React components
 
 /**
- * Video download request for API calls
+ * Video download request for API calls (supports yt-dlp-compatible URLs)
  */
 export interface DownloadRequest {
-  /** Video URL (YouTube and other supported URLs) */
+  /** Video URL (YouTube, Vimeo, Twitter/X, and 1000+ other sites supported) */
   url: string;
   /** Optional custom title override */
   title?: string;
@@ -166,9 +166,9 @@ export interface FormValidation {
 // Utility Types
 
 /**
- * Supported video URL patterns for validation
- * Updated to match backend validation: accepts any valid HTTP/HTTPS URL
- * Still prioritizes YouTube URLs but now supports broader video URLs
+ * Legacy URL patterns for compatibility
+ * NOTE: Backend validation now accepts any valid HTTP/HTTPS URL via yt-dlp
+ * These patterns are maintained for frontend compatibility and testing
  */
 export const VIDEO_URL_PATTERNS = [
   // YouTube URLs (maintained for compatibility)
@@ -181,8 +181,8 @@ export const VIDEO_URL_PATTERNS = [
 ] as const;
 
 /**
- * @deprecated Use VIDEO_URL_PATTERNS instead
- * Kept for backward compatibility
+ * @deprecated Legacy patterns - backend now accepts any yt-dlp-compatible URL
+ * Kept for backward compatibility and testing
  */
 export const YOUTUBE_URL_PATTERNS = VIDEO_URL_PATTERNS;
 

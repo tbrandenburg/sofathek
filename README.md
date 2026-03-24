@@ -5,17 +5,17 @@ A self-hosted family media center application with Netflix-like interface and br
 ## Features
 
 - **Netflix-like Interface**: Clean, responsive grid layout with dark/light theme toggle
-- **Web Video Integration**: Download videos from any HTTP/HTTPS URL via yt-dlp with automatic library integration
+- **Multi-Site Video Download**: Download videos from YouTube, Vimeo, Twitter/X, and 1000+ other sites via yt-dlp with automatic library integration
 - **Media Library**: File system-based video discovery with thumbnail generation
 - **Video Streaming**: HTTP range request support for efficient video playback
 - **Usage Statistics**: Simple view count tracking stored in JSON files
-- **Admin Interface**: YouTube download management, delete videos, storage usage
+- **Admin Interface**: Video download management (URL input, queue control), delete videos, storage usage
 - **Mobile-Responsive**: Optimized for all screen sizes
 
 ## Tech Stack
 
 - **Frontend**: React 18+ with TypeScript, Shadcn/ui, Tailwind CSS
-- **Backend**: Node.js/Express with yt-dlp and ffmpeg integration
+- **Backend**: Node.js/Express with yt-dlp (YouTube, Vimeo, Twitter/X, and 1000+ sites) and ffmpeg integration
 - **Storage**: File system-based (no database required)
 - **Deployment**: Docker containerization
 
@@ -111,10 +111,10 @@ npm run validate:fast   # Skip build (~30s)
 npm run validate:skip   # Emergency skip
 ```
 
-### **YouTube E2E Test Tiers**:
+### **Video Download E2E Test Tiers**:
 - `frontend/tests/youtube-download/full-workflow.spec.ts` - mocked UI workflow tests (fast)
-- `frontend/tests/youtube-download/integration.spec.ts` - live frontend-backend integration tests (no external YouTube dependency)
-- `frontend/tests/youtube-download/real-world.spec.ts` - real YouTube download end-to-end tests (slow)
+- `frontend/tests/youtube-download/integration.spec.ts` - live frontend-backend integration tests (no external video site dependency)
+- `frontend/tests/youtube-download/real-world.spec.ts` - real video download end-to-end tests (slow)
 - `backend/src/__tests__/integration/routes/youtube.integration.test.ts` - real backend API integration tests with actual yt-dlp download (slow)
 
 Additional details: `frontend/tests/README.md`.
