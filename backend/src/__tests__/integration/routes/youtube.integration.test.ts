@@ -110,9 +110,8 @@ async function waitForDownloadCompletion(
   throw new Error(`Timed out waiting for queue item ${queueItemId} to complete`);
 }
 
-describe('YouTube Download Integration (Real)', () => {
-  const shouldRunRealDownloadTests = process.env.RUN_REAL_DOWNLOAD_TESTS === 'true';
-  const suite = shouldRunRealDownloadTests ? describe : describe.skip;
+describe('Video Download Integration (Real)', () => {
+  const suite = describe;  // Always run - tests are now valid for any HTTP/HTTPS URL
 
   suite('real API and download workflow', () => {
     let app: express.Application;
@@ -165,7 +164,7 @@ describe('YouTube Download Integration (Real)', () => {
       });
     }, TEST_CONFIG.DOWNLOAD_TIMEOUT_MS + 30000);
 
-    it('accepts a non-YouTube URL when URL format is valid', async () => {
+    it('accepts any valid HTTP/HTTPS URL', async () => {
       const response = await request(app)
         .post('/api/youtube/download')
         .send({ url: TEST_CONFIG.INVALID_URL })
