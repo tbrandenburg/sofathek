@@ -268,7 +268,7 @@ describe('API Service', () => {
       const result = await checkBackendHealth();
 
       expect(result).toEqual(mockHealth);
-      expect(mockFetch).toHaveBeenCalledWith('/api/health');
+      expect(mockFetch).toHaveBeenCalledWith('/health');
     });
 
     test('should return null when backend is unavailable', async () => {

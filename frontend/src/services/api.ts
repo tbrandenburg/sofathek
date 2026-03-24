@@ -169,7 +169,7 @@ export interface HealthStatus {
  */
 export async function checkBackendHealth(): Promise<HealthStatus | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`);
+    const response = await fetch('/health');
     
     if (!response.ok && response.status < 500) {
       return null;
