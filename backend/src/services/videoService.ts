@@ -73,7 +73,7 @@ export class VideoService {
 
       // Third pass: create videos with metadata
       for (const videoFile of videoFiles) {
-        const thumbnail = thumbnailMap.get(videoFile.path) ?? null;
+        const thumbnail = thumbnailMap.get(videoFile.path);
         const metadata = await this.extractMetadata(videoFile, thumbnail);
         const video = this.createVideo(videoFile, metadata);
 
