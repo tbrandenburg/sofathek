@@ -4,13 +4,13 @@ import { test, expect } from '@playwright/test';
  * Thumbnail Display Verification Tests for Production Build
  * 
  * Verifies that all video thumbnails are properly displayed in the production build
- * running on http://localhost:4173 with backend on http://localhost:3010
+ * running on http://localhost:5183 with backend on http://localhost:3010
  */
 
 test.describe('Production Thumbnail Display Verification', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the production app
-    await page.goto('http://localhost:4173');
+    await page.goto('http://localhost:5183');
     
     // Wait for the application to load completely
     await page.waitForLoadState('networkidle');
