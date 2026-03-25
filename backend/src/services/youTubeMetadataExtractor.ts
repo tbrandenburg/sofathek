@@ -25,6 +25,9 @@ export class YouTubeMetadataExtractor {
       });
 
       const processResult = await subprocess;
+      if (!processResult.stdout?.trim()) {
+        throw new AppError('yt-dlp returned empty stdout — no JSON metadata received', 500);
+      }
       const rawMetadata = JSON.parse(processResult.stdout);
       const metadata = validateYtDlpResponse(rawMetadata);
 
