@@ -48,7 +48,7 @@ describe('YouTubeFileDownloader', () => {
       );
     });
 
-    it('should handle download failures', async () => {
+    it('should handle download failures with sanitized message', async () => {
       const metadata = {
         id: 'test123',
         title: 'Test Video'
@@ -59,7 +59,30 @@ describe('YouTubeFileDownloader', () => {
       mockExec.mockReturnValue(mockSubprocess);
 
       await expect(downloader.download('https://www.youtube.com/watch?v=test123', metadata))
-        .rejects.toThrow('Failed to download video file');
+        .rejects.toThrow('Could not download video file. Please try again.');
+    });
+
+    it('should not expose internal paths or CLI arguments in error', async () => {
+      const metadata = {
+        id: 'test123',
+        title: 'Test Video'
+      };
+
+      const internalPath = '/home/app/node_modules/yt-dlp/yt_dlp/__main__.py';
+      const mockError = new Error(`yt-dlp failed: ${internalPath} --no-warnings`);
+      const mockSubprocess = Promise.reject(mockError);
+      (mockSubprocess as any).stdout = { on: jest.fn() };
+      mockExec.mockReturnValue(mockSubprocess);
+
+      try {
+        await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
+        fail('Expected error to be thrown');
+      } catch (error: any) {
+        expect(error.message).toBe('Could not download video file. Please try again.');
+        expect(error.message).not.toContain('/home/app');
+        expect(error.message).not.toContain('node_modules');
+        expect(error.message).not.toContain('yt-dlp');
+      }
     });
 
     it('should handle missing downloaded file', async () => {
