@@ -55,7 +55,7 @@ export class YouTubeDownloadService {
         duration: metadata.duration
       });
 
-      const tempVideoPath = await this.fileDownloader.download(request.url, metadata);
+      const tempVideoPath = await this.fileDownloader.download(request.url, metadata, downloadId);
       logger.info('Video downloaded to temp location', {
         downloadId,
         tempPath: tempVideoPath
@@ -118,6 +118,10 @@ export class YouTubeDownloadService {
         startedAt
       };
     }
+  }
+
+  async cancelDownload(downloadId: string): Promise<void> {
+    await this.fileDownloader.cancelDownload(downloadId);
   }
 
   async validateYouTubeUrl(url: string): Promise<boolean> {

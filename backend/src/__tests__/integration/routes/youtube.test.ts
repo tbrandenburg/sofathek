@@ -97,6 +97,7 @@ describe('YouTube Routes', () => {
         processing: 1,
         completed: 2,
         failed: 1,
+        cancelled: 0,
         pending: 1,
         items: [],
         lastUpdated: new Date('2026-03-02T20:00:00Z')
@@ -237,6 +238,7 @@ describe('YouTube Routes', () => {
         processing: 0,
         completed: 1,
         failed: 0,
+        cancelled: 0,
         pending: 0,
         items: [mockQueueItem],
         lastUpdated: new Date('2026-03-02T20:00:00Z')
@@ -266,6 +268,7 @@ describe('YouTube Routes', () => {
         processing: 0,
         completed: 0,
         failed: 0,
+        cancelled: 0,
         pending: 0,
         items: [],
         lastUpdated: new Date('2026-03-02T20:00:00Z')
@@ -354,6 +357,7 @@ describe('YouTube Routes', () => {
         processing: 2,
         completed: 5,
         failed: 1,
+        cancelled: 0,
         pending: 2,
         items: [],
         lastUpdated: new Date()

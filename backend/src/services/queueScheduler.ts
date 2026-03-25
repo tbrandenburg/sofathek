@@ -1,9 +1,22 @@
+import * as fs from 'fs/promises';
 import { QueueItem } from '../types/youtube';
 import { getErrorMessage } from '../utils/error';
 import { logger } from '../utils/logger';
 import { YouTubeDownloadService } from './youTubeDownloadService';
 
 type SaveQueueFn = () => Promise<void>;
+
+async function cleanupDownloadedFile(filePath: string): Promise<void> {
+  try {
+    await fs.unlink(filePath);
+    logger.info('Cleaned up cancelled download file', { filePath });
+  } catch (error) {
+    logger.warn('Failed to clean up cancelled download file', {
+      filePath,
+      error: getErrorMessage(error)
+    });
+  }
+}
 
 export async function processQueue(
   queue: QueueItem[],
@@ -30,6 +43,13 @@ export async function processQueueItem(
   saveQueue: SaveQueueFn
 ): Promise<void> {
   try {
+    if (item.status === 'cancelled') {
+      logger.info('Queue item was cancelled before processing started', {
+        queueItemId: item.id
+      });
+      return;
+    }
+
     logger.info('Processing queue item', {
       queueItemId: item.id,
       url: item.request.url
@@ -41,11 +61,38 @@ export async function processQueueItem(
     item.currentStep = 'Starting download';
     await saveQueue();
 
+    if ((item as QueueItem).status === 'cancelled') {
+      logger.info('Queue item cancelled during processing', {
+        queueItemId: item.id
+      });
+      await youtubeDownloadService.cancelDownload(item.id);
+      return;
+    }
+
     item.progress = 25;
     item.currentStep = 'Fetching video metadata';
     await saveQueue();
 
+    if ((item as QueueItem).status === 'cancelled') {
+      logger.info('Queue item cancelled during metadata fetch', {
+        queueItemId: item.id
+      });
+      await youtubeDownloadService.cancelDownload(item.id);
+      return;
+    }
+
     const result = await youtubeDownloadService.downloadVideo(item.request);
+
+    if ((item as QueueItem).status === 'cancelled') {
+      logger.info('Queue item cancelled during download, cleaning up', {
+        queueItemId: item.id
+      });
+      await youtubeDownloadService.cancelDownload(item.id);
+      if (result.videoPath) {
+        await cleanupDownloadedFile(result.videoPath);
+      }
+      return;
+    }
 
     if (result.status === 'success') {
       item.status = 'completed';
