@@ -319,13 +319,13 @@ jobs:
            echo "Running E2E tests from frontend directory..."
            cd frontend
            
-           # Run minimal CI tests first with error handling
-           echo "Starting minimal CI tests..."
-           if ! npx playwright test tests/ci-minimal.spec.ts \
-             --timeout=60000 \
-             --reporter=list \
-             --max-failures=1 \
-             --retries=1; then
+            # Run minimal CI tests first with error handling
+            echo "Starting minimal CI tests..."
+            if ! npx playwright test tests/ci-minimal.spec.ts \
+              --timeout=60000 \
+              --reporter=list,html \
+              --max-failures=1 \
+              --retries=1; then
               
             echo "❌ CI-minimal tests FAILED! Collecting debug info..."
             
@@ -355,12 +355,12 @@ jobs:
             exit 1
           fi
 
-           # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
-           echo "Running integration tests against live backend..."
-           if ! npx playwright test tests/youtube-download/integration.spec.ts \
-             --timeout=60000 \
-             --reporter=list \
-             --max-failures=3; then
+            # Second: Run integration tests (live backend) - Re-enabled after broader URL validation update
+            echo "Running integration tests against live backend..."
+            if ! npx playwright test tests/youtube-download/integration.spec.ts \
+              --timeout=60000 \
+              --reporter=list,html \
+              --max-failures=3; then
               
             echo "❌ Integration tests FAILED! Debug info already collected above."
             exit 1
