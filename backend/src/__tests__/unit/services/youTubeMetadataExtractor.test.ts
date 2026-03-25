@@ -95,7 +95,7 @@ describe('YouTubeMetadataExtractor', () => {
       mockExec.mockReturnValue(mockSubprocess);
 
       await expect(extractor.extract('https://www.youtube.com/watch?v=test'))
-        .rejects.toThrow('yt-dlp returned empty stdout');
+        .rejects.toThrow('Failed to get video metadata: yt-dlp returned empty stdout');
     });
 
     it('should handle extraction errors', async () => {
