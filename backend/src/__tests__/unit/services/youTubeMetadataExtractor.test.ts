@@ -83,6 +83,21 @@ describe('YouTubeMetadataExtractor', () => {
       expect(result.duration).toBeUndefined();
     });
 
+    it('should throw descriptive error when yt-dlp returns empty stdout', async () => {
+      const mockProcessResult = {
+        stdout: '',
+        stderr: '',
+        pid: 12345
+      };
+
+      const mockSubprocess = Promise.resolve(mockProcessResult);
+      (mockSubprocess as any).stderr = { on: jest.fn() };
+      mockExec.mockReturnValue(mockSubprocess);
+
+      await expect(extractor.extract('https://www.youtube.com/watch?v=test'))
+        .rejects.toThrow('yt-dlp returned empty stdout');
+    });
+
     it('should handle extraction errors', async () => {
       const mockSubprocess = Promise.reject(new Error('Download failed'));
       (mockSubprocess as any).stderr = { on: jest.fn() };
