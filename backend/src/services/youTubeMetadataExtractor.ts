@@ -24,7 +24,8 @@ export class YouTubeMetadataExtractor {
         stderrOutput += data.toString();
       });
 
-      const rawMetadata = await subprocess;
+      const processResult = await subprocess;
+      const rawMetadata = JSON.parse(processResult.stdout);
       const metadata = validateYtDlpResponse(rawMetadata);
 
       const result: YouTubeMetadata = {

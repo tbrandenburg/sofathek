@@ -6,7 +6,7 @@ jest.mock('youtube-dl-exec', () => ({
   exec: (...args: any[]) => mockExec(...args)
 }));
 
-// Mock validation utility
+// Mock validation utility - pass through parsed data
 jest.mock('../../../utils/validation', () => ({
   validateYtDlpResponse: jest.fn((data) => data)
 }));
@@ -29,7 +29,14 @@ describe('YouTubeMetadataExtractor', () => {
         uploader: 'Test Channel'
       };
 
-      const mockSubprocess = Promise.resolve(mockMetadata);
+      // youtube-dl-exec.exec() returns process result object with stdout containing JSON
+      const mockProcessResult = {
+        stdout: JSON.stringify(mockMetadata),
+        stderr: '',
+        pid: 12345
+      };
+
+      const mockSubprocess = Promise.resolve(mockProcessResult);
       (mockSubprocess as any).stderr = { on: jest.fn() };
       mockExec.mockReturnValue(mockSubprocess);
 
@@ -57,7 +64,14 @@ describe('YouTubeMetadataExtractor', () => {
         title: 'Test Video'
       };
 
-      const mockSubprocess = Promise.resolve(mockMetadata);
+      // youtube-dl-exec.exec() returns process result object with stdout containing JSON
+      const mockProcessResult = {
+        stdout: JSON.stringify(mockMetadata),
+        stderr: '',
+        pid: 12345
+      };
+
+      const mockSubprocess = Promise.resolve(mockProcessResult);
       (mockSubprocess as any).stderr = { on: jest.fn() };
       mockExec.mockReturnValue(mockSubprocess);
 
@@ -85,7 +99,14 @@ describe('YouTubeMetadataExtractor', () => {
         channel: 'Test Channel'
       };
 
-      const mockSubprocess = Promise.resolve(mockMetadata);
+      // youtube-dl-exec.exec() returns process result object with stdout containing JSON
+      const mockProcessResult = {
+        stdout: JSON.stringify(mockMetadata),
+        stderr: '',
+        pid: 12345
+      };
+
+      const mockSubprocess = Promise.resolve(mockProcessResult);
       (mockSubprocess as any).stderr = { on: jest.fn() };
       mockExec.mockReturnValue(mockSubprocess);
 
