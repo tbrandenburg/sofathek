@@ -100,6 +100,8 @@ export interface QueueStatus {
   completed: number;
   /** Failed items */
   failed: number;
+  /** Cancelled items */
+  cancelled: number;
   /** Pending items */
   pending: number;
   /** List of queue items */

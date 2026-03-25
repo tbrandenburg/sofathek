@@ -30,9 +30,12 @@ export class YouTubeDownloadService {
     this.thumbnailService = thumbnailService;
   }
 
-  async downloadVideo(request: DownloadRequest): Promise<DownloadResult> {
+  async downloadVideo(request: DownloadRequest, cancelKey?: string): Promise<DownloadResult> {
     const startedAt = new Date();
     const downloadId = uuidv4();
+    // Use cancelKey as the subprocess identifier when provided so callers
+    // can cancel via the same key they pass to cancelDownload()
+    const subprocessKey = cancelKey ?? downloadId;
 
     try {
       logger.info('Starting YouTube video download', {
@@ -55,7 +58,7 @@ export class YouTubeDownloadService {
         duration: metadata.duration
       });
 
-      const tempVideoPath = await this.fileDownloader.download(request.url, metadata);
+      const tempVideoPath = await this.fileDownloader.download(request.url, metadata, subprocessKey);
       logger.info('Video downloaded to temp location', {
         downloadId,
         tempPath: tempVideoPath
@@ -118,6 +121,10 @@ export class YouTubeDownloadService {
         startedAt
       };
     }
+  }
+
+  async cancelDownload(downloadId: string): Promise<void> {
+    await this.fileDownloader.cancelDownload(downloadId);
   }
 
   async validateYouTubeUrl(url: string): Promise<boolean> {

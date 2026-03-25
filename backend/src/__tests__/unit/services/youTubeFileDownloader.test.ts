@@ -101,4 +101,58 @@ describe('YouTubeFileDownloader', () => {
       );
     });
   });
+
+  describe('cancelDownload', () => {
+    it('should send SIGTERM to active subprocess and return true', async () => {
+      const mockKill = jest.fn();
+      const subprocess = new Promise<void>(resolve => setTimeout(resolve, 1000)) as any;
+      subprocess.stdout = { on: jest.fn() };
+      subprocess.kill = mockKill;
+      mockExec.mockReturnValue(subprocess);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      // Start the download without awaiting so it stays active
+      const downloadPromise = downloader.download(
+        'https://www.youtube.com/watch?v=test123',
+        { id: 'test123', title: 'Test Video' },
+        'my-cancel-key'
+      );
+
+      const cancelled = await downloader.cancelDownload('my-cancel-key');
+
+      expect(cancelled).toBe(true);
+      expect(mockKill).toHaveBeenCalledWith('SIGTERM');
+
+      // Clean up the hanging promise
+      await downloadPromise.catch(() => {});
+    });
+
+    it('should return false for unknown downloadId', async () => {
+      const cancelled = await downloader.cancelDownload('does-not-exist');
+      expect(cancelled).toBe(false);
+    });
+
+    it('should return false when called twice for same downloadId', async () => {
+      const mockKill = jest.fn();
+      const subprocess = new Promise<void>(resolve => setTimeout(resolve, 1000)) as any;
+      subprocess.stdout = { on: jest.fn() };
+      subprocess.kill = mockKill;
+      mockExec.mockReturnValue(subprocess);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      const downloadPromise = downloader.download(
+        'https://www.youtube.com/watch?v=test123',
+        { id: 'test123', title: 'Test Video' },
+        'cancel-once-key'
+      );
+
+      await downloader.cancelDownload('cancel-once-key');
+      const second = await downloader.cancelDownload('cancel-once-key');
+
+      expect(second).toBe(false);
+      expect(mockKill).toHaveBeenCalledTimes(1);
+
+      await downloadPromise.catch(() => {});
+    });
+  });
 });

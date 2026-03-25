@@ -8,12 +8,13 @@ import { YouTubeMetadata } from '../types/youtube';
 
 export class YouTubeFileDownloader {
   private readonly tempDirectory: string;
+  private activeSubprocesses: Map<string, { subprocess: ReturnType<typeof youtubedl.exec>, aborted: boolean }> = new Map();
 
   constructor(tempDirectory: string) {
     this.tempDirectory = tempDirectory;
   }
 
-  async download(url: string, metadata: YouTubeMetadata): Promise<string> {
+  async download(url: string, metadata: YouTubeMetadata, downloadId?: string): Promise<string> {
     try {
       const safeTitle = this.createSafeFilename(metadata.title);
       const outputTemplate = path.join(this.tempDirectory, `${safeTitle}-${metadata.id}.%(ext)s`);
@@ -21,7 +22,8 @@ export class YouTubeFileDownloader {
       logger.info('Starting video file download', {
         url,
         outputTemplate,
-        videoId: metadata.id
+        videoId: metadata.id,
+        downloadId
       });
 
       const subprocess = youtubedl.exec(url, {
@@ -32,6 +34,11 @@ export class YouTubeFileDownloader {
         noWarnings: true,
         jsRuntimes: 'node'
       });
+
+      const tracker = { subprocess, aborted: false };
+      if (downloadId) {
+        this.activeSubprocesses.set(downloadId, tracker);
+      }
 
       subprocess.stdout?.on('data', (data) => {
         const output = data.toString();
@@ -44,6 +51,10 @@ export class YouTubeFileDownloader {
       });
 
       await subprocess;
+
+      if (downloadId) {
+        this.activeSubprocesses.delete(downloadId);
+      }
 
       const tempFiles = await fs.readdir(this.tempDirectory);
       const downloadedFile = tempFiles.find(file => 
@@ -67,6 +78,20 @@ export class YouTubeFileDownloader {
       logger.error('Video file download failed', { url, error: errorMessage });
       throw new AppError(`Failed to download video file: ${errorMessage}`, 500);
     }
+  }
+
+  async cancelDownload(downloadId: string): Promise<boolean> {
+    const tracker = this.activeSubprocesses.get(downloadId);
+    if (!tracker || tracker.aborted) {
+      return false;
+    }
+
+    tracker.aborted = true;
+    tracker.subprocess.kill('SIGTERM');
+    this.activeSubprocesses.delete(downloadId);
+
+    logger.info('Download cancelled', { downloadId });
+    return true;
   }
 
   private createSafeFilename(title: string): string {

@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
@@ -99,6 +100,7 @@ export class DownloadQueueService {
     const processing = this.queue.filter(item => item.status === 'processing').length;
     const completed = this.queue.filter(item => item.status === 'completed').length;
     const failed = this.queue.filter(item => item.status === 'failed').length;
+    const cancelled = this.queue.filter(item => item.status === 'cancelled').length;
     const pending = this.queue.filter(item => item.status === 'pending').length;
 
     return {
@@ -106,6 +108,7 @@ export class DownloadQueueService {
       processing,
       completed,
       failed,
+      cancelled,
       pending,
       items: [...this.queue], // Return copy to prevent mutation
       lastUpdated: new Date()
@@ -151,6 +154,22 @@ export class DownloadQueueService {
       item.status = 'cancelled';
       item.completedAt = new Date();
       item.error = 'Cancelled by user';
+
+      // Clean up any temp files if download was already completed before cancel was processed
+      if (item.result?.videoPath) {
+        try {
+          await fs.unlink(item.result.videoPath);
+          logger.info('Cleaned up video file for cancelled download', {
+            queueItemId,
+            videoPath: item.result.videoPath
+          });
+        } catch (error) {
+          logger.warn('Failed to clean up video file for cancelled download', {
+            queueItemId,
+            error: getErrorMessage(error)
+          });
+        }
+      }
 
       await this.saveQueue();
 
