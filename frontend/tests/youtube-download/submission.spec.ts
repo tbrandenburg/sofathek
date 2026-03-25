@@ -28,16 +28,16 @@ test.describe('YouTube Download - Full Workflow', () => {
     });
 
     test('should show validation hints for invalid URLs', async ({ page }) => {
-      await helpers.form.testUrlValidation(MOCK_YOUTUBE_URLS.INVALID_NOT_YOUTUBE, false);
-      await expect(page.locator('text=Please enter a valid YouTube URL')).toBeVisible();
+      await helpers.form.testUrlValidation(MOCK_YOUTUBE_URLS.INVALID_MALFORMED, false);
+      await expect(page.locator('text=Please enter a valid video URL')).toBeVisible();
     });
 
     test('should clear validation hints when valid URL is entered', async ({ page }) => {
-      await helpers.form.testUrlValidation(MOCK_YOUTUBE_URLS.INVALID_NOT_YOUTUBE, false);
-      await expect(page.locator('text=Please enter a valid YouTube URL')).toBeVisible();
+      await helpers.form.testUrlValidation(MOCK_YOUTUBE_URLS.INVALID_MALFORMED, false);
+      await expect(page.locator('text=Please enter a valid video URL')).toBeVisible();
 
       await helpers.form.testUrlValidation(MOCK_YOUTUBE_URLS.VALID_WATCH, true);
-      await expect(page.locator('text=Please enter a valid YouTube URL')).not.toBeVisible();
+      await expect(page.locator('text=Please enter a valid video URL')).not.toBeVisible();
     });
   });
 

@@ -56,8 +56,11 @@ export const MOCK_YOUTUBE_URLS = {
     return `https://youtube.com/watch?v=${videoId}`;
   })(),
   
-  // Invalid URLs for validation testing
-  INVALID_NOT_YOUTUBE: 'https://example.com/video',
+  // Valid non-YouTube URLs (should be accepted by broader URL validation)
+  VALID_NON_YOUTUBE: 'https://example.com/video',
+  VALID_VIMEO: 'https://vimeo.com/123456',
+
+  // Invalid URLs for validation testing (truly malformed)
   INVALID_MALFORMED: 'not-a-url',
   INVALID_EMPTY: '',
   INVALID_SPACES: '   ',
@@ -232,7 +235,7 @@ export const API_RESPONSES = {
   
   DOWNLOAD_ERROR: {
     status: 'error' as const,
-    message: 'Invalid YouTube URL or video unavailable'
+    message: 'Invalid video URL or video unavailable'
   },
   
   CANCEL_SUCCESS: {
@@ -258,10 +261,11 @@ export const FORM_TEST_DATA = {
     MOCK_YOUTUBE_URLS.VALID_YOUTU_BE,
     MOCK_YOUTUBE_URLS.VALID_EMBED,
     MOCK_YOUTUBE_URLS.VALID_NO_WWW,
+    MOCK_YOUTUBE_URLS.VALID_NON_YOUTUBE,
+    MOCK_YOUTUBE_URLS.VALID_VIMEO,
   ],
   
   INVALID_INPUTS: [
-    MOCK_YOUTUBE_URLS.INVALID_NOT_YOUTUBE,
     MOCK_YOUTUBE_URLS.INVALID_MALFORMED,
     MOCK_YOUTUBE_URLS.INVALID_EMPTY,
     MOCK_YOUTUBE_URLS.INVALID_SPACES,
