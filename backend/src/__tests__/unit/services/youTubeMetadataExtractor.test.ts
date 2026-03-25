@@ -95,16 +95,29 @@ describe('YouTubeMetadataExtractor', () => {
       mockExec.mockReturnValue(mockSubprocess);
 
       await expect(extractor.extract('https://www.youtube.com/watch?v=test'))
-        .rejects.toThrow('Failed to get video metadata: yt-dlp returned empty stdout');
+        .rejects.toThrow('Could not fetch video metadata. Please check the URL and try again.');
     });
 
-    it('should handle extraction errors', async () => {
+    it('should throw sanitized error without internal details on extraction failure', async () => {
       const mockSubprocess = Promise.reject(new Error('Download failed'));
       (mockSubprocess as any).stderr = { on: jest.fn() };
       mockExec.mockReturnValue(mockSubprocess);
 
       await expect(extractor.extract('https://www.youtube.com/watch?v=invalid'))
-        .rejects.toThrow('Failed to get video metadata');
+        .rejects.toThrow('Could not fetch video metadata. Please check the URL and try again.');
+    });
+
+    it('should not expose stderr content in error message', async () => {
+      const internalError = new Error(
+        'The command spawned as:\n  `/home/user/node_modules/yt-dlp ...` exited with: { code: 1 }\n(stderr: ERROR: Unable to download webpage: HTTP Error 404: Not Found)'
+      );
+      const mockSubprocess = Promise.reject(internalError);
+      (mockSubprocess as any).stderr = { on: jest.fn() };
+      mockExec.mockReturnValue(mockSubprocess);
+
+      const rejection = extractor.extract('https://www.youtube.com/watch?v=invalid');
+      await expect(rejection).rejects.toThrow('Could not fetch video metadata');
+      await expect(extractor.extract('https://www.youtube.com/watch?v=invalid')).rejects.not.toThrow('node_modules');
     });
 
     it('should use channel as uploader fallback', async () => {
