@@ -307,6 +307,68 @@ describe('VideoService', () => {
     });
   });
 
+  describe('extractMetadata - UUID filename handling', () => {
+    it('should strip UUID suffix from video title', async () => {
+      mockFs.stat.mockResolvedValue({
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      const metadata = await videoService.getVideoMetadata('Unknown_Title-24a69609-5e99-44ed-ac38-42254753105e.mp4');
+
+      expect(metadata?.title).toBe('Unknown Title');
+    });
+
+    it('should handle uppercase UUID suffix', async () => {
+      mockFs.stat.mockResolvedValue({
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      const metadata = await videoService.getVideoMetadata('Unknown_Title-24A69609-5E99-44ED-AC38-42254753105E.mp4');
+
+      expect(metadata?.title).toBe('Unknown Title');
+    });
+
+    it('should handle mixed case UUID suffix', async () => {
+      mockFs.stat.mockResolvedValue({
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      const metadata = await videoService.getVideoMetadata('Unknown_Title-24a69609-5E99-44ed-Ac38-42254753105e.mp4');
+
+      expect(metadata?.title).toBe('Unknown Title');
+    });
+
+    it('should not affect normal titles without UUID', async () => {
+      mockFs.stat.mockResolvedValue({
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      const metadata = await videoService.getVideoMetadata('My_Video_File.mp4');
+
+      expect(metadata?.title).toBe('My Video File');
+    });
+
+    it('should handle multiple UUID segments in filename', async () => {
+      mockFs.stat.mockResolvedValue({
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      const metadata = await videoService.getVideoMetadata('Test-24a69609-5e99-44ed-ac38-42254753105e-video-12345678-abcd-5678-def0-123456789abc.mp4');
+
+      expect(metadata?.title).toBe('Test Video');
+    });
+  });
+
   describe('getVideoFilePath', () => {
     it('should return correct file path', async () => {
       const filePath = videoService.getVideoFilePath('test.mp4');
