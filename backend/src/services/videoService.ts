@@ -175,8 +175,10 @@ export class VideoService {
     const nameWithoutExt = path.basename(videoFile.name, path.extname(videoFile.name));
     
     const title = nameWithoutExt
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ' ')
       .replace(/[-_]/g, ' ')
       .replace(/\b\w/g, char => char.toUpperCase())
+      .replace(/\s+/g, ' ')
       .trim();
 
     // Check for existing thumbnail (jpg, jpeg, png, webp)
