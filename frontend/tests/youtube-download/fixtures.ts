@@ -235,7 +235,7 @@ export const API_RESPONSES = {
   
   DOWNLOAD_ERROR: {
     status: 'error' as const,
-    message: 'Invalid YouTube URL or video unavailable'
+    message: 'Invalid video URL or video unavailable'
   },
   
   CANCEL_SUCCESS: {

@@ -91,38 +91,40 @@
     "last_verified": "2026-03-24T10:30:00Z"
   },
   "PR_213_PLAYWRIGHT_REPORT_MISSING": {
-    "status": "in_progress",
+    "status": "done",
     "evidence": [
       "gh run view 23529119229 --job 68488961231 -> annotation: 'No files were found with the provided path: frontend/playwright-report/. No artifacts will be uploaded.'",
       "5xWhy root cause: --reporter=list in CI does not generate frontend/playwright-report/ directory; upload-artifact step expects HTML report",
       "Fix applied: changed --reporter=list to --reporter=list,html in .github/workflows/ci.yml lines 326 and 362",
-      "Commit and push pending CI verification"
+      "Verified: grep -n 'playwright\\|reporter\\|html' .github/workflows/ci.yml shows --reporter=list,html at lines 326 and 362",
+      "CI workflow fix confirmed present in main branch as of 2026-03-25T12:10:00Z"
     ],
-    "last_verified": "2026-03-25T07:20:00Z"
+    "last_verified": "2026-03-25T12:10:00Z"
   },
-  "ISSUE_215_ROOT_CAUSE_ANALYSIS": {
+  "ISSUE_187_ROOT_CAUSE_ANALYSIS": {
     "status": "done",
     "evidence": [
-      "gh issue view 215 -> DEBT: Add empty stdout guard in YouTubeMetadataExtractor before JSON.parse",
-      "5xWhy analysis:",
-      "  Why1: JSON.parse('') throws SyntaxError with non-descriptive message when yt-dlp returns empty stdout",
-      "  Why2: yt-dlp may exit cleanly (no error) in edge cases (network issues, binary misbehavior) producing only stderr",
-      "  Why3: Catch block wrapped error as AppError but with raw SyntaxError message, masking root cause in prod logs",
-      "  Why4: Original code assumed yt-dlp always produces JSON on stdout on clean exit — edge cases not modelled",
-      "  Why5: No unit test covered empty-stdout scenario; only happy path and subprocess rejection were tested",
-      "Root cause: Missing precondition guard on processResult.stdout before JSON.parse, and no test for empty-stdout edge case"
+      "gh issue view 187 -> 'DEBT: Fix incomplete integration test updates for broader URL validation'",
+      "5xWhy RCA:",
+      "Why1: Integration tests inadequate because only one test was hastily patched when PR #185 changed URL validation from YouTube-only to any HTTP/HTTPS",
+      "Why2: Only one test patched because PR #185 was an emergency fix; test updates treated as secondary afterthought",
+      "Why3: Emergency fix lacked comprehensive test updates because URL validation change was not flagged as requiring coverage updates",
+      "Why4: Not flagged because tests were passing CI (green), masking that they tested the wrong behavior",
+      "Why5: Tests passed CI with wrong behavior because INVALID_NOT_YOUTUBE (a valid HTTP URL) was being accepted via a different code path after PR #185, so assertion passed coincidentally",
+      "Root cause: No test coverage for new behavioral contract (accept any HTTP/HTTPS URL) was added when behavior changed in PR #185"
     ],
-    "last_verified": "2026-03-25T10:15:00Z"
+    "last_verified": "2026-03-25T12:10:00Z"
   },
-  "ISSUE_215_FIX_VERIFY_PR_216": {
+  "ISSUE_187_PR_206_CI_VERIFICATION": {
     "status": "done",
     "evidence": [
-      "gh pr view 216 -> mergeStateStatus: CLEAN, mergeable: MERGEABLE",
-      "gh run view 23535669196 -> conclusion: success (all 6 CI jobs passed)",
-      "PR #216 adds: if (!processResult.stdout?.trim()) throw new AppError('yt-dlp returned empty stdout — no JSON metadata received', 500)",
-      "PR #216 adds unit test: 'should throw descriptive error when yt-dlp returns empty stdout'",
-      "CI jobs passed: Level 1 Static Analysis, Level 2 Build, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, CI Pipeline Complete"
+      "gh pr view 206 -> mergeStateStatus: CLEAN, mergeable: MERGEABLE",
+      "gh pr checks 206 -> all 6 checks PASS: Level1 Static, Level2 Build, Level3 Unit, Level4 E2E, Level5 Integration, CI Complete",
+      "gh run list --branch fix/issue-187-test-fixtures-update -> 3 consecutive runs with conclusion: success",
+      "git log --oneline origin/fix/issue-187-test-fixtures-update..origin/main -> (empty, branch is up to date with main)",
+      "PR #206 adds: error-handling.spec.ts (5 tests), VALID_NON_YOUTUBE + VALID_VIMEO fixtures, non-YouTube URL tests in real-world.spec.ts, fixed error message text 'YouTube URL' -> 'video URL'",
+      "All issue #187 checklist items addressed by PR #206"
     ],
-    "last_verified": "2026-03-25T10:15:00Z"
+    "last_verified": "2026-03-25T12:10:00Z"
   }
 }
