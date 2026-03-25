@@ -99,5 +99,30 @@
       "Commit and push pending CI verification"
     ],
     "last_verified": "2026-03-25T07:20:00Z"
+  },
+  "ISSUE_215_ROOT_CAUSE_ANALYSIS": {
+    "status": "done",
+    "evidence": [
+      "gh issue view 215 -> DEBT: Add empty stdout guard in YouTubeMetadataExtractor before JSON.parse",
+      "5xWhy analysis:",
+      "  Why1: JSON.parse('') throws SyntaxError with non-descriptive message when yt-dlp returns empty stdout",
+      "  Why2: yt-dlp may exit cleanly (no error) in edge cases (network issues, binary misbehavior) producing only stderr",
+      "  Why3: Catch block wrapped error as AppError but with raw SyntaxError message, masking root cause in prod logs",
+      "  Why4: Original code assumed yt-dlp always produces JSON on stdout on clean exit — edge cases not modelled",
+      "  Why5: No unit test covered empty-stdout scenario; only happy path and subprocess rejection were tested",
+      "Root cause: Missing precondition guard on processResult.stdout before JSON.parse, and no test for empty-stdout edge case"
+    ],
+    "last_verified": "2026-03-25T10:15:00Z"
+  },
+  "ISSUE_215_FIX_VERIFY_PR_216": {
+    "status": "done",
+    "evidence": [
+      "gh pr view 216 -> mergeStateStatus: CLEAN, mergeable: MERGEABLE",
+      "gh run view 23535669196 -> conclusion: success (all 6 CI jobs passed)",
+      "PR #216 adds: if (!processResult.stdout?.trim()) throw new AppError('yt-dlp returned empty stdout — no JSON metadata received', 500)",
+      "PR #216 adds unit test: 'should throw descriptive error when yt-dlp returns empty stdout'",
+      "CI jobs passed: Level 1 Static Analysis, Level 2 Build, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, CI Pipeline Complete"
+    ],
+    "last_verified": "2026-03-25T10:15:00Z"
   }
 }
