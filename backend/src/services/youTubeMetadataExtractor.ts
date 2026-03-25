@@ -56,12 +56,14 @@ export class YouTubeMetadataExtractor {
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       const stderrMessage = stderrOutput.trim();
-      const detailedMessage = stderrMessage
-        ? `${errorMessage || 'yt-dlp metadata fetch failed'} (stderr: ${stderrMessage})`
-        : errorMessage;
 
-      logger.error('Failed to get video metadata', { url, error: detailedMessage });
-      throw new AppError(`Failed to get video metadata: ${detailedMessage}`, 500);
+      logger.error('Failed to get video metadata', {
+        url,
+        error: errorMessage,
+        stderr: stderrMessage
+      });
+
+      throw new AppError('Could not fetch video metadata. Please check the URL and try again.', 500);
     }
   }
 }
