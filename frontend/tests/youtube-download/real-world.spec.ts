@@ -8,6 +8,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { TEST_SELECTORS } from './fixtures';
 
 // Test configuration
 const TEST_CONFIG = {
@@ -182,7 +183,7 @@ test.describe('Real-World YouTube Download E2E Test', () => {
         errors.push(msg.text());
       }
     });
-    
+
     // Wait a moment to collect any errors
     await page.waitForTimeout(2000);
     
@@ -304,5 +305,40 @@ test.describe('Real-World YouTube Download E2E Test', () => {
       const existingVideoCount = await videoGrid.locator('[data-testid*="video-card"], .video-card, [class*="video"]').count();
       expect(existingVideoCount).toBeGreaterThanOrEqual(0); // Grid should remain functional
     });
+  });
+});
+
+// Step 7 from issue #187: Tests for non-YouTube video URLs acceptance (broader URL validation)
+test.describe('Non-YouTube Video URLs', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:5183/', { waitUntil: 'networkidle' });
+  });
+
+  test('should accept Vimeo URLs as valid', async ({ page }) => {
+    const urlInput = page.locator(TEST_SELECTORS.URL_INPUT);
+    const downloadButton = page.locator(TEST_SELECTORS.DOWNLOAD_BUTTON);
+
+    await urlInput.fill('https://vimeo.com/123456789');
+    await expect(downloadButton).toBeEnabled();
+    await expect(page.locator('[data-testid="url-validation-error"]')).not.toBeVisible();
+  });
+
+  test('should accept generic HTTPS video URLs as valid', async ({ page }) => {
+    const urlInput = page.locator(TEST_SELECTORS.URL_INPUT);
+    const downloadButton = page.locator(TEST_SELECTORS.DOWNLOAD_BUTTON);
+
+    await urlInput.fill('https://example.com/video.mp4');
+    await expect(downloadButton).toBeEnabled();
+    await expect(page.locator('[data-testid="url-validation-error"]')).not.toBeVisible();
+  });
+
+  test('should handle unsupported site gracefully via backend', async ({ page }) => {
+    // Backend accepts the URL format; yt-dlp determines actual support at runtime.
+    // A valid HTTP/HTTPS URL must not be rejected with 400 (format error).
+    const response = await page.request.post('http://localhost:3010/api/youtube/download', {
+      data: { url: 'https://unsupported-site.example/video' }
+    });
+
+    expect(response.status()).not.toBe(400);
   });
 });
