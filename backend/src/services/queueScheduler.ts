@@ -61,6 +61,10 @@ export async function processQueueItem(
     item.currentStep = 'Starting download';
     await saveQueue();
 
+    // Check for cancellation at each async yield point. TypeScript narrows
+    // item.status to 'processing' after the assignment above, but the cancel
+    // handler runs concurrently and can mutate item.status across await boundaries.
+    // The cast refreshes the type check to the full QueueItem union.
     if ((item as QueueItem).status === 'cancelled') {
       logger.info('Queue item cancelled during processing', {
         queueItemId: item.id
@@ -81,7 +85,7 @@ export async function processQueueItem(
       return;
     }
 
-    const result = await youtubeDownloadService.downloadVideo(item.request);
+    const result = await youtubeDownloadService.downloadVideo(item.request, item.id);
 
     if ((item as QueueItem).status === 'cancelled') {
       logger.info('Queue item cancelled during download, cleaning up', {
