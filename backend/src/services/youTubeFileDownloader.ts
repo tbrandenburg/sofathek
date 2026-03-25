@@ -74,9 +74,16 @@ export class YouTubeFileDownloader {
       return downloadedPath;
 
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       const errorMessage = getErrorMessage(error);
-      logger.error('Video file download failed', { url, error: errorMessage });
-      throw new AppError(`Failed to download video file: ${errorMessage}`, 500);
+      logger.error('Video file download failed', {
+        url,
+        error: errorMessage,
+        stderr: (error as any).stderr
+      });
+      throw new AppError('Could not download video file. Please try again.', 500);
     }
   }
 
