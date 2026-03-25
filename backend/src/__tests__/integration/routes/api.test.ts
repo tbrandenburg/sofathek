@@ -76,6 +76,24 @@ describe('API Routes', () => {
   });
 
   describe('GET /api/videos', () => {
+    it('should return stream URLs instead of absolute paths in video list', async () => {
+      mockFsPromises.readdir.mockResolvedValue(['test-video.mp4'] as any);
+      mockFsPromises.stat.mockResolvedValue({
+        size: 1000000,
+        isFile: () => true,
+        isDirectory: () => false,
+        mtime: new Date('2026-03-01')
+      } as any);
+
+      const response = await request(app)
+        .get('/api/videos')
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.videos).toHaveLength(1);
+      expect(response.body.data.videos[0].file.path).toBe('/api/stream/test-video.mp4');
+    });
+
     it('should return list of videos', async () => {
       const response = await request(app)
         .get('/api/videos')

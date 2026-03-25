@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { downloadQueueService, youTubeDownloadService } from '../services/index';
-import { DownloadRequest, QueueItem } from '../types/youtube';
+import { DownloadRequest } from '../types/youtube';
 import { createRateLimiter, rateLimitMiddleware } from '../middleware/rateLimiter';
 import { config } from '../config';
 
@@ -70,14 +70,25 @@ router.get('/queue', catchAsync(async (_req: Request, res: Response) => {
   
   const queueStatus = downloadQueueService.getQueueStatus();
 
-  const transformedItems = queueStatus.items.map(item => ({
-    ...item,
-    url: item.request.url,
-    title: item.request.title || item.result?.metadata?.title || item.request.url,
-    queuedAt: item.queuedAt instanceof Date ? item.queuedAt.toISOString() : item.queuedAt,
-    startedAt: item.startedAt instanceof Date ? item.startedAt.toISOString() : item.startedAt,
-    completedAt: item.completedAt instanceof Date ? item.completedAt.toISOString() : item.completedAt
-  }));
+  const transformedItems = queueStatus.items.map(item => {
+    const { result, ...rest } = item;
+    return {
+      ...rest,
+      url: item.request.url,
+      title: item.request.title || item.result?.metadata?.title || item.request.url,
+      queuedAt: item.queuedAt instanceof Date ? item.queuedAt.toISOString() : item.queuedAt,
+      startedAt: item.startedAt instanceof Date ? item.startedAt.toISOString() : item.startedAt,
+      completedAt: item.completedAt instanceof Date ? item.completedAt.toISOString() : item.completedAt,
+      result: result ? {
+        id: result.id,
+        status: result.status,
+        metadata: result.metadata,
+        error: result.error,
+        completedAt: result.completedAt instanceof Date ? result.completedAt.toISOString() : result.completedAt,
+        startedAt: result.startedAt instanceof Date ? result.startedAt.toISOString() : result.startedAt
+      } : undefined
+    };
+  });
 
   const transformedStatus = {
     ...queueStatus,
@@ -111,8 +122,21 @@ router.get('/download/:id/status', catchAsync(async (req: Request, res: Response
     throw new AppError(`Download with ID '${id}' not found`, 404);
   }
   
-  const responseData: QueueItem & { diagnostics?: any } = { ...queueItem };
-  
+  const { result, ...restItem } = queueItem;
+
+  const responseData: typeof restItem & { diagnostics?: any; result?: any } = { ...restItem };
+
+  if (result) {
+    responseData.result = {
+      id: result.id,
+      status: result.status,
+      metadata: result.metadata,
+      error: result.error,
+      completedAt: result.completedAt instanceof Date ? result.completedAt.toISOString() : result.completedAt,
+      startedAt: result.startedAt instanceof Date ? result.startedAt.toISOString() : result.startedAt
+    };
+  }
+
   // Add diagnostic context for failed downloads
   if (queueItem.status === 'failed' && queueItem.error) {
     responseData.diagnostics = {

@@ -114,6 +114,55 @@ describe('YouTube Routes', () => {
       expect(response.body.data.lastUpdated).toBe('2026-03-02T20:00:00.000Z');
     });
 
+    it('should NOT expose videoPath or thumbnailPath in queue response', async () => {
+      const mockQueueStatus = {
+        totalItems: 1,
+        processing: 0,
+        completed: 1,
+        failed: 0,
+        pending: 0,
+        cancelled: 0,
+        items: [{
+          id: 'queue-123',
+          request: {
+            url: 'https://www.youtube.com/watch?v=test123',
+            requestedAt: new Date('2026-03-02T20:00:00Z'),
+            requestId: 'req-123'
+          },
+          status: 'completed' as const,
+          progress: 100,
+          currentStep: 'Completed',
+          result: {
+            id: 'download-123',
+            status: 'success' as const,
+            videoPath: '/tmp/test.mp4',       // should NOT appear in response
+            thumbnailPath: '/tmp/thumb.jpg',  // should NOT appear in response
+            metadata: { id: 'test123', title: 'Video Title' },
+            startedAt: new Date('2026-03-02T20:01:00Z'),
+            completedAt: new Date('2026-03-02T20:02:00Z')
+          },
+          queuedAt: new Date('2026-03-02T20:00:00Z'),
+          startedAt: new Date('2026-03-02T20:01:00Z'),
+          completedAt: new Date('2026-03-02T20:02:00Z')
+        }],
+        lastUpdated: new Date('2026-03-02T20:03:00Z')
+      };
+
+      mockDownloadQueueService.getQueueStatus.mockReturnValue(mockQueueStatus);
+
+      const response = await request(app)
+        .get('/api/youtube/queue')
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      const item = response.body.data.items[0];
+      expect(item.result).toBeDefined();
+      expect(item.result.videoPath).toBeUndefined();
+      expect(item.result.thumbnailPath).toBeUndefined();
+      expect(item.result.id).toBe('download-123');
+      expect(item.result.status).toBe('success');
+    });
+
     it('should transform queue items with top-level url and title fields', async () => {
       const mockQueueStatus = {
         totalItems: 1,

@@ -2,7 +2,10 @@
  * Video file system data structure
  */
 export interface VideoFile {
-  /** Full file system path to the video */
+  /**
+   * Internal: Full file system path to the video
+   * NOT exposed via API - use streamUrl for public access
+   */
   path: string;
   /** Filename with extension */
   name: string;

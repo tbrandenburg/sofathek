@@ -26,9 +26,20 @@ router.get('/videos', catchAsync(async (_req: Request, res: Response) => {
   
   const result = await videoService.scanVideoDirectory();
   
+  const transformedResult = {
+    ...result,
+    videos: result.videos.map(video => ({
+      ...video,
+      file: {
+        ...video.file,
+        path: `/api/stream/${encodeURIComponent(video.file.name)}`
+      }
+    }))
+  };
+  
   res.json({
     status: 'success',
-    data: result
+    data: transformedResult
   });
 }));
 
@@ -47,9 +58,17 @@ router.get('/videos/:id', catchAsync(async (req: Request, res: Response) => {
     throw new AppError(`Video with id '${id}' not found`, 404);
   }
   
+  const transformedVideo = {
+    ...video,
+    file: {
+      ...video.file,
+      path: `/api/stream/${encodeURIComponent(video.file.name)}`
+    }
+  };
+  
   res.json({
     status: 'success',
-    data: video
+    data: transformedVideo
   });
 }));
 

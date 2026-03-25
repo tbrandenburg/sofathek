@@ -50,9 +50,9 @@ export interface DownloadResult {
   status: 'success' | 'error' | 'cancelled';
   /** YouTube metadata */
   metadata?: YouTubeMetadata;
-  /** Local video file path (if successful) */
+  /** @internal - Local video file path, not exposed via API */
   videoPath?: string;
-  /** Local thumbnail file path (if generated) */
+  /** @internal - Local thumbnail file path, not exposed via API */
   thumbnailPath?: string;
   /** Error message (if failed) */
   error?: string;
