@@ -5,8 +5,6 @@ import { Video } from '../types';
 
 // Mock the API service
 vi.mock('../services/api', () => ({
-  formatFileSize: vi.fn((size) => `${size} bytes`),
-  formatDuration: vi.fn((duration) => `${duration}s`),
   getVideoThumbnailUrl: vi.fn(() => null)
 }));
 
@@ -61,21 +59,18 @@ describe('VideoCard Component', () => {
     expect(mockOnClick).toHaveBeenCalledWith(mockVideo);
   });
 
-  test('should show metadata by default', () => {
-    render(<VideoCard video={mockVideo} />);
-
-    const metadata = screen.getByTestId('video-metadata');
-    expect(metadata).toBeDefined();
-    expect(metadata.textContent).toContain('test-video.mp4');
-    expect(metadata.textContent).toContain('1024000 bytes');
-  });
-
   test('should not show metadata when showMetadata is false', () => {
     render(<VideoCard video={mockVideo} showMetadata={false} />);
 
     const title = screen.getByTestId('video-title');
     expect(title).toBeDefined();
     
+    const metadata = screen.queryByTestId('video-metadata');
+    expect(metadata).toBeNull();
+  });
+
+  test('should not show metadata by default', () => {
+    render(<VideoCard video={mockVideo} />);
     const metadata = screen.queryByTestId('video-metadata');
     expect(metadata).toBeNull();
   });
@@ -108,9 +103,8 @@ describe('VideoCard Component', () => {
     const title = screen.getByTestId('video-title');
     expect(title.textContent).toBe('Minimal Video');
     
-    const metadata = screen.getByTestId('video-metadata');
-    expect(metadata.textContent).toContain('minimal.mp4');
-    expect(metadata.textContent).toContain('500 bytes');
+    const metadata = screen.queryByTestId('video-metadata');
+    expect(metadata).toBeNull();
   });
 
   test('should have proper CSS classes for interactivity', () => {
@@ -142,22 +136,14 @@ describe('VideoCard accessibility', () => {
     lastViewed: new Date('2024-01-15T12:00:00Z')
   };
 
-  test('should have sufficient color contrast for metadata text', () => {
+  test('should avoid rendering metadata text for simplified cards', () => {
     render(<VideoCard video={mockVideo} />);
-    const metadata = screen.getByTestId('video-metadata');
-    const computedStyle = window.getComputedStyle(metadata);
-    
-    // Verify color is using CSS variable (not hardcoded)
-    expect(computedStyle.color).not.toBe('rgb(107, 114, 126)'); // text-slate-500
-    expect(computedStyle.color).not.toBe('#666');
+    const metadata = screen.queryByTestId('video-metadata');
+    expect(metadata).toBeNull();
   });
 
-  test('should use theme-aware colors', () => {
+  test('should keep title accessible', () => {
     render(<VideoCard video={mockVideo} />);
-    const metadata = screen.getByTestId('video-metadata');
-    
-    // Should use CSS custom property
-    expect(metadata.className).not.toContain('text-slate-500');
-    expect(metadata.className).not.toContain('text-gray-600');
+    expect(screen.getByTestId('video-title').textContent).toBe('Test Video Title');
   });
 });

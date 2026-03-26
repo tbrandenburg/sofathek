@@ -1,7 +1,7 @@
 import React from 'react';
 import { VideoCardProps } from '../../types';
-import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { formatDuration, formatFileSize, getVideoThumbnailUrl } from '../../services/api';
+import { Card, CardHeader, CardTitle } from '../ui/card';
+import { getVideoThumbnailUrl } from '../../services/api';
 
 export function VideoCard({ 
   video, 
@@ -9,6 +9,7 @@ export function VideoCard({
   showMetadata = true, 
   className = '' 
 }: VideoCardProps) {
+  void showMetadata;
   const thumbnailUrl = getVideoThumbnailUrl(video);
   
   const handleClick = () => {
@@ -43,12 +44,6 @@ export function VideoCard({
           </div>
         )}
         
-        {/* Duration overlay */}
-        {video.metadata.duration && (
-          <div className="duration-overlay">
-            {formatDuration(video.metadata.duration)}
-          </div>
-        )}
       </div>
 
       {/* Video Information */}
@@ -56,25 +51,6 @@ export function VideoCard({
         <CardTitle className="video-title" data-testid="video-title">
           {video.metadata.title}
         </CardTitle>
-        
-        {showMetadata && (
-          <CardDescription className="video-metadata" data-testid="video-metadata">
-            <div className="metadata-row">
-              <span>File: {video.file.name}</span>
-            </div>
-            <div className="metadata-row">
-              <span>Size: {formatFileSize(video.file.size)}</span>
-              {video.metadata.width && video.metadata.height && (
-                <span> • {video.metadata.width}×{video.metadata.height}</span>
-              )}
-            </div>
-            {video.lastViewed && (
-              <div className="metadata-row">
-                <span>Last viewed: {video.lastViewed.toString().split('T')[0]}</span>
-              </div>
-            )}
-          </CardDescription>
-        )}
       </CardHeader>
     </Card>
   );

@@ -81,16 +81,10 @@ export function VideoPlayer({
   const videoFileName = video.file?.name;
   const hasValidFile = Boolean(videoFileName);
   const streamingUrl = videoFileName ? getVideoStreamUrl(videoFileName) : '';
-  const formatText = video.metadata.format || video.file?.extension?.toUpperCase() || 'Unknown';
-
   return (
     <div className={`video-player ${className}`}>
       <div className="video-header">
         <h2 className="video-player-title">{video.metadata.title}</h2>
-        <div className="video-info">
-          <span className="video-resolution">{video.metadata.width}x{video.metadata.height}</span>
-          <span className="video-duration">{video.metadata.duration ? `${Math.floor(video.metadata.duration / 60)}:${(video.metadata.duration % 60).toString().padStart(2, '0')}` : 'Unknown'}</span>
-        </div>
       </div>
 
       <div className="video-container">
@@ -163,24 +157,6 @@ export function VideoPlayer({
         )}
       </div>
 
-      <div className="video-metadata">
-        {video.file?.size !== undefined && (
-          <div className="metadata-item">
-            <span className="metadata-label">File Size:</span>
-            <span className="metadata-value">{(video.file.size / (1024 * 1024)).toFixed(1)} MB</span>
-          </div>
-        )}
-        <div className="metadata-item">
-          <span className="metadata-label">Format:</span>
-          <span className="metadata-value">{formatText}</span>
-        </div>
-        {video.file?.lastModified && (
-          <div className="metadata-item">
-            <span className="metadata-label">Last Modified:</span>
-            <span className="metadata-value">{new Date(video.file.lastModified).toLocaleDateString()}</span>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
