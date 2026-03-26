@@ -281,16 +281,6 @@ export class DownloadQueueService {
         }
       }
 
-      if (item.result?.videoPath) {
-        try {
-          await fs.unlink(item.result.videoPath);
-        } catch (error) {
-          logger.warn('Failed to remove queue item file while clearing queue', {
-            queueItemId: item.id,
-            error: getErrorMessage(error)
-          });
-        }
-      }
     }
 
     this.queue = [];
