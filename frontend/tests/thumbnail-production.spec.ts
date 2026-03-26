@@ -1,16 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+const BACKEND_URL = `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`;
+const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}`;
+
 /**
  * Thumbnail Display Verification Tests for Production Build
  * 
  * Verifies that all video thumbnails are properly displayed in the production build
- * running on http://localhost:5183 with backend on http://localhost:3010
+ * running on SOFATHEK_FRONTEND_PORT (default 5183) with backend on SOFATHEK_BACKEND_PORT (default 3010)
  */
 
 test.describe('Production Thumbnail Display Verification', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the production app
-    await page.goto('http://localhost:5183');
+    await page.goto(FRONTEND_URL);
     
     // Wait for the application to load completely
     await page.waitForLoadState('networkidle');
@@ -106,7 +109,7 @@ test.describe('Production Thumbnail Display Verification', () => {
       expect(imgSrc).toBeTruthy();
       
       // Test direct API access to thumbnail
-      const fullUrl = `http://localhost:3010${imgSrc}`;
+      const fullUrl = `${BACKEND_URL}${imgSrc}`;
       const response = await page.request.get(fullUrl);
       
       expect(response.status(), `Thumbnail API should return 200 for ${imgSrc}`).toBe(200);
@@ -123,7 +126,7 @@ test.describe('Production Thumbnail Display Verification', () => {
 
   test('should handle non-existent thumbnail gracefully', async ({ page }) => {
     // Try to access a non-existent thumbnail directly
-    const nonExistentUrl = 'http://localhost:3010/api/thumbnails/non-existent-video.jpg';
+    const nonExistentUrl = `${BACKEND_URL}/api/thumbnails/non-existent-video.jpg`;
     const response = await page.request.get(nonExistentUrl);
     
     // Should return 404 for non-existent thumbnail

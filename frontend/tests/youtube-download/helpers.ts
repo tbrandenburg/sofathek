@@ -9,6 +9,8 @@ import { Page, expect } from '@playwright/test';
 import { TEST_SELECTORS, API_RESPONSES, TEST_TIMING } from './fixtures';
 import { QueueStatus } from '../../src/types/youtube';
 
+const BACKEND_URL = `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`;
+
 /**
  * Navigation and setup helpers
  */
@@ -309,13 +311,13 @@ export class LiveAPIHelpers {
   constructor(private page: Page) {}
 
   async getQueueStatus(): Promise<QueueStatus> {
-    const response = await this.page.request.get('http://localhost:3010/api/youtube/queue');
+    const response = await this.page.request.get(`${BACKEND_URL}/api/youtube/queue`);
     const data = await response.json();
     return data.data;
   }
 
   async startDownload(url: string): Promise<{ id: string }> {
-    const response = await this.page.request.post('http://localhost:3010/api/youtube/download', {
+    const response = await this.page.request.post(`${BACKEND_URL}/api/youtube/download`, {
       data: { url }
     });
     const data = await response.json();
@@ -323,7 +325,7 @@ export class LiveAPIHelpers {
   }
 
   async cancelDownload(id: string): Promise<void> {
-    await this.page.request.delete(`http://localhost:3010/api/youtube/download/${id}`);
+    await this.page.request.delete(`${BACKEND_URL}/api/youtube/download/${id}`);
   }
 }
 

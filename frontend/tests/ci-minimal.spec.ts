@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+const BACKEND_URL = `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`;
+const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}`;
+
 /**
  * Minimal CI Test - Only server connectivity validation
  * 
@@ -17,24 +20,24 @@ import { test, expect } from '@playwright/test';
 test.describe('CI Minimal Tests', () => {
   test('server responds to requests', async ({ request }) => {
     // Test backend health endpoint
-    const backendResponse = await request.get('http://localhost:3010/health');
+    const backendResponse = await request.get(`${BACKEND_URL}/health`);
     expect(backendResponse.status()).toBe(200);
     
     // Test frontend server
-    const frontendResponse = await request.get('http://localhost:5183');
+    const frontendResponse = await request.get(FRONTEND_URL);
     expect(frontendResponse.status()).toBeGreaterThanOrEqual(200);
     expect(frontendResponse.status()).toBeLessThan(400);
   });
   
   test('frontend serves HTML content', async ({ request }) => {
-    const response = await request.get('http://localhost:5183');
+    const response = await request.get(FRONTEND_URL);
     const content = await response.text();
     expect(content).toContain('<html');
     expect(content).toContain('</html>');
   });
   
   test('backend health endpoint returns JSON', async ({ request }) => {
-    const response = await request.get('http://localhost:3010/health');
+    const response = await request.get(`${BACKEND_URL}/health`);
     const healthData = await response.json();
     expect(healthData).toHaveProperty('status');
   });

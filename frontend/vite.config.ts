@@ -11,16 +11,16 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5183,
+    port: parseInt(process.env.SOFATHEK_FRONTEND_PORT || '5183', 10),
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3010',
+        target: `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`,
         changeOrigin: true,
         secure: false,
       },
       '/health': {
-        target: 'http://localhost:3010',
+        target: `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`,
         changeOrigin: true,
         secure: false,
       },

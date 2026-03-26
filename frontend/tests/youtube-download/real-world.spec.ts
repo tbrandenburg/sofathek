@@ -311,7 +311,7 @@ test.describe('Real-World YouTube Download E2E Test', () => {
 // Step 7 from issue #187: Tests for non-YouTube video URLs acceptance (broader URL validation)
 test.describe('Non-YouTube Video URLs', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5183/', { waitUntil: 'networkidle' });
+    await page.goto(`http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}/`, { waitUntil: 'networkidle' });
   });
 
   test('should accept Vimeo URLs as valid', async ({ page }) => {
@@ -335,7 +335,7 @@ test.describe('Non-YouTube Video URLs', () => {
   test('should handle unsupported site gracefully via backend', async ({ page }) => {
     // Backend accepts the URL format; yt-dlp determines actual support at runtime.
     // A valid HTTP/HTTPS URL must not be rejected with 400 (format error).
-    const response = await page.request.post('http://localhost:3010/api/youtube/download', {
+    const response = await page.request.post(`http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}/api/youtube/download`, {
       data: { url: 'https://unsupported-site.example/video' }
     });
 

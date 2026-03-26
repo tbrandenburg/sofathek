@@ -3,6 +3,10 @@
 
 .PHONY: help install build test lint clean dev start stop docker playwright-install playwright-test e2e-test e2e-docker clean-ports
 
+# Port configuration (override via: make dev SOFATHEK_BACKEND_PORT=4000)
+SOFATHEK_BACKEND_PORT ?= 3010
+SOFATHEK_FRONTEND_PORT ?= 5183
+
 # Default target
 help: ## Show available commands
 	@echo "Sofathek Development Commands"
@@ -53,53 +57,53 @@ type-check: ## Run TypeScript type checking
 	@cd frontend && npm run type-check
 
 clean-ports: ## Clean up processes on development ports
-	@echo "🧹 Cleaning up ports 3010 and 5183..."
-	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
-	@lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
+	@echo "🧹 Cleaning up ports $(SOFATHEK_BACKEND_PORT) and $(SOFATHEK_FRONTEND_PORT)..."
+	@lsof -ti:$(SOFATHEK_BACKEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
+	@lsof -ti:$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null || true
 	@sleep 1
-	@lsof -ti:3010 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
-	@lsof -ti:5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
-	@pkill -f "PORT=3010" 2>/dev/null || true
-	@pkill -f "python3 -m http.server 5183" 2>/dev/null || true
-	@pkill -f "vite.*--port 5183" 2>/dev/null || true
+	@lsof -ti:$(SOFATHEK_BACKEND_PORT) 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
+	@lsof -ti:$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -KILL 2>/dev/null || true
+	@pkill -f "PORT=$(SOFATHEK_BACKEND_PORT)" 2>/dev/null || true
+	@pkill -f "python3 -m http.server $(SOFATHEK_FRONTEND_PORT)" 2>/dev/null || true
+	@pkill -f "vite.*--port $(SOFATHEK_FRONTEND_PORT)" 2>/dev/null || true
 
-dev: ## Start development servers (backend:3010, frontend:5183)
+dev: ## Start development servers (backend:$(SOFATHEK_BACKEND_PORT), frontend:$(SOFATHEK_FRONTEND_PORT))
 	@echo "🚀 Starting development servers..."
-	@echo "Backend: http://localhost:3010 | Frontend: http://localhost:5183"
+	@echo "Backend: http://localhost:$(SOFATHEK_BACKEND_PORT) | Frontend: http://localhost:$(SOFATHEK_FRONTEND_PORT)"
 	@echo "🧹 Cleaning up any existing processes..."
-	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:3010,5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=3010\|vite.*--port 5183" 2>/dev/null || true
+	@lsof -ti:$(SOFATHEK_BACKEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:$(SOFATHEK_BACKEND_PORT),$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=$(SOFATHEK_BACKEND_PORT)\|vite.*--port $(SOFATHEK_FRONTEND_PORT)" 2>/dev/null || true
 	@trap 'kill %1 %2 2>/dev/null; exit 0' INT; \
-	(cd backend && PORT=3010 npm run dev) & \
+	(cd backend && SOFATHEK_BACKEND_PORT=$(SOFATHEK_BACKEND_PORT) npm run dev) & \
 	sleep 3 && \
-	(cd frontend && npm run dev -- --port 5183) & \
+	(cd frontend && SOFATHEK_FRONTEND_PORT=$(SOFATHEK_FRONTEND_PORT) npm run dev -- --port $(SOFATHEK_FRONTEND_PORT)) & \
 	wait
 
 start: build ## Start production servers
 	@echo "🚀 Starting production servers..."
-	@echo "Backend: http://localhost:3010 | Frontend: http://localhost:5183"
+	@echo "Backend: http://localhost:$(SOFATHEK_BACKEND_PORT) | Frontend: http://localhost:$(SOFATHEK_FRONTEND_PORT)"
 	@echo "🧹 Cleaning up any existing processes..."
-	@lsof -ti:3010 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:5183 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:3010,5183 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=3010\|vite.*--port 5183" 2>/dev/null || true
+	@lsof -ti:$(SOFATHEK_BACKEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:$(SOFATHEK_BACKEND_PORT),$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=$(SOFATHEK_BACKEND_PORT)\|vite.*--port $(SOFATHEK_FRONTEND_PORT)" 2>/dev/null || true
 	@echo "Starting backend..."
-	@(cd backend && PORT=3010 npm start) &
-	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:3010/health 30 || (echo "❌ Backend failed to start - check logs" && exit 1)
+	@(cd backend && SOFATHEK_BACKEND_PORT=$(SOFATHEK_BACKEND_PORT) npm start) &
+	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:$(SOFATHEK_BACKEND_PORT)/health 30 || (echo "❌ Backend failed to start - check logs" && exit 1)
 	@echo "✅ Backend started successfully"
 	@echo "Starting frontend..."
-	@(cd frontend && npm run preview -- --port 5183 --host) &
-	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:5183 10 || (echo "❌ Frontend failed to start" && exit 1)
+	@(cd frontend && SOFATHEK_FRONTEND_PORT=$(SOFATHEK_FRONTEND_PORT) npm run preview -- --port $(SOFATHEK_FRONTEND_PORT) --host) &
+	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:$(SOFATHEK_FRONTEND_PORT) 10 || (echo "❌ Frontend failed to start" && exit 1)
 	@echo "✅ Frontend started successfully"
 	@echo ""
 	@echo "🎉 All services started!"
-	@echo "   Backend: http://localhost:3010"
-	@echo "   Frontend: http://localhost:5183"
+	@echo "   Backend: http://localhost:$(SOFATHEK_BACKEND_PORT)"
+	@echo "   Frontend: http://localhost:$(SOFATHEK_FRONTEND_PORT)"
 	@echo ""
 	@echo "Press Ctrl+C to stop all servers"
 	@trap 'kill %1 %2 2>/dev/null; exit 0' INT; wait
 
 stop: ## Stop all servers and clean up ports
 	@echo "🛑 Stopping servers..."
-	@bash -c 'for port in 3010 5183; do pids=$$(lsof -ti:$$port 2>/dev/null || true); if [ -n "$$pids" ]; then echo "  Killing processes on port $$port: $$pids"; kill -TERM $$pids 2>/dev/null || true; sleep 0.5; kill -KILL $$pids 2>/dev/null || true; fi; done'
-	@pkill -f "PORT=3010" 2>/dev/null || true
-	@pkill -f "vite.*--port 5183" 2>/dev/null || true
+	@bash -c 'for port in $(SOFATHEK_BACKEND_PORT) $(SOFATHEK_FRONTEND_PORT); do pids=$$(lsof -ti:$$port 2>/dev/null || true); if [ -n "$$pids" ]; then echo "  Killing processes on port $$port: $$pids"; kill -TERM $$pids 2>/dev/null || true; sleep 0.5; kill -KILL $$pids 2>/dev/null || true; fi; done'
+	@pkill -f "PORT=$(SOFATHEK_BACKEND_PORT)" 2>/dev/null || true
+	@pkill -f "vite.*--port $(SOFATHEK_FRONTEND_PORT)" 2>/dev/null || true
 	@echo "✅ All servers stopped and ports cleaned up"
 
 clean: ## Clean build artifacts

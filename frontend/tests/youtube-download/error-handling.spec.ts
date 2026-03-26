@@ -11,11 +11,12 @@
 import { test, expect } from '@playwright/test';
 import { TEST_SELECTORS } from './fixtures';
 
-const BACKEND_URL = 'http://localhost:3010';
+const BACKEND_URL = `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`;
+const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}`;
 
 test.describe('URL Validation Error Handling', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5183/', { waitUntil: 'networkidle' });
+    await page.goto(`${FRONTEND_URL}/`, { waitUntil: 'networkidle' });
   });
 
   test('should reject malformed URL in frontend before backend submission', async ({ page }) => {

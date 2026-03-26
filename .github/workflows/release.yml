@@ -7,6 +7,8 @@ on:
 
 env:
   REGISTRY_IMAGE: sofathek/sofathek
+  SOFATHEK_BACKEND_PORT: '3010'
+  SOFATHEK_FRONTEND_PORT: '5183'
 
 jobs:
   # Build and publish Docker images

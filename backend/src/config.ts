@@ -33,7 +33,8 @@ function validateDir(dir: string, name: string): void {
 
 function parseAllowedOrigins(value: string | undefined): string[] {
   if (!value) {
-    return ['http://localhost:5183'];
+    const frontendPort = process.env.SOFATHEK_FRONTEND_PORT || '5183';
+    return [`http://localhost:${frontendPort}`];
   }
 
   return value
@@ -47,7 +48,7 @@ function getConfig(): Config {
   const tempDir = process.env.TEMP_DIR || path.join(process.cwd(), 'data', 'temp');
 
   return {
-    port: parseIntOrDefault(process.env.PORT, 3010),
+    port: parseIntOrDefault(process.env.SOFATHEK_BACKEND_PORT, 3010),
     nodeEnv: process.env.NODE_ENV || 'development',
     logLevel: process.env.LOG_LEVEL || 'info',
     videosDir,

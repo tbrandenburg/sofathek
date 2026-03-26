@@ -16,11 +16,12 @@
 import { test, expect } from '@playwright/test';
 import { TEST_SELECTORS } from './fixtures';
 
-const BACKEND_URL = 'http://localhost:3010';
+const BACKEND_URL = `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`;
+const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}`;
 
 test.describe('Video Download - Integration Tests (Live Backend)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5183/');
+    await page.goto(`${FRONTEND_URL}/`);
     await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Video Library' }).first()).toBeVisible();
   });
