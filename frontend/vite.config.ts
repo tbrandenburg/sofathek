@@ -11,7 +11,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: parseInt(process.env.SOFATHEK_FRONTEND_PORT || '5183', 10),
+    port: parseInt(process.env.SOFATHEK_FRONTEND_PORT || '8010', 10),
     host: true,
     proxy: {
       '/api': {

@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY_IMAGE: sofathek/sofathek
   SOFATHEK_BACKEND_PORT: '3010'
-  SOFATHEK_FRONTEND_PORT: '5183'
+  SOFATHEK_FRONTEND_PORT: '8010'
 
 jobs:
   # Build and publish Docker images
@@ -107,11 +107,11 @@ jobs:
           USER sofathek
           
           # Expose port
-          EXPOSE 5183
+          EXPOSE 8010
           
           # Health check
           HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-              CMD wget --no-verbose --tries=1 --spider http://localhost:5183/ || exit 1
+              CMD wget --no-verbose --tries=1 --spider http://localhost:8010/ || exit 1
           
           # Start nginx
           CMD ["nginx", "-g", "daemon off;"]
@@ -132,8 +132,8 @@ jobs:
               keepalive_timeout  65;
               
               server {
-                  listen       5183;
-                  listen  [::]:5183;
+                  listen       8010;
+                  listen  [::]:8010;
                   server_name  localhost;
                   
                   root   /usr/share/nginx/html;

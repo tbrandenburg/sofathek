@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 const BACKEND_URL = `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`;
-const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}`;
+const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '8010'}`;
 
 /**
  * Thumbnail Display Verification Tests for Production Build
  * 
  * Verifies that all video thumbnails are properly displayed in the production build
- * running on SOFATHEK_FRONTEND_PORT (default 5183) with backend on SOFATHEK_BACKEND_PORT (default 3010)
+ * running on SOFATHEK_FRONTEND_PORT (default 8010) with backend on SOFATHEK_BACKEND_PORT (default 3010)
  */
 
 test.describe('Production Thumbnail Display Verification', () => {

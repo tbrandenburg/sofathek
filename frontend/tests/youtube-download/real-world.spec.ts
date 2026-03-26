@@ -311,7 +311,7 @@ test.describe('Real-World YouTube Download E2E Test', () => {
 // Step 7 from issue #187: Tests for non-YouTube video URLs acceptance (broader URL validation)
 test.describe('Non-YouTube Video URLs', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}/`, { waitUntil: 'networkidle' });
+    await page.goto(`http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '8010'}/`, { waitUntil: 'networkidle' });
   });
 
   test('should accept Vimeo URLs as valid', async ({ page }) => {

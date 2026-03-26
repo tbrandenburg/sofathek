@@ -5,7 +5,7 @@
 
 # Port configuration (override via: make dev SOFATHEK_BACKEND_PORT=4000)
 SOFATHEK_BACKEND_PORT ?= 3010
-SOFATHEK_FRONTEND_PORT ?= 5183
+SOFATHEK_FRONTEND_PORT ?= 8010
 
 # Default target
 help: ## Show available commands

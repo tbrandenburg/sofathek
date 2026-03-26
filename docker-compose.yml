@@ -40,11 +40,11 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "${SOFATHEK_FRONTEND_PORT:-5183}:${SOFATHEK_FRONTEND_PORT:-5183}"
+      - "${SOFATHEK_FRONTEND_PORT:-8010}:${SOFATHEK_FRONTEND_PORT:-8010}"
     environment:
       - CI=true
-      - SOFATHEK_FRONTEND_PORT=${SOFATHEK_FRONTEND_PORT:-5183}
-    command: sh -c "npm install && npx playwright install && npm run dev -- --host 0.0.0.0 --port ${SOFATHEK_FRONTEND_PORT:-5183}"
+      - SOFATHEK_FRONTEND_PORT=${SOFATHEK_FRONTEND_PORT:-8010}
+    command: sh -c "npm install && npx playwright install && npm run dev -- --host 0.0.0.0 --port ${SOFATHEK_FRONTEND_PORT:-8010}"
     depends_on:
       - backend
     networks:

@@ -33,7 +33,7 @@ function validateDir(dir: string, name: string): void {
 
 function parseAllowedOrigins(value: string | undefined): string[] {
   if (!value) {
-    const frontendPort = process.env.SOFATHEK_FRONTEND_PORT || '5183';
+    const frontendPort = process.env.SOFATHEK_FRONTEND_PORT || '8010';
     return [`http://localhost:${frontendPort}`];
   }
 

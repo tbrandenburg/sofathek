@@ -17,7 +17,7 @@ import { test, expect } from '@playwright/test';
 import { TEST_SELECTORS } from './fixtures';
 
 const BACKEND_URL = `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`;
-const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '5183'}`;
+const FRONTEND_URL = `http://localhost:${process.env.SOFATHEK_FRONTEND_PORT || '8010'}`;
 
 test.describe('Video Download - Integration Tests (Live Backend)', () => {
   test.beforeEach(async ({ page }) => {

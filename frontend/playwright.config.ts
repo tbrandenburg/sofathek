@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const FRONTEND_PORT = process.env.SOFATHEK_FRONTEND_PORT || '5183';
+const FRONTEND_PORT = process.env.SOFATHEK_FRONTEND_PORT || '8010';
 const BACKEND_PORT = process.env.SOFATHEK_BACKEND_PORT || '3010';
 const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
 // BACKEND_URL available to tests via process.env, exported here for reference
