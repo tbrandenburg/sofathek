@@ -3,7 +3,8 @@ import {
   downloadVideo, 
   getDownloadQueue, 
   getDownloadStatus, 
-  cancelDownload 
+  cancelDownload,
+  clearDownloadQueue
 } from '../services/youtube';
 import { DownloadRequest, QueueStatus, QueueItem } from '../types/youtube';
 
@@ -231,4 +232,19 @@ export function useClearQueue() {
     clearAll,
     isClearing: cancelMutation.isPending,
   };
+}
+
+/**
+ * Hook for clearing the full queue
+ */
+export function useClearDownloadQueue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: clearDownloadQueue,
+    retry: 1,
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['youtube', 'queue'] });
+    },
+  });
 }

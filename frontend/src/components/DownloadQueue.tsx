@@ -3,7 +3,7 @@ import { getUserFriendlyErrorMessage } from '../lib/error';
 import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
-import { useDownloadQueue, useCancelDownload } from '../hooks/useYouTube';
+import { useDownloadQueue, useCancelDownload, useClearDownloadQueue } from '../hooks/useYouTube';
 import { QueueItem } from '../types/youtube';
 
 interface DownloadQueueProps {
@@ -143,6 +143,21 @@ function QueueItemComponent({ item, onCancel, className = '' }: QueueItemCompone
 
 export function DownloadQueue({ className = '' }: DownloadQueueProps) {
   const { data: queue, isLoading, error } = useDownloadQueue();
+  const clearQueueMutation = useClearDownloadQueue();
+
+  const handleClearQueue = () => {
+    const hasQueueItems = (queue?.items?.length ?? 0) > 0;
+    if (!hasQueueItems) {
+      return;
+    }
+
+    const confirmed = window.confirm('Clear the full download queue? This will stop active downloads.');
+    if (!confirmed) {
+      return;
+    }
+
+    clearQueueMutation.mutate();
+  };
 
   if (error) {
     return (
@@ -184,7 +199,18 @@ export function DownloadQueue({ className = '' }: DownloadQueueProps) {
   return (
     <Card className={`download-queue ${className}`} data-testid="download-queue">
       <CardHeader>
-        <CardTitle>Download Queue</CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>Download Queue</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearQueue}
+            disabled={clearQueueMutation.isPending || !queue || queue.totalItems === 0}
+            data-testid="clear-queue-button"
+          >
+            {clearQueueMutation.isPending ? 'Clearing...' : 'Clear Queue'}
+          </Button>
+        </div>
         {queue && (
           <CardDescription>
             {queue.totalItems === 0 ? (

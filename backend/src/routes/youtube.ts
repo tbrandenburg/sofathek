@@ -221,6 +221,24 @@ router.post('/queue/cleanup', catchAsync(async (req: Request, res: Response) => 
 }));
 
 /**
+ * DELETE /api/youtube/queue
+ * Clear all queue items and stop active downloads
+ */
+router.delete('/queue', catchAsync(async (_req: Request, res: Response) => {
+  logger.info('Queue clear request');
+  const result = await downloadQueueService.clearQueue();
+
+  res.json({
+    status: 'success',
+    data: {
+      message: `Cleared ${result.removedCount} queue items`,
+      removedCount: result.removedCount,
+      cancelledProcessingCount: result.cancelledProcessingCount
+    }
+  });
+}));
+
+/**
  * GET /api/youtube/health
  * Health check endpoint for YouTube integration
  */
