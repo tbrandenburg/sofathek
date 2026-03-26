@@ -13,6 +13,12 @@ export default defineConfig({
   server: {
     port: parseInt(process.env.SOFATHEK_FRONTEND_PORT || '8010', 10),
     host: true,
+    allowedHosts: [
+      ".ngrok-free.dev", // current default ngrok domain
+      ".ngrok.io", // legacy domain
+      ".ngrok.app", // alternate domain
+      ".org", // org domains
+    ],
     proxy: {
       '/api': {
         target: `http://localhost:${process.env.SOFATHEK_BACKEND_PORT || '3010'}`,
