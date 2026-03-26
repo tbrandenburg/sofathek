@@ -5,12 +5,14 @@ const mockReadFile = jest.fn();
 const mockWriteFile = jest.fn();
 const mockMkdir = jest.fn();
 const mockRename = jest.fn();
+const mockUnlink = jest.fn();
 
 jest.mock('fs/promises', () => ({
   readFile: (...args: any[]) => mockReadFile(...args),
   writeFile: (...args: any[]) => mockWriteFile(...args),
   mkdir: (...args: any[]) => mockMkdir(...args),
-  rename: (...args: any[]) => mockRename(...args)
+  rename: (...args: any[]) => mockRename(...args),
+  unlink: (...args: any[]) => mockUnlink(...args)
 }));
 
 jest.mock('fs', () => ({
@@ -20,8 +22,10 @@ jest.mock('fs', () => ({
 
 // Mock YouTubeDownloadService
 const mockDownloadVideo = jest.fn();
+const mockCancelDownload = jest.fn();
 const mockYoutubeService = {
-  downloadVideo: mockDownloadVideo
+  downloadVideo: mockDownloadVideo,
+  cancelDownload: mockCancelDownload
 } as any;
 
 describe('DownloadQueueService', () => {
@@ -35,6 +39,8 @@ describe('DownloadQueueService', () => {
     mockWriteFile.mockResolvedValue(undefined);
     mockMkdir.mockResolvedValue(undefined);
     mockRename.mockResolvedValue(undefined);
+    mockUnlink.mockResolvedValue(undefined);
+    mockCancelDownload.mockResolvedValue(undefined);
     
     // Mock YouTube service to return success result
     mockDownloadVideo.mockResolvedValue({
@@ -166,6 +172,78 @@ describe('DownloadQueueService', () => {
       expect(cleanedCount1).toBe(0);
       expect(cleanedCount2).toBe(0); 
       expect(cleanedCount3).toBe(0);
+    });
+  });
+
+  describe('clearQueue', () => {
+    beforeEach(async () => {
+      mockReadFile.mockRejectedValue(new Error('File not found'));
+      mockWriteFile.mockResolvedValue(undefined);
+      await service.initialize();
+    });
+
+    it('should clear queue items and keep downloaded files intact', async () => {
+      const request = {
+        url: 'https://youtu.be/test-video',
+        requestId: 'req-1',
+        requestedAt: new Date()
+      };
+
+      const processingItem = await service.addToQueue(request);
+      const completedItem = await service.addToQueue({
+        ...request,
+        requestId: 'req-2'
+      });
+
+      const status = service.getQueueStatus();
+      const processing = status.items.find(item => item.id === processingItem.id);
+      const completed = status.items.find(item => item.id === completedItem.id);
+
+      if (!processing || !completed) {
+        throw new Error('Expected queue items to exist for test setup');
+      }
+
+      processing.status = 'processing';
+      completed.status = 'completed';
+      completed.result = {
+        id: 'download-1',
+        status: 'success',
+        videoPath: '/downloads/video.mp4',
+        startedAt: new Date(),
+        completedAt: new Date()
+      };
+
+      const result = await service.clearQueue();
+
+      expect(result.removedCount).toBe(2);
+      expect(result.cancelledProcessingCount).toBe(1);
+      expect(mockCancelDownload).toHaveBeenCalledWith(processingItem.id);
+      expect(mockUnlink).not.toHaveBeenCalled();
+      expect(service.getQueueStatus().totalItems).toBe(0);
+    });
+
+    it('should still clear queue if cancelling active downloads fails', async () => {
+      mockCancelDownload.mockRejectedValueOnce(new Error('cancel failed'));
+      const request = {
+        url: 'https://youtu.be/test-video',
+        requestId: 'req-1',
+        requestedAt: new Date()
+      };
+
+      const queueItem = await service.addToQueue(request);
+      const status = service.getQueueStatus();
+      const processing = status.items.find(item => item.id === queueItem.id);
+
+      if (!processing) {
+        throw new Error('Expected queue item to exist for test setup');
+      }
+      processing.status = 'processing';
+
+      const result = await service.clearQueue();
+
+      expect(result.removedCount).toBe(1);
+      expect(result.cancelledProcessingCount).toBe(0);
+      expect(service.getQueueStatus().totalItems).toBe(0);
     });
   });
   
