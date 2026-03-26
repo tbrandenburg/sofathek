@@ -126,5 +126,32 @@
       "All issue #187 checklist items addressed by PR #206"
     ],
     "last_verified": "2026-03-25T12:10:00Z"
+  },
+  "ISSUE_231_PICOMATCH_RCA": {
+    "status": "done",
+    "evidence": [
+      "gh issue view 231 -> Security: 1 high severity vulnerability found in picomatch",
+      "npm audit -> picomatch <=2.3.1 || 4.0.0-4.0.3 HIGH severity (GHSA-c2c7-rcm5-vvqj ReDoS + GHSA-3v7f-55p6-f55p Method Injection)",
+      "5xWhy RCA: Why1: picomatch 2.3.1 installed (vulnerable). Why2: package-lock.json locked to 2.3.1 before patch released. Why3: no automated transitive dep update process. Why4: Dependabot/Renovate only tracks direct deps by default. Why5: No overrides/resolutions in package.json to enforce minimum patched version.",
+      "Root cause: lockfile pinned to pre-patch version; no enforcement of minimum safe transitive dep version via overrides",
+      "Fix plan: Run npm audit fix (updates picomatch 2.3.1->2.3.2 and 4.0.3->4.0.4); add overrides in package.json to prevent regression"
+    ],
+    "last_verified": "2026-03-26T07:00:00Z"
+  },
+  "ISSUE_231_PICOMATCH_FIX": {
+    "status": "done",
+    "evidence": [
+      "npm audit fix -> updated picomatch 2.3.1->2.3.2 (5 instances) and 4.0.3->4.0.4 in package-lock.json",
+      "git diff package-lock.json | grep picomatch -> shows picomatch-2.3.2.tgz and picomatch-4.0.4.tgz",
+      "Added overrides.picomatch >=2.3.2 in root package.json to prevent regression",
+      "npm audit -> 1 moderate severity vulnerability (esbuild dev-only, breaking change required, out of scope)",
+      "picomatch HIGH vulnerability no longer present in npm audit output"
+    ],
+    "last_verified": "2026-03-26T07:10:00Z"
+  },
+  "ISSUE_231_PICOMATCH_CI": {
+    "status": "in_progress",
+    "evidence": [],
+    "last_verified": ""
   }
 }

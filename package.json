@@ -68,5 +68,8 @@
   "devDependencies": {
     "@types/node": "^25.5.0",
     "husky": "^9.1.7"
+  },
+  "overrides": {
+    "picomatch": ">=2.3.2"
   }
 }
