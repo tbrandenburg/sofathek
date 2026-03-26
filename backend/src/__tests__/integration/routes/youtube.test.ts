@@ -10,7 +10,8 @@ jest.mock('../../../services/index', () => ({
     addToQueue: jest.fn(),
     getQueueStatus: jest.fn(),
     cancelDownload: jest.fn(),
-    cleanupOldItems: jest.fn()
+    cleanupOldItems: jest.fn(),
+    clearQueue: jest.fn()
   },
   youTubeDownloadService: {
     validateYouTubeUrl: jest.fn()
@@ -347,6 +348,24 @@ describe('YouTube Routes', () => {
       expect(response.body.data.cleanedCount).toBe(5);
       expect(response.body.data.maxAgeHours).toBe(48);
       expect(mockDownloadQueueService.cleanupOldItems).toHaveBeenCalledWith(48);
+    });
+  });
+
+  describe('DELETE /api/youtube/queue', () => {
+    it('should clear queue and return summary', async () => {
+      mockDownloadQueueService.clearQueue.mockResolvedValue({
+        removedCount: 4,
+        cancelledProcessingCount: 1
+      });
+
+      const response = await request(app)
+        .delete('/api/youtube/queue');
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.removedCount).toBe(4);
+      expect(response.body.data.cancelledProcessingCount).toBe(1);
+      expect(mockDownloadQueueService.clearQueue).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -3,17 +3,19 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DownloadQueue } from '../components/DownloadQueue';
-import { useDownloadQueue, useCancelDownload } from '../hooks/useYouTube';
+import { useDownloadQueue, useCancelDownload, useClearDownloadQueue } from '../hooks/useYouTube';
 import { QueueStatus } from '../types/youtube';
 
 // Mock the YouTube hooks
 vi.mock('../hooks/useYouTube', () => ({
   useDownloadQueue: vi.fn(),
   useCancelDownload: vi.fn(),
+  useClearDownloadQueue: vi.fn(),
 }));
 
 const mockUseDownloadQueue = vi.mocked(useDownloadQueue);
 const mockUseCancelDownload = vi.mocked(useCancelDownload);
+const mockUseClearDownloadQueue = vi.mocked(useClearDownloadQueue);
 
 // Test wrapper for React Query
 const createWrapper = () => {
@@ -34,6 +36,16 @@ describe('DownloadQueue Component', () => {
     
     // Default mock for cancel mutation
     mockUseCancelDownload.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+      isSuccess: false,
+      error: null,
+      data: undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    mockUseClearDownloadQueue.mockReturnValue({
       mutate: vi.fn(),
       isPending: false,
       isError: false,
@@ -77,6 +89,7 @@ describe('DownloadQueue Component', () => {
     expect(screen.getByText('Download Queue')).toBeInTheDocument();
     expect(screen.getByText('No downloads yet')).toBeInTheDocument();
     expect(screen.getByText(/enter a youtube url above to start downloading/i)).toBeInTheDocument();
+    expect(screen.getByTestId('clear-queue-button')).toBeDisabled();
   });
 
   test('should render loading state', () => {
@@ -417,5 +430,60 @@ describe('DownloadQueue Component', () => {
 
     const component = screen.getByTestId('download-queue');
     expect(component).toHaveClass('custom-queue-class');
+  });
+
+  test('should clear queue when clear button is confirmed', () => {
+    const mockClearMutate = vi.fn();
+    mockUseClearDownloadQueue.mockReturnValue({
+      mutate: mockClearMutate,
+      isPending: false,
+      isError: false,
+      isSuccess: false,
+      error: null,
+      data: undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    const queueWithItems: QueueStatus = {
+      items: [
+        {
+          id: 'download-1',
+          url: 'https://www.youtube.com/watch?v=test1',
+          title: 'Queued Video',
+          status: 'pending',
+          progress: 0,
+          currentStep: 'Queued',
+          queuedAt: new Date().toISOString()
+        }
+      ],
+      totalItems: 1,
+      processing: 0,
+      completed: 0,
+      failed: 0,
+      pending: 1,
+      cancelled: 0,
+      lastUpdated: new Date().toISOString()
+    };
+
+    mockUseDownloadQueue.mockReturnValue({
+      data: queueWithItems,
+      isLoading: false,
+      error: null,
+      isError: false,
+      refetch: vi.fn()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const Wrapper = createWrapper();
+    render(
+      <Wrapper>
+        <DownloadQueue />
+      </Wrapper>
+    );
+
+    fireEvent.click(screen.getByTestId('clear-queue-button'));
+    expect(mockClearMutate).toHaveBeenCalledTimes(1);
   });
 });

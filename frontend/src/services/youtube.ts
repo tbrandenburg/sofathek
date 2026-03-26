@@ -149,6 +149,22 @@ export async function cancelDownload(itemId: string): Promise<{ message: string;
 }
 
 /**
+ * Clear the entire download queue
+ * DELETE /api/youtube/queue
+ */
+export async function clearDownloadQueue(): Promise<{ message: string; removedCount: number; cancelledProcessingCount: number }> {
+  const response = await youtubeApiFetch<{ message: string; removedCount: number; cancelledProcessingCount: number }>('/youtube/queue', {
+    method: 'DELETE',
+  });
+
+  if (response.status !== 'success' || !response.data) {
+    throw new ApiError(response.message || 'Failed to clear download queue', 400);
+  }
+
+  return response.data;
+}
+
+/**
  * Validate video URL format (supports YouTube and other video URLs)
  * Matches backend validation logic for consistency
  */

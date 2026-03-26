@@ -14,6 +14,11 @@ interface CancelResult {
   reason?: 'not_found' | 'already_completed' | 'already_cancelled' | 'error';
 }
 
+interface ClearQueueResult {
+  removedCount: number;
+  cancelledProcessingCount: number;
+}
+
 /**
  * Queue management for YouTube download operations
  */
@@ -254,5 +259,51 @@ export class DownloadQueueService {
       });
       return 0;
     }
+  }
+
+  /**
+   * Clear all queue items and cancel any active downloads.
+   */
+  async clearQueue(): Promise<ClearQueueResult> {
+    const snapshot = [...this.queue];
+    let cancelledProcessingCount = 0;
+
+    for (const item of snapshot) {
+      if (item.status === 'processing') {
+        try {
+          await this.youtubeDownloadService.cancelDownload(item.id);
+          cancelledProcessingCount += 1;
+        } catch (error) {
+          logger.warn('Failed to cancel active download while clearing queue', {
+            queueItemId: item.id,
+            error: getErrorMessage(error)
+          });
+        }
+      }
+
+      if (item.result?.videoPath) {
+        try {
+          await fs.unlink(item.result.videoPath);
+        } catch (error) {
+          logger.warn('Failed to remove queue item file while clearing queue', {
+            queueItemId: item.id,
+            error: getErrorMessage(error)
+          });
+        }
+      }
+    }
+
+    this.queue = [];
+    await this.saveQueue();
+
+    logger.info('Queue cleared', {
+      removedCount: snapshot.length,
+      cancelledProcessingCount
+    });
+
+    return {
+      removedCount: snapshot.length,
+      cancelledProcessingCount
+    };
   }
 }

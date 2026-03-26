@@ -9,7 +9,7 @@ A self-hosted family media center application with Netflix-like interface and br
 - **Media Library**: File system-based video discovery with thumbnail generation
 - **Video Streaming**: HTTP range request support for efficient video playback
 - **Usage Statistics**: Simple view count tracking stored in JSON files
-- **Admin Interface**: Video download management (URL input, queue control), delete videos, storage usage
+- **Admin Interface**: Video download management (URL input, queue control, clear queue action), delete videos, storage usage
 - **Mobile-Responsive**: Optimized for all screen sizes
 
 ## Tech Stack
