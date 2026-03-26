@@ -150,8 +150,13 @@
     "last_verified": "2026-03-26T07:10:00Z"
   },
   "ISSUE_231_PICOMATCH_CI": {
-    "status": "in_progress",
-    "evidence": [],
-    "last_verified": ""
+    "status": "done",
+    "evidence": [
+      "gh run list --branch fix/issue-231-picomatch-security -> conclusion: success, status: completed",
+      "CI/CD Pipeline run 23582045351: Level1 Static ✓, Level2 Build ✓, Level3 Unit Tests ✓, Level4 E2E Tests ✓",
+      "PR #233 CI all checks passing: https://github.com/tbrandenburg/sofathek/actions/runs/23582045351",
+      "All 246 backend + 165 frontend unit tests pass locally: npm test (verified 2026-03-26T08:09:43Z)"
+    ],
+    "last_verified": "2026-03-26T08:20:00Z"
   }
 }
