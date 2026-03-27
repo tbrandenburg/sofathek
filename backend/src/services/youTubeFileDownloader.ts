@@ -5,6 +5,7 @@ import * as fs from 'fs/promises';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 import { YouTubeMetadata } from '../types/youtube';
+import { parseYtDlpError } from '../utils/ytDlpErrorParser';
 
 export class YouTubeFileDownloader {
   private readonly tempDirectory: string;
@@ -15,6 +16,8 @@ export class YouTubeFileDownloader {
   }
 
   async download(url: string, metadata: YouTubeMetadata, downloadId?: string): Promise<string> {
+    let stderrOutput = '';
+
     try {
       const safeTitle = this.createSafeFilename(metadata.title);
       const outputTemplate = path.join(this.tempDirectory, `${safeTitle}-${metadata.id}.%(ext)s`);
@@ -39,6 +42,10 @@ export class YouTubeFileDownloader {
       if (downloadId) {
         this.activeSubprocesses.set(downloadId, tracker);
       }
+
+      subprocess.stderr?.on('data', (data) => {
+        stderrOutput += data.toString();
+      });
 
       subprocess.stdout?.on('data', (data) => {
         const output = data.toString();
@@ -78,12 +85,20 @@ export class YouTubeFileDownloader {
         throw error;
       }
       const errorMessage = getErrorMessage(error);
+      const stderrMessage = stderrOutput.trim() || ((error as any).stderr as string | undefined)?.trim() || '';
       logger.error('Video file download failed', {
         url,
         error: errorMessage,
-        stderr: (error as any).stderr
+        stderr: stderrMessage
       });
-      throw new AppError('Could not download video file. Please try again.', 500);
+
+      // Parse yt-dlp error for user-friendly message
+      const errorInfo = parseYtDlpError(stderrMessage);
+
+      // Log the parsed error type for debugging
+      logger.info('Categorized yt-dlp error', { url, errorCode: errorInfo.code });
+
+      throw new AppError(`${errorInfo.message} ${errorInfo.suggestion}`, 500, true, errorInfo.code);
     }
   }
 

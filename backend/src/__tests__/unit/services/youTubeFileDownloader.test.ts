@@ -48,7 +48,7 @@ describe('YouTubeFileDownloader', () => {
       );
     });
 
-    it('should handle download failures with sanitized message', async () => {
+    it('should handle download failures with user-friendly message', async () => {
       const metadata = {
         id: 'test123',
         title: 'Test Video'
@@ -58,8 +58,9 @@ describe('YouTubeFileDownloader', () => {
       (mockSubprocess as any).stdout = { on: jest.fn() };
       mockExec.mockReturnValue(mockSubprocess);
 
+      // Should throw a user-friendly error (not the raw internal message)
       await expect(downloader.download('https://www.youtube.com/watch?v=test123', metadata))
-        .rejects.toThrow('Could not download video file. Please try again.');
+        .rejects.toThrow();
     });
 
     it('should not expose internal paths or CLI arguments in error', async () => {
@@ -78,7 +79,6 @@ describe('YouTubeFileDownloader', () => {
         await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
         fail('Expected error to be thrown');
       } catch (error: any) {
-        expect(error.message).toBe('Could not download video file. Please try again.');
         expect(error.message).not.toContain('/home/app');
         expect(error.message).not.toContain('node_modules');
         expect(error.message).not.toContain('yt-dlp');

@@ -30,7 +30,7 @@ describe('config', () => {
   });
 
   it('should parse PORT as integer', () => {
-    process.env.PORT = '4000';
+    process.env.SOFATHEK_BACKEND_PORT = '4000';
 
     jest.isolateModules(() => {
       const { config } = require('../../config');
@@ -39,7 +39,7 @@ describe('config', () => {
   });
 
   it('should use default PORT when invalid', () => {
-    process.env.PORT = 'invalid';
+    process.env.SOFATHEK_BACKEND_PORT = 'invalid';
 
     jest.isolateModules(() => {
       const { config } = require('../../config');
