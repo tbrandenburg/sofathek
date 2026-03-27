@@ -7,11 +7,13 @@ import { logger } from '../utils/logger';
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
+  public readonly code: string | undefined;
 
-  constructor(message: string, statusCode: number = 500, isOperational: boolean = true) {
+  constructor(message: string, statusCode: number = 500, isOperational: boolean = true, code?: string) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
+    this.code = code;
 
     // Maintains proper stack trace for where our error was thrown
     Error.captureStackTrace(this, this.constructor);
@@ -37,6 +39,7 @@ interface DevErrorResponse {
 interface ProdErrorResponse {
   status: 'error';
   message: string;
+  code?: string;
 }
 
 /**
@@ -65,6 +68,7 @@ const sendProdError = (err: AppError, res: Response): void => {
     const response: ProdErrorResponse = {
       status: 'error',
       message: err.message,
+      ...(err.code !== undefined && { code: err.code }),
     };
     res.status(err.statusCode).json(response);
   } else {

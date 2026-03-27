@@ -5,6 +5,7 @@ import * as fs from 'fs/promises';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 import { YouTubeMetadata } from '../types/youtube';
+import { parseYtDlpError } from '../utils/ytDlpErrorParser';
 
 export class YouTubeFileDownloader {
   private readonly tempDirectory: string;
@@ -78,12 +79,20 @@ export class YouTubeFileDownloader {
         throw error;
       }
       const errorMessage = getErrorMessage(error);
+      const stderrMessage = ((error as any).stderr as string | undefined)?.trim() ?? '';
       logger.error('Video file download failed', {
         url,
         error: errorMessage,
-        stderr: (error as any).stderr
+        stderr: stderrMessage
       });
-      throw new AppError('Could not download video file. Please try again.', 500);
+
+      // Parse yt-dlp error for user-friendly message
+      const errorInfo = parseYtDlpError(stderrMessage);
+
+      // Log the parsed error type for debugging
+      logger.info('Categorized yt-dlp error', { url, errorCode: errorInfo.code });
+
+      throw new AppError(`${errorInfo.message} ${errorInfo.suggestion}`, 500, true, errorInfo.code);
     }
   }
 

@@ -5,6 +5,7 @@ import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 import { YouTubeMetadata } from '../types/youtube';
 import { validateYtDlpResponse } from '../utils/validation';
+import { parseYtDlpError } from '../utils/ytDlpErrorParser';
 
 export class YouTubeMetadataExtractor {
   async extract(url: string): Promise<YouTubeMetadata> {
@@ -54,6 +55,9 @@ export class YouTubeMetadataExtractor {
       return result;
 
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       const errorMessage = getErrorMessage(error);
       const stderrMessage = stderrOutput.trim();
 
@@ -63,7 +67,14 @@ export class YouTubeMetadataExtractor {
         stderr: stderrMessage
       });
 
-      throw new AppError('Could not fetch video metadata. Please check the URL and try again.', 500);
+      // Parse yt-dlp error for user-friendly message
+      const errorInfo = parseYtDlpError(stderrMessage);
+
+      // Log the parsed error type for debugging
+      logger.info('Categorized yt-dlp error', { url, errorCode: errorInfo.code });
+
+      // Throw with user-friendly message derived from yt-dlp output
+      throw new AppError(`${errorInfo.message} ${errorInfo.suggestion}`, 500, true, errorInfo.code);
     }
   }
 }
