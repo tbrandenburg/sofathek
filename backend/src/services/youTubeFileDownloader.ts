@@ -16,6 +16,8 @@ export class YouTubeFileDownloader {
   }
 
   async download(url: string, metadata: YouTubeMetadata, downloadId?: string): Promise<string> {
+    let stderrOutput = '';
+
     try {
       const safeTitle = this.createSafeFilename(metadata.title);
       const outputTemplate = path.join(this.tempDirectory, `${safeTitle}-${metadata.id}.%(ext)s`);
@@ -40,6 +42,10 @@ export class YouTubeFileDownloader {
       if (downloadId) {
         this.activeSubprocesses.set(downloadId, tracker);
       }
+
+      subprocess.stderr?.on('data', (data) => {
+        stderrOutput += data.toString();
+      });
 
       subprocess.stdout?.on('data', (data) => {
         const output = data.toString();
@@ -79,7 +85,7 @@ export class YouTubeFileDownloader {
         throw error;
       }
       const errorMessage = getErrorMessage(error);
-      const stderrMessage = ((error as any).stderr as string | undefined)?.trim() ?? '';
+      const stderrMessage = stderrOutput.trim() || ((error as any).stderr as string | undefined)?.trim() || '';
       logger.error('Video file download failed', {
         url,
         error: errorMessage,

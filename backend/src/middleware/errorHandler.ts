@@ -30,6 +30,7 @@ interface DevErrorResponse {
     statusCode: number;
     stack: string | undefined;
     isOperational: boolean;
+    code: string | undefined;
   };
 }
 
@@ -53,6 +54,7 @@ const sendDevError = (err: AppError, res: Response): void => {
       statusCode: err.statusCode,
       stack: err.stack,
       isOperational: err.isOperational,
+      code: err.code,
     },
   };
 
