@@ -432,6 +432,88 @@ describe('DownloadQueue Component', () => {
     expect(component).toHaveClass('custom-queue-class');
   });
 
+  test('should invalidate videos query when a download completes', () => {
+    const queueBeforeCompletion: QueueStatus = {
+      items: [
+        {
+          id: 'download-1',
+          url: 'https://www.youtube.com/watch?v=test1',
+          title: 'Processing Video',
+          status: 'processing',
+          progress: 80,
+          currentStep: 'Downloading',
+          queuedAt: new Date().toISOString(),
+        },
+      ],
+      totalItems: 1,
+      processing: 1,
+      completed: 0,
+      failed: 0,
+      pending: 0,
+      cancelled: 0,
+      lastUpdated: new Date().toISOString(),
+    };
+
+    const queueAfterCompletion: QueueStatus = {
+      ...queueBeforeCompletion,
+      items: [
+        {
+          ...queueBeforeCompletion.items[0],
+          status: 'completed',
+          progress: 100,
+          completedAt: new Date().toISOString(),
+        },
+      ],
+      processing: 0,
+      completed: 1,
+    };
+
+    mockUseDownloadQueue.mockReturnValue({
+      data: queueBeforeCompletion,
+      isLoading: false,
+      error: null,
+      isError: false,
+      refetch: vi.fn(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { rerender } = render(
+      <Wrapper>
+        <DownloadQueue />
+      </Wrapper>
+    );
+
+    mockUseDownloadQueue.mockReturnValue({
+      data: queueAfterCompletion,
+      isLoading: false,
+      error: null,
+      isError: false,
+      refetch: vi.fn(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    rerender(
+      <Wrapper>
+        <DownloadQueue />
+      </Wrapper>
+    );
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['videos'] });
+  });
+
   test('should clear queue when clear button is confirmed', () => {
     const mockClearMutate = vi.fn();
     mockUseClearDownloadQueue.mockReturnValue({
