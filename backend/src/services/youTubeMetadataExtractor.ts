@@ -45,12 +45,41 @@ export class YouTubeMetadataExtractor {
       } else if (metadata.channel !== undefined) {
         result.uploader = metadata.channel;
       }
+      if (metadata.uploader_id !== undefined) result.uploaderId = metadata.uploader_id;
+      if (metadata.channel_id !== undefined) result.channelId = metadata.channel_id;
+      if (metadata.channel_url !== undefined) result.channelUrl = metadata.channel_url;
+      if (metadata.channel_follower_count !== undefined) result.channelFollowerCount = metadata.channel_follower_count;
+      if (metadata.channel_is_verified !== undefined) result.channelIsVerified = metadata.channel_is_verified;
       if (metadata.upload_date !== undefined) result.uploadDate = metadata.upload_date;
+      if (metadata.timestamp !== undefined) result.timestamp = metadata.timestamp;
       if (metadata.view_count !== undefined) result.viewCount = metadata.view_count;
-      if (metadata.format !== undefined) result.format = metadata.format;
+      if (metadata.like_count !== undefined) result.likeCount = metadata.like_count;
+      if (metadata.comment_count !== undefined) result.commentCount = metadata.comment_count;
       if (metadata.width !== undefined) result.width = metadata.width;
       if (metadata.height !== undefined) result.height = metadata.height;
+      if (metadata.resolution !== undefined) result.resolution = metadata.resolution;
+      if (metadata.fps !== undefined) result.fps = metadata.fps;
+      if (metadata.aspect_ratio !== undefined) result.aspectRatio = metadata.aspect_ratio;
+      if (metadata.dynamic_range !== undefined) result.dynamicRange = metadata.dynamic_range;
+      if (metadata.vcodec !== undefined) result.vcodec = metadata.vcodec;
+      if (metadata.acodec !== undefined) result.acodec = metadata.acodec;
+      if (metadata.vbr !== undefined) result.vbr = metadata.vbr;
+      if (metadata.abr !== undefined) result.abr = metadata.abr;
+      if (metadata.tbr !== undefined) result.tbr = metadata.tbr;
+      if (metadata.asr !== undefined) result.asr = metadata.asr;
+      if (metadata.audio_channels !== undefined) result.audioChannels = metadata.audio_channels;
+      if (metadata.filesize_approx !== undefined) result.filesizeApprox = metadata.filesize_approx;
+      if (metadata.categories !== undefined) result.categories = metadata.categories;
+      if (metadata.tags !== undefined) result.tags = metadata.tags;
+      if (metadata.age_limit !== undefined) result.ageLimit = metadata.age_limit;
+      if (metadata.language !== undefined) result.language = metadata.language;
+      if (metadata.availability !== undefined) result.availability = metadata.availability;
+      if (metadata.is_live !== undefined) result.isLive = metadata.is_live;
+      if (metadata.was_live !== undefined) result.wasLive = metadata.was_live;
+      if (metadata.live_status !== undefined) result.liveStatus = metadata.live_status;
+      if (metadata.playable_in_embed !== undefined) result.playableInEmbed = metadata.playable_in_embed;
       if (metadata.thumbnail !== undefined) result.thumbnailUrl = metadata.thumbnail;
+      if (metadata.webpage_url !== undefined) result.webpageUrl = metadata.webpage_url;
 
       return result;
 

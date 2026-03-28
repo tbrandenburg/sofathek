@@ -13,7 +13,7 @@ export interface DownloadRequest {
 }
 
 /**
- * YouTube video metadata from yt-dlp
+ * YouTube video metadata from yt-dlp (Tier 1 + 2 fields)
  */
 export interface YouTubeMetadata {
   /** YouTube video ID */
@@ -26,18 +26,76 @@ export interface YouTubeMetadata {
   duration?: number;
   /** Channel name */
   uploader?: string;
-  /** Upload date */
+  /** Uploader / channel handle */
+  uploaderId?: string;
+  /** Channel ID */
+  channelId?: string;
+  /** Channel URL */
+  channelUrl?: string;
+  /** Channel follower count */
+  channelFollowerCount?: number;
+  /** Whether channel is verified */
+  channelIsVerified?: boolean;
+  /** Upload date (YYYYMMDD) */
   uploadDate?: string;
+  /** Upload Unix timestamp */
+  timestamp?: number;
   /** View count */
   viewCount?: number;
-  /** Video format information */
-  format?: string;
+  /** Like count */
+  likeCount?: number;
+  /** Comment count */
+  commentCount?: number;
   /** Video resolution width */
   width?: number;
   /** Video resolution height */
   height?: number;
+  /** Resolution string e.g. "1920x1080" */
+  resolution?: string;
+  /** Frames per second */
+  fps?: number;
+  /** Aspect ratio */
+  aspectRatio?: number;
+  /** Dynamic range e.g. "SDR" */
+  dynamicRange?: string;
+  /** Video codec */
+  vcodec?: string;
+  /** Audio codec */
+  acodec?: string;
+  /** Video bitrate (kbps) */
+  vbr?: number;
+  /** Audio bitrate (kbps) */
+  abr?: number;
+  /** Total bitrate (kbps) */
+  tbr?: number;
+  /** Audio sample rate (Hz) */
+  asr?: number;
+  /** Audio channel count */
+  audioChannels?: number;
+  /** Approximate file size in bytes */
+  filesizeApprox?: number;
+  /** Content categories */
+  categories?: string[];
+  /** Content tags */
+  tags?: string[];
+  /** Age limit */
+  ageLimit?: number;
+  /** Language code */
+  language?: string;
+  /** Availability status */
+  availability?: string;
+  /** Whether currently live */
+  isLive?: boolean;
+  /** Whether was previously live */
+  wasLive?: boolean;
+  /** Live status string */
+  liveStatus?: string;
+  /** Whether playable in embed */
+  playableInEmbed?: boolean;
   /** Thumbnail URL from YouTube */
   thumbnailUrl?: string;
+  /** Original webpage URL */
+  webpageUrl?: string;
 }
 
 /**
