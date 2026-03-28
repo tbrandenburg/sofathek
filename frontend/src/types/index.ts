@@ -34,6 +34,15 @@ export interface VideoMetadata {
   bitrate?: number;
   /** Thumbnail file path (relative to videos directory) */
   thumbnail?: string;
+  /** Downloaded audio file path (relative to videos directory) */
+  audio?: string;
+  /** Available transcript/subtitle files */
+  transcripts?: TranscriptFile[];
+}
+
+export interface TranscriptFile {
+  language: string;
+  file: string;
 }
 
 /**

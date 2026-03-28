@@ -35,6 +35,20 @@ export interface VideoMetadata {
   bitrate?: number;
   /** Thumbnail file name (relative to videos directory) */
   thumbnail?: string;
+  /** Matching downloaded audio file name (relative to videos directory) */
+  audio?: string;
+  /** Matching subtitle files (relative to videos directory) */
+  transcripts?: TranscriptFile[];
+}
+
+/**
+ * Transcript file metadata discovered next to a video file
+ */
+export interface TranscriptFile {
+  /** Language code (e.g. en, de, sv, unknown) */
+  language: string;
+  /** Subtitle filename (relative to videos directory) */
+  file: string;
 }
 
 /**

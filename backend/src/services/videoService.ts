@@ -8,6 +8,7 @@ import {
   VideoMetadata, 
   Video, 
   VideoScanResult,
+  TranscriptFile,
   SUPPORTED_VIDEO_EXTENSIONS,
   SupportedVideoExtension
 } from '../types/video';
@@ -21,6 +22,8 @@ export class VideoService {
   private thumbnailCache: Map<string, { files: string[]; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000;
   private readonly THUMBNAIL_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+  private readonly AUDIO_EXTENSIONS = ['.mp3'];
+  private readonly TRANSCRIPT_EXTENSION = '.srt';
 
   constructor(videosDirectory: string, thumbnailsDirectory: string) {
     this.videosDirectory = videosDirectory;
@@ -185,12 +188,62 @@ export class VideoService {
     const thumbnail = existingThumbnail !== undefined
       ? existingThumbnail
       : await this.findThumbnail(videoFile.path);
+    const audio = await this.findAudio(videoFile.path);
+    const transcripts = await this.findTranscripts(videoFile.path);
 
     return {
       title,
       format: videoFile.extension.toUpperCase(),
-      ...(thumbnail && { thumbnail })
+      ...(thumbnail && { thumbnail }),
+      ...(audio && { audio }),
+      ...(transcripts.length > 0 && { transcripts })
     };
+  }
+
+  private async findAudio(videoPath: string): Promise<string | null> {
+    const videoDir = path.dirname(videoPath);
+    const baseName = path.basename(videoPath, path.extname(videoPath));
+
+    for (const ext of this.AUDIO_EXTENSIONS) {
+      const audioPath = path.join(videoDir, `${baseName}${ext}`);
+      try {
+        await fs.access(audioPath);
+        return `${baseName}${ext}`;
+      } catch {
+        // Try next supported audio extension
+      }
+    }
+
+    return null;
+  }
+
+  private async findTranscripts(videoPath: string): Promise<TranscriptFile[]> {
+    const videoDir = path.dirname(videoPath);
+    const baseName = path.basename(videoPath, path.extname(videoPath));
+
+    try {
+      const files = await fs.readdir(videoDir);
+      const transcripts = files
+        .filter(file => file.startsWith(`${baseName}.`) && file.endsWith(this.TRANSCRIPT_EXTENSION))
+        .map(file => ({
+          language: this.parseTranscriptLanguage(file, baseName),
+          file
+        }))
+        .sort((a, b) => a.language.localeCompare(b.language));
+
+      return transcripts;
+    } catch {
+      return [];
+    }
+  }
+
+  private parseTranscriptLanguage(filename: string, baseName: string): string {
+    const suffix = filename.substring(baseName.length + 1, filename.length - this.TRANSCRIPT_EXTENSION.length);
+    if (!suffix) {
+      return 'unknown';
+    }
+    const languageToken = suffix.split('.')[0];
+    return languageToken || 'unknown';
   }
 
   /**

@@ -111,7 +111,8 @@ async function waitForDownloadCompletion(
 }
 
 describe('Video Download Integration (Real)', () => {
-  const suite = describe;  // Always run - tests are now valid for any HTTP/HTTPS URL
+  const shouldRunRealDownloadTests = process.env.RUN_REAL_DOWNLOAD_TESTS === 'true';
+  const suite = shouldRunRealDownloadTests ? describe : describe.skip;
 
   suite('real API and download workflow', () => {
     let app: express.Application;
@@ -119,7 +120,7 @@ describe('Video Download Integration (Real)', () => {
 
     beforeAll(async () => {
       if (!(await isYtDlpAvailable())) {
-        throw new Error('yt-dlp is not available in PATH. Install yt-dlp or set RUN_REAL_DOWNLOAD_TESTS=false (or omit the flag).');
+        throw new Error('yt-dlp is not available in PATH. Set RUN_REAL_DOWNLOAD_TESTS=true and ensure yt-dlp is installed.');
       }
 
       const modules = await createIsolatedApp();

@@ -7,7 +7,7 @@ import { Layout, ContentContainer, PageHeader } from './components/Layout/Layout
 import { YouTubeDownload } from './components/YouTubeDownload';
 import { DownloadQueue } from './components/DownloadQueue';
 import { useVideos } from './hooks/useVideos';
-import { getVideoStreamUrl, sanitizeFilename } from './services/api';
+import { getDownloadFileUrl, sanitizeFilename } from './services/api';
 
 // Create Query Client outside component to avoid recreation on renders
 const queryClient = new QueryClient({
@@ -49,6 +49,9 @@ function App() {
     // Could show a toast notification here
   };
 
+  const transcriptDownloads = (selectedVideo?.metadata.transcripts ?? [])
+    .filter(item => ['en', 'de', 'sv'].includes(item.language.toLowerCase()));
+
   return (
     <Layout>
       <ContentContainer>
@@ -83,7 +86,7 @@ function App() {
             <div className="absolute top-4 right-4 z-10 flex gap-2">
               {selectedVideo.file?.name && (
                 <a
-                  href={getVideoStreamUrl(selectedVideo.file.name)}
+                  href={getDownloadFileUrl(selectedVideo.file.name)}
                   download={sanitizeFilename(selectedVideo.file.name)}
                   className="text-white hover:text-gray-300 text-xl p-2"
                   aria-label="Download video"
@@ -92,6 +95,34 @@ function App() {
                   ↓
                 </a>
               )}
+              {selectedVideo.metadata.audio && (
+                <a
+                  href={getDownloadFileUrl(selectedVideo.metadata.audio)}
+                  download={sanitizeFilename(selectedVideo.metadata.audio)}
+                  className="text-white hover:text-gray-300 p-2"
+                  aria-label="Download audio"
+                  title="Download audio"
+                >
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                    <path d="M15 3v11.55a4 4 0 1 1-2-3.46V7h8V3h-6z" />
+                  </svg>
+                </a>
+              )}
+              {transcriptDownloads.map((transcript) => {
+                const language = transcript.language.toLowerCase();
+                return (
+                  <a
+                    key={transcript.file}
+                    href={getDownloadFileUrl(transcript.file)}
+                    download={sanitizeFilename(transcript.file)}
+                    className="text-white hover:text-gray-300 text-sm font-semibold px-2 py-2"
+                    aria-label={`Download ${language.toUpperCase()} transcript`}
+                    title={`Download ${language.toUpperCase()} transcript`}
+                  >
+                    {language.toUpperCase()}
+                  </a>
+                );
+              })}
               <button 
                 className="text-white hover:text-gray-300 text-2xl font-bold"
                 onClick={handleClosePlayer}

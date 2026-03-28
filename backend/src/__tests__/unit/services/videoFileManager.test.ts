@@ -31,13 +31,19 @@ describe('VideoFileManager', () => {
       };
 
       mockMkdir.mockResolvedValue(undefined);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'Test_Video-test123.mp3', 'other-file.mp4']);
       mockRename.mockResolvedValue(undefined);
 
       const result = await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
 
       expect(result).toBe('/test/videos/Test_Video-test123.mp4');
       expect(mockMkdir).toHaveBeenCalledWith('/test/videos', { recursive: true });
+      expect(mockReaddir).toHaveBeenCalledWith('/test/temp');
+      // Moves all files with the prefix (video + companions)
       expect(mockRename).toHaveBeenCalledWith('/test/temp/Test_Video-test123.mp4', '/test/videos/Test_Video-test123.mp4');
+      expect(mockRename).toHaveBeenCalledWith('/test/temp/Test_Video-test123.mp3', '/test/videos/Test_Video-test123.mp3');
+      // Non-matching file is NOT moved
+      expect(mockRename).not.toHaveBeenCalledWith('/test/temp/other-file.mp4', expect.anything());
     });
 
     it('should handle move failures', async () => {
@@ -47,7 +53,7 @@ describe('VideoFileManager', () => {
       };
 
       mockMkdir.mockResolvedValue(undefined);
-      mockRename.mockRejectedValue(new Error('Permission denied'));
+      mockReaddir.mockRejectedValue(new Error('Permission denied'));
 
       await expect(manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata))
         .rejects.toThrow('Failed to move video to library');
@@ -60,6 +66,7 @@ describe('VideoFileManager', () => {
       };
 
       mockMkdir.mockResolvedValue(undefined);
+      mockReaddir.mockResolvedValue(['Test_Video_Special_CharactersAndMore!-test123.mp4']);
       mockRename.mockResolvedValue(undefined);
 
       const result = await manager.moveToLibrary('/test/temp/file.mp4', metadata);

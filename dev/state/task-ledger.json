@@ -180,9 +180,11 @@
       "git diff backend/package.json shows: removed 'postinstall': 'node node_modules/youtube-dl-exec/scripts/postinstall.js'",
       "youtube-dl-exec already has its own postinstall that runs automatically - no need for explicit call",
       "git commit 00d192c pushed to origin/main",
-      "Local npm ci test with YOUTUBE_DL_SKIP_DOWNLOAD=true completed successfully (884 packages installed)"
+      "Local npm ci test with YOUTUBE_DL_SKIP_DOWNLOAD=true completed successfully (884 packages installed)",
+      "Merge of origin/main into PR branch codex/add-transcript-and-audio-download-options completed (commit a4e5fc2)",
+      "All 267 tests pass locally after merge"
     ],
-    "last_verified": "2026-03-28T18:45:00Z"
+    "last_verified": "2026-03-28T20:14:00Z"
   },
   "ISSUE_243_VERIFY_CI": {
     "status": "in_progress",
@@ -191,8 +193,8 @@
       "Commit 275ea75 pushed as additional trigger attempt",
       "git log origin/main --oneline shows: 275ea75 ci: re-trigger CI verification, 00d192c fix: remove redundant postinstall script",
       "Local verification: npm ci completed successfully with YOUTUBE_DL_SKIP_DOWNLOAD=true (no postinstall error)",
-      "CI not yet triggered - GitHub Actions may have delay or webhook issue"
+      "Merge commit a4e5fc2 brings fix into PR branch - push to remote pending"
     ],
-    "last_verified": "2026-03-28T18:50:00Z"
+    "last_verified": "2026-03-28T20:14:00Z"
   }
 }
