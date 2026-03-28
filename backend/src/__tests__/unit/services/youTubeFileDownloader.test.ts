@@ -27,30 +27,48 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video'
       };
 
-      const mockSubprocess = Promise.resolve();
-      (mockSubprocess as any).stdout = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
-      
+      const mockSubprocess = () => {
+        const p = Promise.resolve() as any;
+        p.stdout = { on: jest.fn() };
+        p.stderr = { on: jest.fn() };
+        p.kill = jest.fn();
+        return p;
+      };
+      mockExec.mockImplementation(mockSubprocess);
+
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'other-file.txt']);
 
       const result = await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
 
       expect(result).toBe('/test/temp/Test_Video-test123.mp4');
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(mockExec).toHaveBeenCalledTimes(2);
+
+      // Pass 1: video + subtitles, no extractAudio
+      expect(mockExec).toHaveBeenNthCalledWith(
+        1,
         'https://www.youtube.com/watch?v=test123',
         expect.objectContaining({
           output: expect.stringContaining('Test_Video-test123'),
           format: 'bestvideo+bestaudio',
           mergeOutputFormat: 'mp4',
-          extractAudio: true,
-          audioFormat: 'mp3',
           writeSub: true,
           writeAutoSub: true,
           subLang: 'sv.*,en.*,de.*',
           convertSubs: 'srt',
           noPlaylist: true,
           restrictFilenames: true,
-          noWarnings: true
+        })
+      );
+
+      // Pass 2: audio extraction only
+      expect(mockExec).toHaveBeenNthCalledWith(
+        2,
+        'https://www.youtube.com/watch?v=test123',
+        expect.objectContaining({
+          format: 'bestaudio',
+          extractAudio: true,
+          audioFormat: 'mp3',
+          noPlaylist: true,
         })
       );
     });
@@ -61,8 +79,11 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video'
       };
 
-      const mockSubprocess = Promise.reject(new Error('Download failed'));
-      (mockSubprocess as any).stdout = { on: jest.fn() };
+      const mockSubprocess = Object.assign(Promise.reject(new Error('Download failed')), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
       mockExec.mockReturnValue(mockSubprocess);
 
       // Should throw a user-friendly error (not the raw internal message)
@@ -78,8 +99,11 @@ describe('YouTubeFileDownloader', () => {
 
       const internalPath = '/home/app/node_modules/yt-dlp/yt_dlp/__main__.py';
       const mockError = new Error(`yt-dlp failed: ${internalPath} --no-warnings`);
-      const mockSubprocess = Promise.reject(mockError);
-      (mockSubprocess as any).stdout = { on: jest.fn() };
+      const mockSubprocess = Object.assign(Promise.reject(mockError), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
       mockExec.mockReturnValue(mockSubprocess);
 
       try {
@@ -98,10 +122,13 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video'
       };
 
-      const mockSubprocess = Promise.resolve();
-      (mockSubprocess as any).stdout = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
-      
+      const mkSub = () => Object.assign(Promise.resolve(), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
+      mockExec.mockImplementation(mkSub);
+
       mockReaddir.mockResolvedValue(['other-file.txt']); // No matching file
 
       await expect(downloader.download('https://www.youtube.com/watch?v=test123', metadata))
@@ -114,10 +141,13 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video: "Special" Characters/And\\More!'
       };
 
-      const mockSubprocess = Promise.resolve();
-      (mockSubprocess as any).stdout = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
-      
+      const mkSub = () => Object.assign(Promise.resolve(), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
+      mockExec.mockImplementation(mkSub);
+
       // Based on the actual filename sanitization logic: removes <>"/:*?|\ chars, converts spaces to _
       mockReaddir.mockResolvedValue(['Test_Video_Special_CharactersAndMore!-test123.mp4']);
 
@@ -135,9 +165,11 @@ describe('YouTubeFileDownloader', () => {
   describe('cancelDownload', () => {
     it('should send SIGTERM to active subprocess and return true', async () => {
       const mockKill = jest.fn();
-      const subprocess = new Promise<void>(resolve => setTimeout(resolve, 1000)) as any;
-      subprocess.stdout = { on: jest.fn() };
-      subprocess.kill = mockKill;
+      const subprocess = Object.assign(new Promise<void>(resolve => setTimeout(resolve, 1000)), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: mockKill,
+      });
       mockExec.mockReturnValue(subprocess);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
@@ -164,9 +196,11 @@ describe('YouTubeFileDownloader', () => {
 
     it('should return false when called twice for same downloadId', async () => {
       const mockKill = jest.fn();
-      const subprocess = new Promise<void>(resolve => setTimeout(resolve, 1000)) as any;
-      subprocess.stdout = { on: jest.fn() };
-      subprocess.kill = mockKill;
+      const subprocess = Object.assign(new Promise<void>(resolve => setTimeout(resolve, 1000)), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: mockKill,
+      });
       mockExec.mockReturnValue(subprocess);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 

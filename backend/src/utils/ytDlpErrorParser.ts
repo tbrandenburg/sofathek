@@ -39,6 +39,15 @@ export function parseYtDlpError(stderr: string): YtDlpErrorInfo {
     };
   }
 
+  // Rate limited
+  if (lowerStderr.includes('http error 429') || lowerStderr.includes('too many requests')) {
+    return {
+      code: 'RATE_LIMITED',
+      message: 'The video service is temporarily rate-limiting requests.',
+      suggestion: 'Please wait a moment and try again.',
+    };
+  }
+
   // Network error
   if (
     lowerStderr.includes('http error 503') ||
