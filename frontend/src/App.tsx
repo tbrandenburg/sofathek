@@ -8,6 +8,7 @@ import { YouTubeDownload } from './components/YouTubeDownload';
 import { DownloadQueue } from './components/DownloadQueue';
 import { useVideos } from './hooks/useVideos';
 import { getDownloadFileUrl, sanitizeFilename } from './services/api';
+import { Download, Music2, X } from 'lucide-react';
 
 // Create Query Client outside component to avoid recreation on renders
 const queryClient = new QueryClient({
@@ -52,6 +53,9 @@ function App() {
   const transcriptDownloads = (selectedVideo?.metadata.transcripts ?? [])
     .filter(item => ['en', 'de', 'sv'].includes(item.language.toLowerCase()));
 
+  const playerActionButtonClass =
+    'inline-flex h-9 w-9 items-center justify-center rounded-sm text-white hover:bg-white/10 hover:text-gray-200 transition-colors';
+
   return (
     <Layout>
       <ContentContainer>
@@ -83,29 +87,27 @@ function App() {
             onClick={handleClosePlayer} 
           />
           <div className="relative bg-black rounded-lg overflow-hidden max-w-4xl w-full mx-4">
-            <div className="absolute top-4 right-4 z-10 flex gap-2">
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
               {selectedVideo.file?.name && (
                 <a
                   href={getDownloadFileUrl(selectedVideo.file.name)}
                   download={sanitizeFilename(selectedVideo.file.name)}
-                  className="text-white hover:text-gray-300 text-xl p-2"
+                  className={playerActionButtonClass}
                   aria-label="Download video"
                   title="Download video"
                 >
-                  ↓
+                  <Download size={20} aria-hidden="true" />
                 </a>
               )}
               {selectedVideo.metadata.audio && (
                 <a
                   href={getDownloadFileUrl(selectedVideo.metadata.audio)}
                   download={sanitizeFilename(selectedVideo.metadata.audio)}
-                  className="text-white hover:text-gray-300 p-2"
+                  className={playerActionButtonClass}
                   aria-label="Download audio"
                   title="Download audio"
                 >
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-                    <path d="M15 3v11.55a4 4 0 1 1-2-3.46V7h8V3h-6z" />
-                  </svg>
+                  <Music2 size={20} aria-hidden="true" />
                 </a>
               )}
               {transcriptDownloads.map((transcript) => {
@@ -115,7 +117,7 @@ function App() {
                     key={transcript.file}
                     href={getDownloadFileUrl(transcript.file)}
                     download={sanitizeFilename(transcript.file)}
-                    className="text-white hover:text-gray-300 text-sm font-semibold px-2 py-2"
+                    className="inline-flex h-9 min-w-9 items-center justify-center rounded-sm px-2 text-sm font-semibold text-white hover:bg-white/10 hover:text-gray-200 transition-colors"
                     aria-label={`Download ${language.toUpperCase()} transcript`}
                     title={`Download ${language.toUpperCase()} transcript`}
                   >
@@ -124,11 +126,11 @@ function App() {
                 );
               })}
               <button 
-                className="text-white hover:text-gray-300 text-2xl font-bold"
+                className={playerActionButtonClass}
                 onClick={handleClosePlayer}
                 aria-label="Close video player"
               >
-                ✕
+                <X size={20} aria-hidden="true" />
               </button>
             </div>
             <VideoPlayer
