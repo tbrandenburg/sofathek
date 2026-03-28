@@ -17,8 +17,7 @@
     "test:integration": "jest src/__tests__/integration",
     "test:real-youtube": "RUN_REAL_DOWNLOAD_TESTS=true jest src/__tests__/integration/routes/youtube.integration.test.ts",
     "test:youtube": "ts-node scripts/youtube-integration.ts",
-    "test:queue": "ts-node scripts/download-queue.ts",
-    "postinstall": "node -e \"require('youtube-dl-exec/scripts/postinstall.js')\""
+    "test:queue": "ts-node scripts/download-queue.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

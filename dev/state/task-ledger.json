@@ -13,7 +13,7 @@
     "status": "done",
     "evidence": [
       "Fixed frontend/tests/youtube-download/integration.spec.ts lines 49 and 70",
-      "Changed expect(data.message.toLowerCase()) to expect(errorMessage?.toLowerCase())", 
+      "Changed expect(data.message.toLowerCase()) to expect(errorMessage?.toLowerCase())",
       "Added errorMessage = data.message ?? data.error?.message handling for dev/prod formats",
       "Commit 3567e7c4ebfdcf87517920e5124ba4ac7b473e00 already applied"
     ],
@@ -55,7 +55,7 @@
     "last_verified": "2026-03-24T10:22:00Z"
   },
   "ISSUE_202_FIX_TEST_COUNT_ACCURACY": {
-    "status": "done", 
+    "status": "done",
     "evidence": [
       "Verified test count is accurate: 8 tests passed for Chromium browser",
       "Test count claim in docs/issue-193-resolution.md:31 is CORRECT",
@@ -158,5 +158,41 @@
       "All 246 backend + 165 frontend unit tests pass locally: npm test (verified 2026-03-26T08:09:43Z)"
     ],
     "last_verified": "2026-03-26T08:20:00Z"
+  },
+  "ISSUE_243_CI_FAILURE_ROOT_CAUSE": {
+    "status": "done",
+    "evidence": [
+      "gh run view 23691517856 --log -> npm error: Cannot find module 'youtube-dl-exec/scripts/postinstall.js'",
+      "5xWhy RCA:",
+      "Why1: CI fails with 'Cannot find module youtube-dl-exec/scripts/postinstall.js' because npm ci runs the postinstall script from backend/package.json",
+      "Why2: The postinstall script runs unconditionally because backend/package.json has 'postinstall': 'node node_modules/youtube-dl-exec/scripts/postinstall.js'",
+      "Why3: This postinstall is redundant - youtube-dl-exec has its own postinstall that runs automatically",
+      "Why4: When YOUTUBE_DL_SKIP_DOWNLOAD=true, youtube-dl-exec's scripts directory is not included in the installed package",
+      "Why5: CI sets YOUTUBE_DL_SKIP_DOWNLOAD=true to avoid downloading the yt-dlp binary during dependency install",
+      "Root cause: Redundant postinstall script in backend/package.json that calls youtube-dl-exec's postinstall, which fails when scripts directory is absent"
+    ],
+    "last_verified": "2026-03-28T18:30:00Z"
+  },
+  "ISSUE_243_FIX_POSTINSTALL": {
+    "status": "done",
+    "evidence": [
+      "Removed redundant postinstall script from backend/package.json",
+      "git diff backend/package.json shows: removed 'postinstall': 'node node_modules/youtube-dl-exec/scripts/postinstall.js'",
+      "youtube-dl-exec already has its own postinstall that runs automatically - no need for explicit call",
+      "git commit 00d192c pushed to origin/main",
+      "Local npm ci test with YOUTUBE_DL_SKIP_DOWNLOAD=true completed successfully (884 packages installed)"
+    ],
+    "last_verified": "2026-03-28T18:45:00Z"
+  },
+  "ISSUE_243_VERIFY_CI": {
+    "status": "in_progress",
+    "evidence": [
+      "Fix committed and pushed to origin/main at commit 00d192c",
+      "Commit 275ea75 pushed as additional trigger attempt",
+      "git log origin/main --oneline shows: 275ea75 ci: re-trigger CI verification, 00d192c fix: remove redundant postinstall script",
+      "Local verification: npm ci completed successfully with YOUTUBE_DL_SKIP_DOWNLOAD=true (no postinstall error)",
+      "CI not yet triggered - GitHub Actions may have delay or webhook issue"
+    ],
+    "last_verified": "2026-03-28T18:50:00Z"
   }
 }
