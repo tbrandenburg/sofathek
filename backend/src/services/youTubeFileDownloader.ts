@@ -29,12 +29,11 @@ export class YouTubeFileDownloader {
         downloadId
       });
 
-      const subprocess = youtubedl.exec(url, {
+      // Pass 1: download best video+audio merged as MP4, plus subtitles
+      const videoSubprocess = youtubedl.exec(url, {
         output: outputTemplate,
         format: 'bestvideo+bestaudio',
         mergeOutputFormat: 'mp4',
-        extractAudio: true,
-        audioFormat: 'mp3',
         writeSub: true,
         writeAutoSub: true,
         subLang: 'sv.*,en.*,de.*',
@@ -42,37 +41,62 @@ export class YouTubeFileDownloader {
         noPlaylist: true,
         restrictFilenames: true,
         noWarnings: true,
+        ignoreErrors: true,
         jsRuntimes: 'node'
       });
 
-      const tracker = { subprocess, aborted: false };
+      const tracker = { subprocess: videoSubprocess, aborted: false };
       if (downloadId) {
         this.activeSubprocesses.set(downloadId, tracker);
       }
 
-      subprocess.stderr?.on('data', (data) => {
+      videoSubprocess.stderr?.on('data', (data) => {
         stderrOutput += data.toString();
       });
 
-      subprocess.stdout?.on('data', (data) => {
+      videoSubprocess.stdout?.on('data', (data) => {
         const output = data.toString();
         if (output.includes('[download]')) {
-          logger.debug('Download progress', { 
-            videoId: metadata.id,
-            progress: output.trim()
-          });
+          logger.debug('Download progress', { videoId: metadata.id, progress: output.trim() });
         }
       });
 
-      await subprocess;
+      await videoSubprocess;
+
+      // Pass 2: extract audio as MP3 (best audio only, no video stream)
+      if (!tracker.aborted) {
+        logger.info('Extracting audio track', { url, videoId: metadata.id });
+        const audioSubprocess = youtubedl.exec(url, {
+          output: outputTemplate,
+          format: 'bestaudio',
+          extractAudio: true,
+          audioFormat: 'mp3',
+          noPlaylist: true,
+          restrictFilenames: true,
+          noWarnings: true,
+          ignoreErrors: true,
+          jsRuntimes: 'node'
+        });
+
+        if (downloadId) {
+          tracker.subprocess = audioSubprocess;
+        }
+
+        audioSubprocess.stderr?.on('data', (data) => {
+          stderrOutput += data.toString();
+        });
+
+        await audioSubprocess;
+      }
 
       if (downloadId) {
         this.activeSubprocesses.delete(downloadId);
       }
 
       const tempFiles = await fs.readdir(this.tempDirectory);
-      const downloadedFile = tempFiles.find(file => 
-        file.startsWith(`${safeTitle}-${metadata.id}`) && path.extname(file).toLowerCase() === '.mp4'
+      const prefix = `${safeTitle}-${metadata.id}`;
+      const downloadedFile = tempFiles.find(
+        file => file.startsWith(prefix) && path.extname(file).toLowerCase() === '.mp4'
       );
 
       if (!downloadedFile) {

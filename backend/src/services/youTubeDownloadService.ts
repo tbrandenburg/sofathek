@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
@@ -65,19 +66,27 @@ export class YouTubeDownloadService {
       });
 
       let thumbnailPath: string | undefined;
-      try {
-        thumbnailPath = await this.thumbnailService.generateThumbnail(tempVideoPath);
-        logger.info('Thumbnail generated successfully', { 
+      const isAudioOnly = path.extname(tempVideoPath).toLowerCase() === '.mp3';
+      if (isAudioOnly) {
+        logger.info('Skipping thumbnail generation for audio-only file', {
           downloadId,
-          thumbnailPath 
+          tempVideoPath
         });
-      } catch (error) {
-        logger.warn('Thumbnail generation failed, continuing without thumbnail', {
-          downloadId,
-          videoPath: tempVideoPath,
-          error: getErrorMessage(error)
-        });
-        thumbnailPath = undefined;
+      } else {
+        try {
+          thumbnailPath = await this.thumbnailService.generateThumbnail(tempVideoPath);
+          logger.info('Thumbnail generated successfully', { 
+            downloadId,
+            thumbnailPath 
+          });
+        } catch (error) {
+          logger.warn('Thumbnail generation failed, continuing without thumbnail', {
+            downloadId,
+            videoPath: tempVideoPath,
+            error: getErrorMessage(error)
+          });
+          thumbnailPath = undefined;
+        }
       }
 
       const finalVideoPath = await this.fileManager.moveToLibrary(tempVideoPath, metadata);

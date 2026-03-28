@@ -1,39 +1,17 @@
-import { FFmpeggy } from 'ffmpeggy';
+import execa from 'execa';
 import { getErrorMessage } from '../utils/error';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { config } from '../config';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 
-// Import static binaries for reliable FFmpeg/FFprobe paths
+// Import static binary for reliable FFmpeg path
 import ffmpegBin from 'ffmpeg-static';
-const ffprobeStatic = require('ffprobe-static');
 
-// Configure FFmpeg binary paths for FFmpeggy using DefaultConfig with static binaries
-try {
-  if (FFmpeggy.DefaultConfig) {
-      FFmpeggy.DefaultConfig = {
-        ...FFmpeggy.DefaultConfig,
-        ffmpegBin: ffmpegBin || config.ffmpegPath,
-        ffprobeBin: ffprobeStatic.path || config.ffprobePath,
-      };
-    logger.info('FFmpeggy DefaultConfig configured with static binaries', { 
-      ffmpegBin: ffmpegBin || 'system fallback', 
-      ffprobeBin: ffprobeStatic.path || 'system fallback' 
-    });
-  } else {
-    logger.warn('FFmpeggy.DefaultConfig is not available');
-  }
-} catch (error) {
-  // Fallback for older versions or test environments
-  logger.warn('Could not configure FFmpeggy DefaultConfig, using fallback method', {
-    error: getErrorMessage(error)
-  });
-}
+const FFMPEG_BIN = ffmpegBin || 'ffmpeg';
 
 /**
- * Thumbnail generation service using FFmpeggy
+ * Thumbnail generation service using ffmpeg directly via execa
  */
 export class ThumbnailService {
   private readonly tempDirectory: string;
@@ -49,146 +27,51 @@ export class ThumbnailService {
    */
   async generateThumbnail(videoPath: string): Promise<string> {
     try {
-      // Ensure directories exist
       await this.ensureDirectoriesExist();
 
-      // Generate unique thumbnail filename
       const videoBasename = path.basename(videoPath, path.extname(videoPath));
       const thumbnailFilename = `${videoBasename}.jpg`;
       const thumbnailPath = path.join(this.thumbnailsDirectory, thumbnailFilename);
 
-      logger.info('Generating thumbnail', {
-        videoPath,
+      logger.info('Generating thumbnail', { videoPath, thumbnailPath });
+
+      await execa(FFMPEG_BIN, [
+        '-y',
+        '-ss', '00:00:01.000',
+        '-i', videoPath,
+        '-vframes', '1',
+        '-q:v', '2',
+        '-vf', 'scale=320:240',
         thumbnailPath,
-        videoBasename
-      });
+      ]);
 
-      // Create FFmpeggy instance with thumbnail extraction options
-      const ffmpeggy = new FFmpeggy({
-        input: videoPath,
-        output: thumbnailPath,
-        outputOptions: [
-          '-ss', '00:00:01.000',        // Seek to 1 second
-          '-vframes', '1',              // Extract 1 frame
-          '-q:v', '2',                  // High quality
-          '-vf', 'scale=320:240'        // Resize to thumbnail
-        ],
-        overwriteExisting: true
-      });
-
-      // Run FFmpeg thumbnail generation
-      await ffmpeggy.run();
-      await ffmpeggy.done();
-
-      // Verify thumbnail was created
-      try {
-        await fs.access(thumbnailPath);
-        logger.info('Thumbnail generated successfully', { thumbnailPath });
-        return thumbnailPath;
-      } catch (error) {
-        throw new AppError('Thumbnail file was not created', 500);
-      }
+      await fs.access(thumbnailPath);
+      logger.info('Thumbnail generated successfully', { thumbnailPath });
+      return thumbnailPath;
 
     } catch (error) {
       const errorMessage = getErrorMessage(error);
-      logger.error('Thumbnail generation failed', {
-        videoPath,
-        error: errorMessage
-      });
-      
+      logger.error('Thumbnail generation failed', { videoPath, error: errorMessage });
+
       if (error instanceof AppError) {
         throw error;
       }
-      
       throw new AppError(`Failed to generate thumbnail: ${errorMessage}`, 500);
     }
   }
 
   /**
-   * Generate thumbnail with progress tracking
+   * Generate thumbnail with progress tracking (simplified — no progress for single-frame extraction)
    */
   async generateThumbnailWithProgress(
     videoPath: string,
     progressCallback?: (progress: number) => void
   ): Promise<string> {
-    try {
-      // Ensure directories exist
-      await this.ensureDirectoriesExist();
-
-      // Generate unique thumbnail filename
-      const videoBasename = path.basename(videoPath, path.extname(videoPath));
-      const thumbnailFilename = `${videoBasename}.jpg`;
-      const thumbnailPath = path.join(this.thumbnailsDirectory, thumbnailFilename);
-
-      logger.info('Generating thumbnail with progress tracking', {
-        videoPath,
-        thumbnailPath
-      });
-
-      // Create FFmpeggy instance with progress tracking
-      const ffmpeggy = new FFmpeggy({
-        input: videoPath,
-        output: thumbnailPath,
-        outputOptions: [
-          '-ss', '00:00:01.000',
-          '-vframes', '1',
-          '-q:v', '2',
-          '-vf', 'scale=320:240'
-        ],
-        overwriteExisting: true
-      });
-
-      // Set up progress tracking
-      let progressHandler: ((progress: any) => void) | undefined;
-      if (progressCallback) {
-        progressHandler = (progress) => {
-          if (progress.percent) {
-            progressCallback(Math.round(progress.percent));
-          }
-        };
-        ffmpeggy.on('progress', progressHandler);
-      }
-
-      // Set up error handling
-      const errorHandler = (error: Error) => {
-        logger.error('FFmpeg thumbnail error', { error: error.message });
-      };
-      ffmpeggy.on('error', errorHandler);
-
-      try {
-        // Run thumbnail generation
-        await ffmpeggy.run();
-        await ffmpeggy.done();
-      } finally {
-        // Clean up event listeners
-        if (progressHandler) {
-          ffmpeggy.removeListener('progress', progressHandler);
-        }
-        ffmpeggy.removeListener('error', errorHandler);
-      }
-
-      // Verify thumbnail was created
-      try {
-        await fs.access(thumbnailPath);
-        logger.info('Thumbnail with progress generated successfully', { thumbnailPath });
-        return thumbnailPath;
-      } catch (error) {
-        throw new AppError('Thumbnail file was not created', 500);
-      }
-
-    } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      logger.error('Thumbnail generation with progress failed', {
-        videoPath,
-        error: errorMessage
-      });
-      
-      if (error instanceof AppError) {
-        throw error;
-      }
-      
-      throw new AppError(`Failed to generate thumbnail: ${errorMessage}`, 500);
-    }
+    // Single-frame extraction has no meaningful progress; report 50% then 100%
+    if (progressCallback) progressCallback(50);
+    const result = await this.generateThumbnail(videoPath);
+    if (progressCallback) progressCallback(100);
+    return result;
   }
 
   /**
@@ -198,7 +81,6 @@ export class ThumbnailService {
     try {
       const videoBasename = path.basename(videoPath, path.extname(videoPath));
       const thumbnailPath = path.join(this.thumbnailsDirectory, `${videoBasename}.jpg`);
-      
       await fs.access(thumbnailPath);
       return true;
     } catch {
@@ -218,19 +100,8 @@ export class ThumbnailService {
    * Ensure required directories exist
    */
   private async ensureDirectoriesExist(): Promise<void> {
-    try {
-      await fs.access(this.tempDirectory);
-    } catch {
-      await fs.mkdir(this.tempDirectory, { recursive: true });
-      logger.info('Created temp directory', { path: this.tempDirectory });
-    }
-
-    try {
-      await fs.access(this.thumbnailsDirectory);
-    } catch {
-      await fs.mkdir(this.thumbnailsDirectory, { recursive: true });
-      logger.info('Created thumbnails directory', { path: this.thumbnailsDirectory });
-    }
+    await fs.mkdir(this.tempDirectory, { recursive: true });
+    await fs.mkdir(this.thumbnailsDirectory, { recursive: true });
   }
 
   /**
@@ -246,30 +117,20 @@ export class ThumbnailService {
         try {
           const filePath = path.join(this.tempDirectory, filename);
           const stats = await fs.stat(filePath);
-          
           if (stats.mtime.getTime() < cutoffTime) {
             await fs.unlink(filePath);
             cleanedCount++;
             logger.debug('Cleaned up old temp file', { filePath });
           }
         } catch (error) {
-          logger.warn('Failed to clean up temp file', { 
-            filename, 
-            error: getErrorMessage(error)
-          });
+          logger.warn('Failed to clean up temp file', { filename, error: getErrorMessage(error) });
         }
       }
 
-      logger.info('Thumbnail temp cleanup completed', { 
-        cleanedCount, 
-        maxAgeHours 
-      });
-      
+      logger.info('Thumbnail temp cleanup completed', { cleanedCount, maxAgeHours });
       return cleanedCount;
     } catch (error) {
-      logger.error('Failed to cleanup thumbnail temp files', {
-        error: getErrorMessage(error)
-      });
+      logger.error('Failed to cleanup thumbnail temp files', { error: getErrorMessage(error) });
       return 0;
     }
   }

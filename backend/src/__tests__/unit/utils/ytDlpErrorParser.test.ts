@@ -72,6 +72,21 @@ describe('parseYtDlpError', () => {
     });
   });
 
+  describe('RATE_LIMITED', () => {
+    it('should detect HTTP 429 errors', () => {
+      const result = parseYtDlpError(
+        "ERROR: Unable to download video subtitles for 'sv-en': HTTP Error 429: Too Many Requests"
+      );
+      expect(result.code).toBe('RATE_LIMITED');
+      expect(result.message).toContain('rate-limiting');
+    });
+
+    it('should detect "too many requests" errors', () => {
+      const result = parseYtDlpError('ERROR: too many requests from your IP');
+      expect(result.code).toBe('RATE_LIMITED');
+    });
+  });
+
   describe('NETWORK_ERROR', () => {
     it('should detect HTTP error responses', () => {
       const result = parseYtDlpError('ERROR: Unable to download webpage: HTTP Error 503');
