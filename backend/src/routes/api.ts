@@ -5,7 +5,7 @@ import { config } from '../config';
 import { VideoService } from '../services/videoService';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
-import { validateVideoFilename, validateImageFilename, validatePathInDirectory } from '../utils/fileValidation';
+import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename } from '../utils/fileValidation';
 import youtubeRouter from './youtube';
 
 const router = Router();
@@ -168,6 +168,38 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
     logger.info(`Serving full file: ${fileSize} bytes`);
     fs.createReadStream(videoPath).pipe(res);
   }
+}));
+
+/**
+ * GET /api/download/:filename
+ * Download media companion files (video/audio/transcript) as attachments
+ */
+router.get('/download/:filename', catchAsync(async (req: Request, res: Response) => {
+  const { filename } = req.params;
+
+  if (!filename) {
+    throw new AppError('Filename parameter is required', 400);
+  }
+
+  validateDownloadableFilename(filename);
+  const filePath = path.join(videosDirectory, filename);
+  const allowedVideosDir = path.resolve(videosDirectory);
+  validatePathInDirectory(filePath, allowedVideosDir);
+
+  try {
+    await fs.promises.access(filePath, fs.constants.R_OK);
+  } catch {
+    throw new AppError(`File '${filename}' not found`, 404);
+  }
+
+  const extension = path.extname(filename).toLowerCase();
+  const contentType = extension === '.mp3' ? 'audio/mpeg'
+    : extension === '.srt' ? 'application/x-subrip'
+      : getVideoMimeType(extension);
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  fs.createReadStream(filePath).pipe(res);
 }));
 
 // Serve thumbnail files from videos directory

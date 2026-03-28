@@ -20,9 +20,19 @@ export class VideoFileManager {
       const safeTitle = this.createSafeFilename(metadata.title);
       const finalFilename = `${safeTitle}-${metadata.id}${extension}`;
       const finalPath = path.join(this.videosDirectory, finalFilename);
+      const filePrefix = `${safeTitle}-${metadata.id}`;
 
       await fs.mkdir(this.videosDirectory, { recursive: true });
-      await fs.rename(tempPath, finalPath);
+      const tempFiles = await fs.readdir(this.tempDirectory);
+
+      for (const tempFile of tempFiles) {
+        if (!tempFile.startsWith(filePrefix)) {
+          continue;
+        }
+        const sourcePath = path.join(this.tempDirectory, tempFile);
+        const destinationPath = path.join(this.videosDirectory, tempFile);
+        await fs.rename(sourcePath, destinationPath);
+      }
 
       logger.info('Video moved to library', {
         tempPath,

@@ -4,6 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 
 const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+const DOWNLOADABLE_EXTENSIONS = [...VIDEO_EXTENSIONS, '.mp3', '.srt'];
 
 export function validateFilename(filename: string, allowedExtensions: string[]): void {
   if (!filename) {
@@ -24,6 +25,10 @@ export function validateVideoFilename(filename: string): void {
 
 export function validateImageFilename(filename: string): void {
   validateFilename(filename, IMAGE_EXTENSIONS);
+}
+
+export function validateDownloadableFilename(filename: string): void {
+  validateFilename(filename, DOWNLOADABLE_EXTENSIONS);
 }
 
 /**

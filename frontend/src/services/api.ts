@@ -96,6 +96,13 @@ export function getVideoStreamUrl(filename: string): string {
 }
 
 /**
+ * Get direct download URL for media assets (video/audio/transcript)
+ */
+export function getDownloadFileUrl(filename: string): string {
+  return `${API_BASE_URL}/download/${encodeURIComponent(filename)}`;
+}
+
+/**
  * Get thumbnail URL for a video (if available)
  */
 export function getVideoThumbnailUrl(video: Video): string | null {

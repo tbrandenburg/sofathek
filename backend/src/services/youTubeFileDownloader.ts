@@ -31,7 +31,14 @@ export class YouTubeFileDownloader {
 
       const subprocess = youtubedl.exec(url, {
         output: outputTemplate,
-        format: 'best[ext=mp4]/best',
+        format: 'bestvideo+bestaudio',
+        mergeOutputFormat: 'mp4',
+        extractAudio: true,
+        audioFormat: 'mp3',
+        writeSub: true,
+        writeAutoSub: true,
+        subLang: 'sv.*,en.*,de.*',
+        convertSubs: 'srt',
         noPlaylist: true,
         restrictFilenames: true,
         noWarnings: true,
@@ -65,7 +72,7 @@ export class YouTubeFileDownloader {
 
       const tempFiles = await fs.readdir(this.tempDirectory);
       const downloadedFile = tempFiles.find(file => 
-        file.startsWith(`${safeTitle}-${metadata.id}`)
+        file.startsWith(`${safeTitle}-${metadata.id}`) && path.extname(file).toLowerCase() === '.mp4'
       );
 
       if (!downloadedFile) {

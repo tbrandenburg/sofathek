@@ -115,6 +115,31 @@ describe('VideoService', () => {
       expect(result.videos).toHaveLength(1);
       expect(result.videos[0]?.file.name).toBe('video1.mp4');
     });
+
+    it('should include companion audio and transcripts metadata', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readdir
+        .mockResolvedValueOnce(['sample.mp4', 'sample.mp3', 'sample.en.srt', 'sample.de.srt'] as any)
+        .mockResolvedValueOnce(['sample.mp4', 'sample.mp3', 'sample.en.srt', 'sample.de.srt'] as any)
+        .mockResolvedValueOnce(['sample.mp4', 'sample.mp3', 'sample.en.srt', 'sample.de.srt'] as any);
+      mockFs.stat.mockImplementation((_filePath) => {
+        return Promise.resolve({
+          isDirectory: () => false,
+          isFile: () => true,
+          size: 1000000,
+          mtime: new Date('2024-01-01')
+        } as any);
+      });
+
+      const result = await videoService.scanVideoDirectory();
+      const video = result.videos[0];
+
+      expect(video?.metadata.audio).toBe('sample.mp3');
+      expect(video?.metadata.transcripts).toEqual([
+        { language: 'de', file: 'sample.de.srt' },
+        { language: 'en', file: 'sample.en.srt' }
+      ]);
+    });
   });
 
   describe('validateVideoFile', () => {
