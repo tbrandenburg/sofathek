@@ -9,6 +9,7 @@ import {
   Video, 
   VideoScanResult,
   TranscriptFile,
+  VideoInfoFile,
   SUPPORTED_VIDEO_EXTENSIONS,
   SupportedVideoExtension
 } from '../types/video';
@@ -24,6 +25,7 @@ export class VideoService {
   private readonly THUMBNAIL_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
   private readonly AUDIO_EXTENSIONS = ['.mp3'];
   private readonly TRANSCRIPT_EXTENSION = '.srt';
+  private readonly INFO_EXTENSION = '.info.json';
 
   constructor(videosDirectory: string, thumbnailsDirectory: string) {
     this.videosDirectory = videosDirectory;
@@ -170,9 +172,8 @@ export class VideoService {
   }
 
   /**
-   * Extract metadata from video file
-   * For Phase 1, we'll use basic filename-based metadata
-   * Future phases can integrate ffprobe for detailed video analysis
+   * Extract metadata from video file.
+   * Prefers rich data from .info.json sidecar when present; falls back to filename-based metadata.
    */
   private async extractMetadata(videoFile: VideoFile, existingThumbnail?: string | null): Promise<VideoMetadata> {
     const nameWithoutExt = path.basename(videoFile.name, path.extname(videoFile.name));
@@ -184,6 +185,9 @@ export class VideoService {
       .replace(/\s+/g, ' ')
       .trim();
 
+    // Try to read info sidecar for rich metadata
+    const infoSidecar = await this.readInfoSidecar(videoFile.path);
+
     // Check for existing thumbnail (jpg, jpeg, png, webp)
     const thumbnail = existingThumbnail !== undefined
       ? existingThumbnail
@@ -192,12 +196,33 @@ export class VideoService {
     const transcripts = await this.findTranscripts(videoFile.path);
 
     return {
-      title,
-      format: videoFile.extension.toUpperCase(),
+      title: infoSidecar?.title ?? title,
+      ...(infoSidecar?.duration !== undefined && { duration: infoSidecar.duration }),
+      ...(infoSidecar?.width !== undefined && { width: infoSidecar.width }),
+      ...(infoSidecar?.height !== undefined && { height: infoSidecar.height }),
+      format: infoSidecar?.resolution ?? videoFile.extension.toUpperCase(),
+      ...(infoSidecar?.tbr !== undefined && { bitrate: infoSidecar.tbr }),
       ...(thumbnail && { thumbnail }),
       ...(audio && { audio }),
       ...(transcripts.length > 0 && { transcripts })
     };
+  }
+
+  private async readInfoSidecar(videoPath: string): Promise<VideoInfoFile | null> {
+    const videoDir = path.dirname(videoPath);
+    const baseName = path.basename(videoPath, path.extname(videoPath));
+    const infoPath = path.join(videoDir, `${baseName}${this.INFO_EXTENSION}`);
+
+    try {
+      const content = await fs.readFile(infoPath, 'utf-8');
+      return JSON.parse(content) as VideoInfoFile;
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return null;
+      }
+      logger.warn('Failed to read info sidecar', { infoPath, error: getErrorMessage(error) });
+      return null;
+    }
   }
 
   private async findAudio(videoPath: string): Promise<string | null> {

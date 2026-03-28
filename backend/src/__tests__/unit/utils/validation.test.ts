@@ -51,10 +51,17 @@ describe('validation', () => {
         channel: 'RickAstleyVEVO',
         upload_date: '20091025',
         view_count: 1392485951,
-        format: 'mp4',
         width: 1920,
         height: 1080,
-        thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'
+        resolution: '1920x1080',
+        fps: 30,
+        vcodec: 'h264',
+        acodec: 'aac',
+        thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+        webpage_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        like_count: 15000000,
+        categories: ['Music'],
+        tags: ['rick astley']
       };
       
       const result = validateYtDlpResponse(fullResponse);

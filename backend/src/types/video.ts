@@ -52,6 +52,69 @@ export interface TranscriptFile {
 }
 
 /**
+ * Rich video metadata stored in sidecar .info.json file.
+ * Mirrors yt-dlp's --write-info-json output, filtered to useful fields.
+ */
+export interface VideoInfoFile {
+  // Source
+  sourceUrl: string;
+  extractor: string;
+  // Identity
+  id: string;
+  title: string;
+  description?: string;
+  // Channel
+  uploader?: string;
+  uploaderId?: string;
+  channelId?: string;
+  channelUrl?: string;
+  channelFollowerCount?: number;
+  channelIsVerified?: boolean;
+  // Temporal
+  uploadDate?: string;
+  timestamp?: number;
+  releaseYear?: number;
+  // Playback
+  duration?: number;
+  durationString?: string;
+  width?: number;
+  height?: number;
+  resolution?: string;
+  fps?: number;
+  aspectRatio?: number;
+  dynamicRange?: string;
+  vcodec?: string;
+  acodec?: string;
+  vbr?: number;
+  abr?: number;
+  tbr?: number;
+  asr?: number;
+  audioChannels?: number;
+  filesizeApprox?: number;
+  // Engagement
+  viewCount?: number;
+  likeCount?: number;
+  commentCount?: number;
+  // Classification
+  categories?: string[];
+  tags?: string[];
+  ageLimit?: number;
+  language?: string;
+  availability?: string;
+  // Status
+  isLive?: boolean;
+  wasLive?: boolean;
+  liveStatus?: string;
+  playableInEmbed?: boolean;
+  // Chapters & heatmap
+  chapters?: Array<{ title: string; start_time: number; end_time: number }>;
+  heatmap?: Array<{ start_time: number; end_time: number; value: number }>;
+  // Local files (set at write time)
+  localThumbnail?: string;
+  downloadedAt: string;
+}
+
+/**
  * Complete video information combining file and metadata
  */
 export interface Video {

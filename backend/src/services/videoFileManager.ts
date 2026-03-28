@@ -25,8 +25,13 @@ export class VideoFileManager {
       await fs.mkdir(this.videosDirectory, { recursive: true });
       const tempFiles = await fs.readdir(this.tempDirectory);
 
+      const COMPANION_EXTENSIONS = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.m4v', '.mp3', '.srt', '.vtt', '.info.json'];
       for (const tempFile of tempFiles) {
         if (!tempFile.startsWith(filePrefix)) {
+          continue;
+        }
+        const ext = tempFile.endsWith('.info.json') ? '.info.json' : path.extname(tempFile).toLowerCase();
+        if (!COMPANION_EXTENSIONS.includes(ext)) {
           continue;
         }
         const sourcePath = path.join(this.tempDirectory, tempFile);

@@ -46,6 +46,40 @@ describe('VideoFileManager', () => {
       expect(mockRename).not.toHaveBeenCalledWith('/test/temp/other-file.mp4', expect.anything());
     });
 
+    it('should move info.json sidecar alongside video', async () => {
+      const metadata = {
+        id: 'test123',
+        title: 'Test Video'
+      };
+
+      mockMkdir.mockResolvedValue(undefined);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'Test_Video-test123.info.json']);
+      mockRename.mockResolvedValue(undefined);
+
+      await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
+
+      expect(mockRename).toHaveBeenCalledWith(
+        '/test/temp/Test_Video-test123.info.json',
+        '/test/videos/Test_Video-test123.info.json'
+      );
+    });
+
+    it('should not move unknown extension files', async () => {
+      const metadata = {
+        id: 'test123',
+        title: 'Test Video'
+      };
+
+      mockMkdir.mockResolvedValue(undefined);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'Test_Video-test123.part', 'Test_Video-test123.tmp']);
+      mockRename.mockResolvedValue(undefined);
+
+      await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
+
+      expect(mockRename).not.toHaveBeenCalledWith(expect.stringContaining('.part'), expect.anything());
+      expect(mockRename).not.toHaveBeenCalledWith(expect.stringContaining('.tmp'), expect.anything());
+    });
+
     it('should handle move failures', async () => {
       const metadata = {
         id: 'test123',

@@ -16,7 +16,8 @@ jest.mock('fs', () => ({
     readdir: jest.fn(),
     access: jest.fn(),
     mkdir: jest.fn(),
-    stat: jest.fn()
+    stat: jest.fn(),
+    readFile: jest.fn()
   }
 }));
 
@@ -34,6 +35,9 @@ describe('VideoService', () => {
   beforeEach(() => {
     videoService = new VideoService(testVideosDir, testThumbnailsDir);
     jest.clearAllMocks();
+    // Default: no sidecar file present
+    const enoentError = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    mockFs.readFile.mockRejectedValue(enoentError);
   });
 
   describe('scanVideoDirectory', () => {
@@ -569,6 +573,106 @@ describe('VideoService', () => {
       const result = await (serviceWithThumbnails as any).findThumbnail('/test/videos/video.mp4');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('readInfoSidecar', () => {
+    it('should return null when sidecar file does not exist', async () => {
+      const enoentError = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      mockFs.readFile.mockRejectedValue(enoentError);
+
+      const result = await (videoService as any).readInfoSidecar('/test/videos/video-abc123.mp4');
+
+      expect(result).toBeNull();
+    });
+
+    it('should parse and return sidecar when file exists', async () => {
+      const sidecar = {
+        sourceUrl: 'https://www.youtube.com/watch?v=abc123',
+        extractor: 'youtube',
+        id: 'abc123',
+        title: 'My Video',
+        duration: 120,
+        width: 1920,
+        height: 1080,
+        resolution: '1920x1080',
+        tbr: 5000,
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+
+      const result = await (videoService as any).readInfoSidecar('/test/videos/video-abc123.mp4');
+
+      expect(result).toEqual(sidecar);
+      expect(mockFs.readFile).toHaveBeenCalledWith('/test/videos/video-abc123.info.json', 'utf-8');
+    });
+
+    it('should return null and log warning when sidecar JSON is corrupt', async () => {
+      mockFs.readFile.mockResolvedValue('{ invalid json' as any);
+
+      const result = await (videoService as any).readInfoSidecar('/test/videos/video-abc123.mp4');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('extractMetadata with sidecar', () => {
+    it('should populate rich metadata fields from sidecar', async () => {
+      const sidecar = {
+        sourceUrl: 'https://www.youtube.com/watch?v=abc123',
+        extractor: 'youtube',
+        id: 'abc123',
+        title: 'Real Title From Sidecar',
+        duration: 300,
+        width: 1920,
+        height: 1080,
+        resolution: '1920x1080',
+        tbr: 5000,
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const videoFile = {
+        path: '/test/videos/video-abc123.mp4',
+        name: 'video-abc123.mp4',
+        size: 1000000,
+        extension: 'mp4',
+        lastModified: new Date()
+      };
+
+      const result = await (videoService as any).extractMetadata(videoFile);
+
+      expect(result.title).toBe('Real Title From Sidecar');
+      expect(result.duration).toBe(300);
+      expect(result.width).toBe(1920);
+      expect(result.height).toBe(1080);
+      expect(result.format).toBe('1920x1080');
+      expect(result.bitrate).toBe(5000);
+    });
+
+    it('should fall back to filename-based metadata when sidecar is absent', async () => {
+      const enoentError = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      mockFs.readFile.mockRejectedValue(enoentError);
+      mockFs.access.mockRejectedValue(enoentError);
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const videoFile = {
+        path: '/test/videos/My_Cool_Video-abc123.mp4',
+        name: 'My_Cool_Video-abc123.mp4',
+        size: 1000000,
+        extension: 'mp4',
+        lastModified: new Date()
+      };
+
+      const result = await (videoService as any).extractMetadata(videoFile);
+
+      expect(result.title).toBe('My Cool Video Abc123');
+      expect(result.duration).toBeUndefined();
+      expect(result.width).toBeUndefined();
+      expect(result.height).toBeUndefined();
+      expect(result.format).toBe('MP4');
     });
   });
 });
