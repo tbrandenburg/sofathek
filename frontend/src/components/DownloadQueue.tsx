@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { getUserFriendlyErrorMessage } from '../lib/error';
 import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
 import { useDownloadQueue, useCancelDownload, useClearDownloadQueue } from '../hooks/useYouTube';
+import { useQueryClient } from '@tanstack/react-query';
 import { QueueItem } from '../types/youtube';
 
 interface DownloadQueueProps {
@@ -144,6 +145,31 @@ function QueueItemComponent({ item, onCancel, className = '' }: QueueItemCompone
 export function DownloadQueue({ className = '' }: DownloadQueueProps) {
   const { data: queue, isLoading, error } = useDownloadQueue();
   const clearQueueMutation = useClearDownloadQueue();
+  const queryClient = useQueryClient();
+  const previousCompletedIdsRef = useRef<Set<string> | null>(null);
+
+  useEffect(() => {
+    const completedIds = new Set(
+      (queue?.items ?? [])
+        .filter((item) => item.status === 'completed')
+        .map((item) => item.id)
+    );
+
+    if (previousCompletedIdsRef.current === null) {
+      previousCompletedIdsRef.current = completedIds;
+      return;
+    }
+
+    const hasNewlyCompletedItem = [...completedIds].some(
+      (id) => !previousCompletedIdsRef.current?.has(id)
+    );
+
+    if (hasNewlyCompletedItem) {
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+    }
+
+    previousCompletedIdsRef.current = completedIds;
+  }, [queue, queryClient]);
 
   const handleClearQueue = () => {
     const hasQueueItems = (queue?.items?.length ?? 0) > 0;
