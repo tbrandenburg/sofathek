@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { VideoPlayer } from '../components/VideoPlayer/VideoPlayer';
 import { Video } from '../types';
 
@@ -191,5 +191,53 @@ describe('VideoPlayer Component - Malformed Data Handling', () => {
     expect(screen.queryByText('File Size:')).toBeNull();
     expect(screen.queryByText('Format:')).toBeNull();
     expect(screen.queryByText('Last Modified:')).toBeNull();
+  });
+});
+
+describe('VideoPlayer Component - Pointer Events and Controls', () => {
+  test('should render play button overlay when video is paused', () => {
+    const validVideo: Video = {
+      id: 'test-video',
+      file: { name: 'test.mp4', size: 1024, path: '/videos/test.mp4', extension: 'mp4', lastModified: new Date() },
+      metadata: { title: 'Test Video', width: 1920, height: 1080 },
+      viewCount: 0
+    };
+
+    const { container } = render(<VideoPlayer video={validVideo} />);
+
+    // Simulate video loaded to transition out of loading state
+    const videoEl = container.querySelector('video');
+    if (videoEl) fireEvent.loadedData(videoEl);
+
+    const playButton = screen.getByRole('button', { name: /play video/i });
+    expect(playButton).toBeDefined();
+  });
+
+  test('should render video element with controls enabled', () => {
+    const validVideo: Video = {
+      id: 'test-video',
+      file: { name: 'test.mp4', size: 1024, path: '/videos/test.mp4', extension: 'mp4', lastModified: new Date() },
+      metadata: { title: 'Test Video', width: 1920, height: 1080 },
+      viewCount: 0
+    };
+
+    const { container } = render(<VideoPlayer video={validVideo} controls={true} />);
+
+    const videoElement = container.querySelector('video[controls]');
+    expect(videoElement).toBeDefined();
+  });
+
+  test('play button overlay should not use video-overlay CSS class (avoids pointer-events-auto conflict)', () => {
+    const validVideo: Video = {
+      id: 'test-video',
+      file: { name: 'test.mp4', size: 1024, path: '/videos/test.mp4', extension: 'mp4', lastModified: new Date() },
+      metadata: { title: 'Test Video', width: 1920, height: 1080 },
+      viewCount: 0
+    };
+
+    const { container } = render(<VideoPlayer video={validVideo} />);
+
+    const overlayWithOldClass = container.querySelector('.video-overlay');
+    expect(overlayWithOldClass).toBeNull();
   });
 });

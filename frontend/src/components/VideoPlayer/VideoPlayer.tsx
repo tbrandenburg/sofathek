@@ -142,17 +142,15 @@ export function VideoPlayer({
           </div>
         )}
 
-        {hasValidFile && !hasError && !isLoading && (
-          <div className="video-overlay">
-            {!isPlaying && (
-              <button
-                className="play-overlay-button"
-                onClick={() => videoRef.current?.play()}
-                aria-label="Play video"
-              >
-                <span className="play-icon">▶️</span>
-              </button>
-            )}
+        {hasValidFile && !hasError && !isLoading && !isPlaying && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-10">
+            <button
+              className="play-overlay-button"
+              onClick={() => videoRef.current?.play()}
+              aria-label="Play video"
+            >
+              <span className="play-icon">▶️</span>
+            </button>
           </div>
         )}
       </div>
