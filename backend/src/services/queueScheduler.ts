@@ -73,7 +73,7 @@ export async function processQueueItem(
       return;
     }
 
-    item.progress = 25;
+    item.progress = 5;
     item.currentStep = 'Fetching video metadata';
     await saveQueue();
 
@@ -85,7 +85,24 @@ export async function processQueueItem(
       return;
     }
 
-    const result = await youtubeDownloadService.downloadVideo(item.request, item.id);
+    // Phase-weighted progress: video 25–75%, audio 75–85%
+    // Throttle: only persist to JSON when progress changes by ≥2%
+    let lastSavedProgress = 5;
+    const updateProgress = (phase: 'video' | 'audio', percent: number): void => {
+      const mapped = phase === 'video'
+        ? 25 + percent * 0.5   // 0–100 → 25–75
+        : 75 + percent * 0.1;  // 0–100 → 75–85
+      if (mapped - lastSavedProgress >= 2) {
+        item.progress = Math.round(mapped);
+        item.currentStep = phase === 'video'
+          ? `Downloading video (${item.progress}%)`
+          : `Downloading audio (${item.progress}%)`;
+        lastSavedProgress = mapped;
+        saveQueue();
+      }
+    };
+
+    const result = await youtubeDownloadService.downloadVideo(item.request, item.id, updateProgress);
 
     if ((item as QueueItem).status === 'cancelled') {
       logger.info('Queue item cancelled during download, cleaning up', {
