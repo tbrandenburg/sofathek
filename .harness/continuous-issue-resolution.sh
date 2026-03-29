@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKFLOW_NAME="continuous-issue-resolution"
+SCRIPT_NAME="continuous-issue-resolution.sh"
+WORKFLOW_NAME="${SCRIPT_NAME%.sh}"
+WORKFLOW_SLUG=$(printf '%s' "$WORKFLOW_NAME" \
+  | tr '[:upper:]' '[:lower:]' \
+  | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//; s/-+/-/g')
+LOG_TIMESTAMP="$(date -u +'%Y%m%dT%H%M%SZ')"
+LOG_BASENAME="made-${WORKFLOW_SLUG}-${LOG_TIMESTAMP}-$$.log"
 
 # ---------------------------------------------------------------------------
 # Argument handling
@@ -15,23 +21,18 @@ elif [[ $# -gt 0 ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Log file setup
-# Required filename: made-<workflow-name>-<YYYYMMDDTHHMMSSZ>-<PID>.log
-# Prefer /var/log, fallback to /tmp/made-harness-logs
+# Log file setup — prefer /var/log, fallback to /tmp/made-harness-logs
 # ---------------------------------------------------------------------------
-_LOG_TIMESTAMP="$(date -u +'%Y%m%dT%H%M%SZ')"
-_LOG_FILENAME="made-${WORKFLOW_NAME}-${_LOG_TIMESTAMP}-$$.log"
-
 if [[ -w "/var/log" ]]; then
-  LOG_FILE="/var/log/${_LOG_FILENAME}"
+  LOG_FILE="/var/log/${LOG_BASENAME}"
 else
   LOG_DIR="/tmp/made-harness-logs"
   mkdir -p "$LOG_DIR"
-  LOG_FILE="${LOG_DIR}/${_LOG_FILENAME}"
+  LOG_FILE="${LOG_DIR}/${LOG_BASENAME}"
 fi
 
 # ---------------------------------------------------------------------------
-# log() — ISO-8601 UTC timestamps, INFO/ERROR levels, always to stderr
+# log() — ISO-8601 UTC timestamps, INFO/ERROR, always to stderr + log file
 # ---------------------------------------------------------------------------
 log() {
   local level="$1"; shift
@@ -51,7 +52,7 @@ catch() {
 }
 
 # ---------------------------------------------------------------------------
-# run_step() — dry-run and failure handling for step functions
+# run_step() — dry-run and failure handling; streams output via tee
 # ---------------------------------------------------------------------------
 run_step() {
   local step_name="$1"
@@ -64,8 +65,13 @@ run_step() {
   log INFO "Running step: ${step_name}"
 
   set +e
-  "$step_name"
-  local status=$?
+  if ( : >> "$LOG_FILE" ) 2>/dev/null; then
+    "$step_name" 2>&1 | tee -a "$LOG_FILE"
+    local status=${PIPESTATUS[0]}
+  else
+    "$step_name"
+    local status=$?
+  fi
   set -e
 
   if [[ $status -ne 0 ]]; then

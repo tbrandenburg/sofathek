@@ -7,7 +7,8 @@ workflows:
   - type: bash
     run: gh issue list --limit 1 --state open | grep -q . || return 42
   - type: bash
-    run: git restore --staged . 2>/dev/null && git restore . && git switch main && git pull --rebase --autostash
+    run: git restore --staged . 2>/dev/null && git restore . && git switch main &&
+      git pull --rebase --autostash
   - type: agent
     agent: build
     prompt: Follow the instructions in @.opencode/commands/prp-issue-fix.md for the
@@ -32,5 +33,6 @@ workflows:
       Then, try to merge it. If any PR was processed, send a telegram message on the
       outcome.'
   - type: bash
-    run: git restore --staged . 2>/dev/null && git restore . && git switch main && git pull --rebase --autostash
+    run: git restore --staged . 2>/dev/null && git restore . && git switch main &&
+      git pull --rebase --autostash
   shellScriptPath: .harness/continuous-issue-resolution.sh
