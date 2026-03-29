@@ -8,7 +8,7 @@ import { VideoInfoFile } from '../types/video';
 import { ThumbnailService } from './thumbnailService';
 import { YouTubeUrlValidator } from './youTubeUrlValidator';
 import { YouTubeMetadataExtractor } from './youTubeMetadataExtractor';
-import { YouTubeFileDownloader } from './youTubeFileDownloader';
+import { YouTubeFileDownloader, DownloadProgressCallback } from './youTubeFileDownloader';
 import { VideoFileManager } from './videoFileManager';
 
 /**
@@ -33,7 +33,7 @@ export class YouTubeDownloadService {
     this.thumbnailService = thumbnailService;
   }
 
-  async downloadVideo(request: DownloadRequest, cancelKey?: string): Promise<DownloadResult> {
+  async downloadVideo(request: DownloadRequest, cancelKey?: string, progressCallback?: DownloadProgressCallback): Promise<DownloadResult> {
     const startedAt = new Date();
     const downloadId = uuidv4();
     // Use cancelKey as the subprocess identifier when provided so callers
@@ -61,7 +61,7 @@ export class YouTubeDownloadService {
         duration: metadata.duration
       });
 
-      const tempVideoPath = await this.fileDownloader.download(request.url, metadata, subprocessKey);
+      const tempVideoPath = await this.fileDownloader.download(request.url, metadata, subprocessKey, progressCallback);
       logger.info('Video downloaded to temp location', {
         downloadId,
         tempPath: tempVideoPath

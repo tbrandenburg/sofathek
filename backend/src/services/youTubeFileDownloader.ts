@@ -7,6 +7,8 @@ import { AppError } from '../middleware/errorHandler';
 import { YouTubeMetadata } from '../types/youtube';
 import { parseYtDlpError } from '../utils/ytDlpErrorParser';
 
+export type DownloadProgressCallback = (phase: 'video' | 'audio', percent: number) => void;
+
 export class YouTubeFileDownloader {
   private readonly tempDirectory: string;
   private activeSubprocesses: Map<string, { subprocess: ReturnType<typeof youtubedl.exec>, aborted: boolean }> = new Map();
@@ -15,7 +17,12 @@ export class YouTubeFileDownloader {
     this.tempDirectory = tempDirectory;
   }
 
-  async download(url: string, metadata: YouTubeMetadata, downloadId?: string): Promise<string> {
+  async download(
+    url: string,
+    metadata: YouTubeMetadata,
+    downloadId?: string,
+    progressCallback?: DownloadProgressCallback
+  ): Promise<string> {
     let stderrOutput = '';
 
     try {
@@ -57,6 +64,10 @@ export class YouTubeFileDownloader {
       videoSubprocess.stdout?.on('data', (data) => {
         const output = data.toString();
         if (output.includes('[download]')) {
+          const percentMatch = output.match(/\[download\]\s+([\d.]+)%/);
+          if (percentMatch && progressCallback) {
+            progressCallback('video', parseFloat(percentMatch[1]));
+          }
           logger.debug('Download progress', { videoId: metadata.id, progress: output.trim() });
         }
       });
@@ -84,6 +95,16 @@ export class YouTubeFileDownloader {
 
         audioSubprocess.stderr?.on('data', (data) => {
           stderrOutput += data.toString();
+        });
+
+        audioSubprocess.stdout?.on('data', (data) => {
+          const output = data.toString();
+          if (output.includes('[download]')) {
+            const percentMatch = output.match(/\[download\]\s+([\d.]+)%/);
+            if (percentMatch && progressCallback) {
+              progressCallback('audio', parseFloat(percentMatch[1]));
+            }
+          }
         });
 
         await audioSubprocess;

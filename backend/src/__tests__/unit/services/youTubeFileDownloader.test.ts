@@ -176,6 +176,127 @@ describe('YouTubeFileDownloader', () => {
     });
   });
 
+  describe('progressCallback', () => {
+    it('should invoke callback with video phase and parsed percentage from yt-dlp stdout', async () => {
+      const metadata = { id: 'test123', title: 'Test Video' };
+      const received: Array<{ phase: string; percent: number }> = [];
+
+      let videoStdoutHandler: ((data: Buffer) => void) | undefined;
+      const mkSub = () => {
+        const p = Promise.resolve() as any;
+        p.stdout = {
+          on: jest.fn((event, handler) => {
+            if (event === 'data') videoStdoutHandler = handler;
+          })
+        };
+        p.stderr = { on: jest.fn() };
+        p.kill = jest.fn();
+        return p;
+      };
+      mockExec.mockImplementation(mkSub);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      const downloadPromise = downloader.download(
+        'https://www.youtube.com/watch?v=test123',
+        metadata,
+        undefined,
+        (phase, percent) => received.push({ phase, percent })
+      );
+
+      // Simulate yt-dlp stdout lines for the video subprocess
+      videoStdoutHandler?.(Buffer.from('[download]  45.2% of 123.45MiB at 3.20MiB/s ETA 00:30\n'));
+      videoStdoutHandler?.(Buffer.from('[download] 100.0% of 123.45MiB\n'));
+
+      await downloadPromise;
+
+      expect(received).toContainEqual({ phase: 'video', percent: 45.2 });
+      expect(received).toContainEqual({ phase: 'video', percent: 100 });
+    });
+
+    it('should invoke callback with audio phase from audio subprocess stdout', async () => {
+      const metadata = { id: 'test123', title: 'Test Video' };
+      const received: Array<{ phase: string; percent: number }> = [];
+
+      const stdoutHandlers: Array<(data: Buffer) => void> = [];
+      const mkSub = () => {
+        const p = Promise.resolve() as any;
+        p.stdout = {
+          on: jest.fn((event, handler) => {
+            if (event === 'data') stdoutHandlers.push(handler);
+          })
+        };
+        p.stderr = { on: jest.fn() };
+        p.kill = jest.fn();
+        return p;
+      };
+      mockExec.mockImplementation(mkSub);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      const downloadPromise = downloader.download(
+        'https://www.youtube.com/watch?v=test123',
+        metadata,
+        undefined,
+        (phase, percent) => received.push({ phase, percent })
+      );
+
+      await downloadPromise;
+
+      // Trigger audio stdout handler (second subprocess → second registered handler)
+      stdoutHandlers[1]?.(Buffer.from('[download]  60.0% of 5.23MiB\n'));
+
+      expect(received).toContainEqual({ phase: 'audio', percent: 60 });
+    });
+
+    it('should not throw when progressCallback is undefined (backward compatibility)', async () => {
+      const metadata = { id: 'test123', title: 'Test Video' };
+      const mkSub = () => Object.assign(Promise.resolve(), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
+      mockExec.mockImplementation(mkSub);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      await expect(
+        downloader.download('https://www.youtube.com/watch?v=test123', metadata)
+      ).resolves.toBe('/test/temp/Test_Video-test123.mp4');
+    });
+
+    it('should not fire callback for stdout lines without [download] percentage', async () => {
+      const metadata = { id: 'test123', title: 'Test Video' };
+      const received: Array<{ phase: string; percent: number }> = [];
+
+      let videoStdoutHandler: ((data: Buffer) => void) | undefined;
+      const mkSub = () => {
+        const p = Promise.resolve() as any;
+        p.stdout = {
+          on: jest.fn((event, handler) => {
+            if (event === 'data') videoStdoutHandler = handler;
+          })
+        };
+        p.stderr = { on: jest.fn() };
+        p.kill = jest.fn();
+        return p;
+      };
+      mockExec.mockImplementation(mkSub);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      const downloadPromise = downloader.download(
+        'https://www.youtube.com/watch?v=test123',
+        metadata,
+        undefined,
+        (phase, percent) => received.push({ phase, percent })
+      );
+
+      videoStdoutHandler?.(Buffer.from('[download] Destination: /tmp/file.mp4\n'));
+      videoStdoutHandler?.(Buffer.from('[info] Writing subtitles\n'));
+
+      await downloadPromise;
+
+      expect(received).toHaveLength(0);
+    });
+  });
+
   describe('cancelDownload', () => {
     it('should send SIGTERM to active subprocess and return true', async () => {
       const mockKill = jest.fn();
