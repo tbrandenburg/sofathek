@@ -81,12 +81,11 @@ function App() {
 
       {/* Video Player Modal */}
       {isPlayerOpen && selectedVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleClosePlayer}>
           <div 
-            className="absolute inset-0 bg-black bg-opacity-90" 
-            onClick={handleClosePlayer} 
+            className="absolute inset-0 bg-black bg-opacity-90 pointer-events-none" 
           />
-          <div className="relative bg-black rounded-lg overflow-hidden max-w-4xl w-full mx-4">
+          <div className="relative bg-black rounded-lg overflow-hidden max-w-4xl w-full mx-4 z-10" onClick={(e) => e.stopPropagation()}>
             <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
               {selectedVideo.file?.name && (
                 <a
