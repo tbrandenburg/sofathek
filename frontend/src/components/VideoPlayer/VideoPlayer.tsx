@@ -143,9 +143,9 @@ export function VideoPlayer({
         )}
 
         {hasValidFile && !hasError && !isLoading && !isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-10 pointer-events-none">
             <button
-              className="play-overlay-button"
+              className="play-overlay-button pointer-events-auto"
               onClick={() => videoRef.current?.play()}
               aria-label="Play video"
             >

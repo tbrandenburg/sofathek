@@ -207,10 +207,30 @@ describe('VideoPlayer Component - Pointer Events and Controls', () => {
 
     // Simulate video loaded to transition out of loading state
     const videoEl = container.querySelector('video');
-    if (videoEl) fireEvent.loadedData(videoEl);
+    expect(videoEl).not.toBeNull();
+    fireEvent.loadedData(videoEl!);
 
     const playButton = screen.getByRole('button', { name: /play video/i });
-    expect(playButton).toBeDefined();
+    expect(playButton).not.toBeNull();
+  });
+
+  test('should hide play button overlay when video is playing', () => {
+    const validVideo: Video = {
+      id: 'test-video',
+      file: { name: 'test.mp4', size: 1024, path: '/videos/test.mp4', extension: 'mp4', lastModified: new Date() },
+      metadata: { title: 'Test Video', width: 1920, height: 1080 },
+      viewCount: 0
+    };
+
+    const { container } = render(<VideoPlayer video={validVideo} />);
+
+    const videoEl = container.querySelector('video');
+    expect(videoEl).not.toBeNull();
+    fireEvent.loadedData(videoEl!);
+    fireEvent.play(videoEl!);
+
+    const playButton = screen.queryByRole('button', { name: /play video/i });
+    expect(playButton).toBeNull();
   });
 
   test('should render video element with controls enabled', () => {
@@ -224,7 +244,7 @@ describe('VideoPlayer Component - Pointer Events and Controls', () => {
     const { container } = render(<VideoPlayer video={validVideo} controls={true} />);
 
     const videoElement = container.querySelector('video[controls]');
-    expect(videoElement).toBeDefined();
+    expect(videoElement).not.toBeNull();
   });
 
   test('play button overlay should not use video-overlay CSS class (avoids pointer-events-auto conflict)', () => {
