@@ -49,8 +49,8 @@ describe('YouTubeFileDownloader', () => {
         'https://www.youtube.com/watch?v=test123',
         expect.objectContaining({
           output: expect.stringContaining('Test_Video-test123'),
-          format: 'bestvideo+bestaudio',
-          mergeOutputFormat: 'mp4',
+          format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio',
+          mergeOutputFormat: 'mp4/webm',
           writeSub: true,
           writeAutoSub: true,
           subLang: 'sv.*,en.*,de.*',
