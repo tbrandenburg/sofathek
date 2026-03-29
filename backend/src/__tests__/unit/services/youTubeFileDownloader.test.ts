@@ -49,8 +49,8 @@ describe('YouTubeFileDownloader', () => {
         'https://www.youtube.com/watch?v=test123',
         expect.objectContaining({
           output: expect.stringContaining('Test_Video-test123'),
-          format: 'bestvideo+bestaudio',
-          mergeOutputFormat: 'mp4',
+          format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=mp4]/best[ext=webm]',
+          mergeOutputFormat: 'mp4/webm',
           writeSub: true,
           writeAutoSub: true,
           subLang: 'sv.*,en.*,de.*',
@@ -114,6 +114,20 @@ describe('YouTubeFileDownloader', () => {
         expect(error.message).not.toContain('node_modules');
         expect(error.message).not.toContain('yt-dlp');
       }
+    });
+
+    it('should find and return a .webm file when no .mp4 is available', async () => {
+      const metadata = { id: 'test123', title: 'Test Video' };
+      const mkSub = () => Object.assign(Promise.resolve(), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
+      mockExec.mockImplementation(mkSub);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.webm']);
+
+      const result = await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
+      expect(result).toBe('/test/temp/Test_Video-test123.webm');
     });
 
     it('should handle missing downloaded file', async () => {

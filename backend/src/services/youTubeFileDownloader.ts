@@ -29,11 +29,11 @@ export class YouTubeFileDownloader {
         downloadId
       });
 
-      // Pass 1: download best video+audio merged as MP4, plus subtitles
+      // Pass 1: download best video+audio merged as MP4 (prefer) or WebM (fallback), plus subtitles
       const videoSubprocess = youtubedl.exec(url, {
         output: outputTemplate,
-        format: 'bestvideo+bestaudio',
-        mergeOutputFormat: 'mp4',
+        format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=mp4]/best[ext=webm]',
+        mergeOutputFormat: 'mp4/webm',
         writeSub: true,
         writeAutoSub: true,
         subLang: 'sv.*,en.*,de.*',
@@ -95,8 +95,9 @@ export class YouTubeFileDownloader {
 
       const tempFiles = await fs.readdir(this.tempDirectory);
       const prefix = `${safeTitle}-${metadata.id}`;
+      const videoExtensions = new Set(['.mp4', '.webm']);
       const downloadedFile = tempFiles.find(
-        file => file.startsWith(prefix) && path.extname(file).toLowerCase() === '.mp4'
+        file => file.startsWith(prefix) && videoExtensions.has(path.extname(file).toLowerCase())
       );
 
       if (!downloadedFile) {
