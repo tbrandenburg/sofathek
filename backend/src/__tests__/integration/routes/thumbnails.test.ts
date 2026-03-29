@@ -84,7 +84,7 @@ describe('GET /api/thumbnails/:filename', () => {
       expect(mockFs.createReadStream).toHaveBeenCalled();
     });
 
-    it('should serve thumbnail from temp/thumbnails directory', async () => {
+    it('should return 404 for thumbnail only in temp/thumbnails (no longer served from there)', async () => {
       const tempThumbnailsDir = path.join(mockTempDir, 'thumbnails');
       mockFs.statSync.mockImplementation((candidatePath: fs.PathLike) => {
         if (String(candidatePath).startsWith(tempThumbnailsDir)) {
@@ -97,12 +97,12 @@ describe('GET /api/thumbnails/:filename', () => {
 
       const response = await request(app)
         .get('/api/thumbnails/generated-thumb.png')
-        .expect(200);
+        .expect(404);
 
-      expect(response.headers['content-type']).toBe('image/png');
+      expect(response.body.status).toBe('error');
     });
 
-    it('should serve thumbnail from custom TEMP_DIR', async () => {
+    it('should return 404 for thumbnail only in custom TEMP_DIR (no longer served from there)', async () => {
       const expectedTempThumbPath = path.join(mockTempDir, 'thumbnails', 'custom-thumb.jpg');
       mockFs.statSync.mockImplementation((candidatePath: fs.PathLike) => {
         if (String(candidatePath) === expectedTempThumbPath) {
@@ -115,10 +115,9 @@ describe('GET /api/thumbnails/:filename', () => {
 
       const response = await request(app)
         .get('/api/thumbnails/custom-thumb.jpg')
-        .expect(200);
+        .expect(404);
 
-      expect(response.headers['content-type']).toBe('image/jpeg');
-      expect(mockFs.statSync).toHaveBeenCalledWith(expectedTempThumbPath);
+      expect(response.body.status).toBe('error');
     });
 
     it('should return correct MIME type for jpeg', async () => {

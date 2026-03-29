@@ -12,8 +12,7 @@ const router = Router();
 
 // Initialize video service (in production this would come from DI container)
 const videosDirectory = config.videosDir;
-const tempDirectory = config.tempDir;
-const videoService = new VideoService(videosDirectory, config.thumbnailsDir);
+const videoService = new VideoService(videosDirectory);
 const MAX_THUMBNAIL_SIZE = config.thumbnailMaxSize;
 const THUMBNAIL_CACHE_DURATION = config.thumbnailCacheDuration;
 
@@ -216,48 +215,33 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   // Extract extension for MIME type detection
   const ext = path.extname(filename).toLowerCase();
   
-  // Check in videos directory first (user-uploaded thumbnails)
-  const videosThumbPath = path.join(videosDirectory, filename);
-  
-  // Check in temp/thumbnails (generated thumbnails)
-  const tempThumbPath = path.join(tempDirectory, 'thumbnails', filename);
-  
-  let thumbnailPath: string | null = null;
+  // Check in videos directory only (thumbnails are now always stored alongside videos)
+  const thumbnailPath = path.join(videosDirectory, filename);
+
+  // Security: Verify resolved path is within allowed directory (before any fs access)
+  const allowedVideosDir = path.resolve(videosDirectory);
+  validatePathInDirectory(thumbnailPath, allowedVideosDir);
+
   let stat: fs.Stats | null = null;
 
-  for (const candidatePath of [videosThumbPath, tempThumbPath]) {
-    try {
-      const candidateStat = fs.statSync(candidatePath);
-      if (candidateStat.isFile()) {
-        thumbnailPath = candidatePath;
-        stat = candidateStat;
-        break;
-      }
-    } catch (error: unknown) {
-      const fsError = error as NodeJS.ErrnoException;
-      if (fsError.code === 'ENOENT') {
-        continue;
-      }
-      if (fsError.code === 'EACCES' || fsError.code === 'EPERM') {
-        throw new AppError('Permission denied accessing thumbnail', 403);
-      }
-      throw new AppError('Unable to access thumbnail', 500);
+  try {
+    const thumbStat = fs.statSync(thumbnailPath);
+    if (!thumbStat.isFile()) {
+      throw new AppError(`Thumbnail '${filename}' is not a file`, 404);
     }
-  }
-  
-  if (!thumbnailPath) {
-    throw new AppError(`Thumbnail '${filename}' not found`, 404);
-  }
-  
-  // Security: Verify resolved path is within allowed directories
-  const allowedVideosDir = path.resolve(videosDirectory);
-  const allowedTempDir = path.resolve(tempDirectory, 'thumbnails');
-  
-  // Validate path is in allowed directory based on which location was used
-  if (thumbnailPath === videosThumbPath) {
-    validatePathInDirectory(thumbnailPath, allowedVideosDir);
-  } else if (thumbnailPath === tempThumbPath) {
-    validatePathInDirectory(thumbnailPath, allowedTempDir);
+    stat = thumbStat;
+  } catch (error: unknown) {
+    const fsError = error as NodeJS.ErrnoException;
+    if (error instanceof AppError) {
+      throw error;
+    }
+    if (fsError.code === 'ENOENT') {
+      throw new AppError(`Thumbnail '${filename}' not found`, 404);
+    }
+    if (fsError.code === 'EACCES' || fsError.code === 'EPERM') {
+      throw new AppError('Permission denied accessing thumbnail', 403);
+    }
+    throw new AppError('Unable to access thumbnail', 500);
   }
   
   if (!stat || stat.size > MAX_THUMBNAIL_SIZE) {

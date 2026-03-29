@@ -25,7 +25,7 @@ export class VideoFileManager {
       await fs.mkdir(this.videosDirectory, { recursive: true });
       const tempFiles = await fs.readdir(this.tempDirectory);
 
-      const COMPANION_EXTENSIONS = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.m4v', '.mp3', '.srt', '.vtt', '.info.json'];
+      const COMPANION_EXTENSIONS = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.m4v', '.mp3', '.srt', '.vtt', '.info.json', '.jpg', '.jpeg', '.png', '.webp'];
       for (const tempFile of tempFiles) {
         if (!tempFile.startsWith(filePrefix)) {
           continue;
@@ -37,6 +37,25 @@ export class VideoFileManager {
         const sourcePath = path.join(this.tempDirectory, tempFile);
         const destinationPath = path.join(this.videosDirectory, tempFile);
         await fs.rename(sourcePath, destinationPath);
+      }
+
+      // Also scan temp/thumbnails subdirectory for generated thumbnails (legacy path)
+      const thumbnailsSubdir = path.join(this.tempDirectory, 'thumbnails');
+      try {
+        const thumbnailFiles = await fs.readdir(thumbnailsSubdir);
+        for (const thumbFile of thumbnailFiles) {
+          if (!thumbFile.startsWith(filePrefix)) {
+            continue;
+          }
+          const sourcePath = path.join(thumbnailsSubdir, thumbFile);
+          const destinationPath = path.join(this.videosDirectory, thumbFile);
+          await fs.rename(sourcePath, destinationPath);
+        }
+      } catch (error) {
+        // thumbnails subdir may not exist, which is fine
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          throw error;
+        }
       }
 
       logger.info('Video moved to library', {

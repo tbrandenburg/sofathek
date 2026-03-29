@@ -11,27 +11,28 @@ import ffmpegBin from 'ffmpeg-static';
 const FFMPEG_BIN = ffmpegBin || 'ffmpeg';
 
 /**
- * Thumbnail generation service using ffmpeg directly via execa
+ * Thumbnail generation service using ffmpeg directly via execa.
+ * Thumbnails are written alongside the source video file (same directory).
  */
 export class ThumbnailService {
   private readonly tempDirectory: string;
-  private readonly thumbnailsDirectory: string;
 
-  constructor(tempDirectory: string, thumbnailsDirectory: string) {
+  constructor(tempDirectory: string) {
     this.tempDirectory = tempDirectory;
-    this.thumbnailsDirectory = thumbnailsDirectory;
   }
 
   /**
-   * Generate thumbnail from video file
+   * Generate thumbnail from video file.
+   * The thumbnail is placed in the same directory as the video.
    */
   async generateThumbnail(videoPath: string): Promise<string> {
     try {
       await this.ensureDirectoriesExist();
 
+      const videoDir = path.dirname(videoPath);
       const videoBasename = path.basename(videoPath, path.extname(videoPath));
       const thumbnailFilename = `${videoBasename}.jpg`;
-      const thumbnailPath = path.join(this.thumbnailsDirectory, thumbnailFilename);
+      const thumbnailPath = path.join(videoDir, thumbnailFilename);
 
       logger.info('Generating thumbnail', { videoPath, thumbnailPath });
 
@@ -75,12 +76,13 @@ export class ThumbnailService {
   }
 
   /**
-   * Check if thumbnail already exists for video
+   * Check if thumbnail already exists for video (looks in same directory as video)
    */
   async thumbnailExists(videoPath: string): Promise<boolean> {
     try {
+      const videoDir = path.dirname(videoPath);
       const videoBasename = path.basename(videoPath, path.extname(videoPath));
-      const thumbnailPath = path.join(this.thumbnailsDirectory, `${videoBasename}.jpg`);
+      const thumbnailPath = path.join(videoDir, `${videoBasename}.jpg`);
       await fs.access(thumbnailPath);
       return true;
     } catch {
@@ -89,11 +91,13 @@ export class ThumbnailService {
   }
 
   /**
-   * Get thumbnail path for video (without generating)
+   * Get thumbnail path for video (without generating).
+   * Returns the path in the same directory as the video.
    */
   getThumbnailPath(videoPath: string): string {
+    const videoDir = path.dirname(videoPath);
     const videoBasename = path.basename(videoPath, path.extname(videoPath));
-    return path.join(this.thumbnailsDirectory, `${videoBasename}.jpg`);
+    return path.join(videoDir, `${videoBasename}.jpg`);
   }
 
   /**
@@ -101,7 +105,6 @@ export class ThumbnailService {
    */
   private async ensureDirectoriesExist(): Promise<void> {
     await fs.mkdir(this.tempDirectory, { recursive: true });
-    await fs.mkdir(this.thumbnailsDirectory, { recursive: true });
   }
 
   /**

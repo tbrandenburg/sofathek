@@ -12,7 +12,7 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 
 // Initialize services with configured directories
-export const thumbnailService = new ThumbnailService(config.tempDir, config.thumbnailsDir);
+export const thumbnailService = new ThumbnailService(config.tempDir);
 export const youTubeDownloadService = new YouTubeDownloadService(config.videosDir, config.tempDir, thumbnailService);
 export const downloadQueueService = new DownloadQueueService(config.tempDir, youTubeDownloadService);
 

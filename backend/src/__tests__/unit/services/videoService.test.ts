@@ -30,10 +30,9 @@ const mockFs = fs as jest.Mocked<typeof fs>;
 describe('VideoService', () => {
   let videoService: VideoService;
   const testVideosDir = '/test/videos';
-  const testThumbnailsDir = '/test/thumbnails';
 
   beforeEach(() => {
-    videoService = new VideoService(testVideosDir, testThumbnailsDir);
+    videoService = new VideoService(testVideosDir);
     jest.clearAllMocks();
     // Default: no sidecar file present
     const enoentError = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
@@ -485,8 +484,7 @@ describe('VideoService', () => {
 
     it('should use default path when VIDEOS_DIR is not set', () => {
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
-        '/test/thumbnails'
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).toBe(path.join('/mock/cwd', 'data', 'videos', 'test.mp4'));
@@ -495,8 +493,7 @@ describe('VideoService', () => {
     it('should use environment variable override when VIDEOS_DIR is set', () => {
       process.env.VIDEOS_DIR = '/custom/videos';
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
-        '/test/thumbnails'
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).toBe(path.join('/custom/videos', 'test.mp4'));
@@ -504,8 +501,7 @@ describe('VideoService', () => {
 
     it('should produce absolute paths', () => {
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
-        '/test/thumbnails'
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(path.isAbsolute(filePath)).toBe(true);
@@ -514,8 +510,7 @@ describe('VideoService', () => {
     it('should not contain dangerous path traversals in default path', () => {
       delete process.env.VIDEOS_DIR;
       const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos'),
-        '/test/thumbnails'
+        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
       );
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).not.toContain('../');
@@ -523,56 +518,52 @@ describe('VideoService', () => {
 
     it('should handle absolute custom path from environment variable', () => {
       process.env.VIDEOS_DIR = '/absolute/custom/path';
-      const service = new VideoService(process.env.VIDEOS_DIR, '/test/thumbnails');
+      const service = new VideoService(process.env.VIDEOS_DIR);
       const filePath = service.getVideoFilePath('video.mp4');
       expect(filePath).toBe('/absolute/custom/path/video.mp4');
       expect(path.isAbsolute(filePath)).toBe(true);
     });
   });
 
-  describe('findThumbnail (thumbnails directory fallback)', () => {
+  describe('findThumbnail (video directory)', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
-    it('should find thumbnail in thumbnails directory when not in video directory', async () => {
-      const serviceWithThumbnails = new VideoService('/test/videos', '/test/thumbnails');
-      
-      mockFs.access
-        .mockRejectedValueOnce(new Error('ENOENT')) // video dir search fails
-        .mockRejectedValueOnce(new Error('ENOENT')) // video dir .jpeg fails
-        .mockRejectedValueOnce(new Error('ENOENT')) // video dir .png fails  
-        .mockRejectedValueOnce(new Error('ENOENT')) // video dir .webp fails
-        .mockRejectedValueOnce(new Error('ENOENT')) // thumbnails dir .jpg fails
-        .mockResolvedValueOnce(undefined); // thumbnails dir .jpeg succeeds
+    it('should find thumbnail in same directory as video', async () => {
+      const service = new VideoService('/test/videos');
 
-      const result = await (serviceWithThumbnails as any).findThumbnail('/test/videos/video.mp4');
+      mockFs.access.mockResolvedValueOnce(undefined); // /test/videos/video.jpg found
 
-      expect(result).toBe('video.jpeg');
-      expect(mockFs.access).toHaveBeenCalledWith('/test/thumbnails/video.jpeg');
-    });
-
-    it('should prefer thumbnail in video directory over thumbnails directory', async () => {
-      const serviceWithThumbnails = new VideoService('/test/videos', '/test/thumbnails');
-      
-      mockFs.access.mockResolvedValue(undefined);
-
-      const result = await (serviceWithThumbnails as any).findThumbnail('/test/videos/video.mp4');
+      const result = await (service as any).findThumbnail('/test/videos/video.mp4');
 
       expect(result).toBe('video.jpg');
       expect(mockFs.access).toHaveBeenCalledWith('/test/videos/video.jpg');
       expect(mockFs.access).toHaveBeenCalledTimes(1);
     });
 
-    it('should return null when thumbnail not in either directory', async () => {
-      const serviceWithThumbnails = new VideoService('/test/videos', '/test/thumbnails');
-      
+    it('should return null when thumbnail not found in video directory', async () => {
+      const service = new VideoService('/test/videos');
+
       mockFs.access.mockRejectedValue(new Error('ENOENT'));
       mockFs.readdir.mockResolvedValue(['other.jpg'] as any);
 
-      const result = await (serviceWithThumbnails as any).findThumbnail('/test/videos/video.mp4');
+      const result = await (service as any).findThumbnail('/test/videos/video.mp4');
 
       expect(result).toBeNull();
+    });
+
+    it('should not look in any other directory', async () => {
+      const service = new VideoService('/test/videos');
+
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      await (service as any).findThumbnail('/test/videos/video.mp4');
+
+      // Should only check paths within /test/videos
+      const accessCalls = (mockFs.access as jest.Mock).mock.calls.map((c: any[]) => c[0] as string);
+      expect(accessCalls.every((p: string) => p.startsWith('/test/videos'))).toBe(true);
     });
   });
 

@@ -19,7 +19,6 @@ import {
  */
 export class VideoService {
   private readonly videosDirectory: string;
-  private readonly thumbnailsDirectory: string;
   private thumbnailCache: Map<string, { files: string[]; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000;
   private readonly THUMBNAIL_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -27,9 +26,8 @@ export class VideoService {
   private readonly TRANSCRIPT_EXTENSION = '.srt';
   private readonly INFO_EXTENSION = '.info.json';
 
-  constructor(videosDirectory: string, thumbnailsDirectory: string) {
+  constructor(videosDirectory: string) {
     this.videosDirectory = videosDirectory;
-    this.thumbnailsDirectory = thumbnailsDirectory;
   }
 
   /**
@@ -279,13 +277,8 @@ export class VideoService {
   private async findThumbnail(videoPath: string): Promise<string | null> {
     const videoDir = path.dirname(videoPath);
     const baseName = path.basename(videoPath, path.extname(videoPath));
-    
-    const thumbnail = await this.findThumbnailInDirectory(videoDir, baseName);
-    if (thumbnail) {
-      return thumbnail;
-    }
 
-    return this.findThumbnailInDirectory(this.thumbnailsDirectory, baseName);
+    return this.findThumbnailInDirectory(videoDir, baseName);
   }
 
   private async findThumbnailInDirectory(directory: string, baseName: string): Promise<string | null> {
@@ -397,6 +390,5 @@ export class VideoService {
  * Uses environment variable or default path
  */
 export const videoService = new VideoService(
-  config.videosDir,
-  config.thumbnailsDir
+  config.videosDir
 );
