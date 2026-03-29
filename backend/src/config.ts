@@ -7,6 +7,7 @@ export interface Config {
   logLevel: string;
   videosDir: string;
   tempDir: string;
+  /** @deprecated Alias for videosDir; thumbnails are now stored alongside videos */
   thumbnailsDir: string;
   allowedOrigins: string[];
   thumbnailMaxSize: number;

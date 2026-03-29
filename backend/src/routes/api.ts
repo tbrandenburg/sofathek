@@ -218,6 +218,10 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
   // Check in videos directory only (thumbnails are now always stored alongside videos)
   const thumbnailPath = path.join(videosDirectory, filename);
 
+  // Security: Verify resolved path is within allowed directory (before any fs access)
+  const allowedVideosDir = path.resolve(videosDirectory);
+  validatePathInDirectory(thumbnailPath, allowedVideosDir);
+
   let stat: fs.Stats | null = null;
 
   try {
@@ -239,10 +243,6 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     }
     throw new AppError('Unable to access thumbnail', 500);
   }
-
-  // Security: Verify resolved path is within allowed directory
-  const allowedVideosDir = path.resolve(videosDirectory);
-  validatePathInDirectory(thumbnailPath, allowedVideosDir);
   
   if (!stat || stat.size > MAX_THUMBNAIL_SIZE) {
     if (!stat) {

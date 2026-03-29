@@ -89,6 +89,24 @@ describe('VideoFileManager', () => {
       expect(mockRename).not.toHaveBeenCalledWith(expect.stringContaining('.tmp'), expect.anything());
     });
 
+    it('should move thumbnail .jpg from flat tempDir alongside video', async () => {
+      const metadata = {
+        id: 'test123',
+        title: 'Test Video'
+      };
+
+      mockMkdir.mockResolvedValue(undefined);
+      mockReaddir.mockImplementation((dir: string) => {
+        if (dir === '/test/temp') return Promise.resolve(['Test_Video-test123.mp4', 'Test_Video-test123.jpg']);
+        return Promise.resolve([]);
+      });
+      mockRename.mockResolvedValue(undefined);
+
+      await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
+
+      expect(mockRename).toHaveBeenCalledWith('/test/temp/Test_Video-test123.jpg', '/test/videos/Test_Video-test123.jpg');
+    });
+
     it('should also move thumbnails from temp/thumbnails subdir', async () => {
       const metadata = {
         id: 'test123',
