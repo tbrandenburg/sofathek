@@ -83,11 +83,11 @@ async function main() {
       results.failed.forEach(({ video, error }) => console.log(`  - ${video}: ${error}`));
     }
     
-    // Verify thumbnail directory
-    const thumbnailFiles = await fs.readdir(config.thumbnailsDir);
-    const jpgFiles = thumbnailFiles.filter(file => file.endsWith('.jpg'));
+    // Thumbnails now live alongside videos in videosDir
+    const allFiles = await fs.readdir(config.videosDir);
+    const jpgFiles = allFiles.filter(file => file.endsWith('.jpg'));
     
-    console.log(`\n📁 Thumbnail directory contains ${jpgFiles.length} .jpg files`);
+    console.log(`\n📁 Videos directory contains ${jpgFiles.length} .jpg thumbnail files`);
     
     // Check for orphaned thumbnails
     const orphanedThumbs = jpgFiles.filter(thumbFile => {
