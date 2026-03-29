@@ -83,9 +83,8 @@ async function main() {
       results.failed.forEach(({ video, error }) => console.log(`  - ${video}: ${error}`));
     }
     
-    // Thumbnails now live alongside videos in videosDir
-    const allFiles = await fs.readdir(config.videosDir);
-    const jpgFiles = allFiles.filter(file => file.endsWith('.jpg'));
+    // Thumbnails now live alongside videos in videosDir (reuse already-fetched listing)
+    const jpgFiles = videoFiles.filter(file => file.endsWith('.jpg'));
     
     console.log(`\n📁 Videos directory contains ${jpgFiles.length} .jpg thumbnail files`);
     
