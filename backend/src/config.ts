@@ -53,7 +53,7 @@ function getConfig(): Config {
     logLevel: process.env.LOG_LEVEL || 'info',
     videosDir,
     tempDir,
-    thumbnailsDir: path.join(tempDir, 'thumbnails'),
+    thumbnailsDir: videosDir,  // Thumbnails stored alongside videos; kept for backward compat
     allowedOrigins: parseAllowedOrigins(process.env.ALLOWED_ORIGINS),
     thumbnailMaxSize: parseIntOrDefault(process.env.THUMBNAIL_MAX_SIZE, 10 * 1024 * 1024),
     thumbnailCacheDuration: parseIntOrDefault(process.env.THUMBNAIL_CACHE_DURATION, 86400),
@@ -68,4 +68,4 @@ export const config = getConfig();
 
 validateDir(config.videosDir, 'VIDEOS_DIR');
 validateDir(config.tempDir, 'TEMP_DIR');
-validateDir(config.thumbnailsDir, 'THUMBNAILS_DIR');
+// thumbnailsDir now points to videosDir; no separate validation needed

@@ -31,7 +31,10 @@ describe('VideoFileManager', () => {
       };
 
       mockMkdir.mockResolvedValue(undefined);
-      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'Test_Video-test123.mp3', 'other-file.mp4']);
+      mockReaddir.mockImplementation((dir: string) => {
+        if (dir === '/test/temp') return Promise.resolve(['Test_Video-test123.mp4', 'Test_Video-test123.mp3', 'other-file.mp4']);
+        return Promise.resolve([]);
+      });
       mockRename.mockResolvedValue(undefined);
 
       const result = await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
@@ -53,7 +56,10 @@ describe('VideoFileManager', () => {
       };
 
       mockMkdir.mockResolvedValue(undefined);
-      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'Test_Video-test123.info.json']);
+      mockReaddir.mockImplementation((dir: string) => {
+        if (dir === '/test/temp') return Promise.resolve(['Test_Video-test123.mp4', 'Test_Video-test123.info.json']);
+        return Promise.resolve([]);
+      });
       mockRename.mockResolvedValue(undefined);
 
       await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
@@ -71,13 +77,56 @@ describe('VideoFileManager', () => {
       };
 
       mockMkdir.mockResolvedValue(undefined);
-      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'Test_Video-test123.part', 'Test_Video-test123.tmp']);
+      mockReaddir.mockImplementation((dir: string) => {
+        if (dir === '/test/temp') return Promise.resolve(['Test_Video-test123.mp4', 'Test_Video-test123.part', 'Test_Video-test123.tmp']);
+        return Promise.resolve([]);
+      });
       mockRename.mockResolvedValue(undefined);
 
       await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
 
       expect(mockRename).not.toHaveBeenCalledWith(expect.stringContaining('.part'), expect.anything());
       expect(mockRename).not.toHaveBeenCalledWith(expect.stringContaining('.tmp'), expect.anything());
+    });
+
+    it('should also move thumbnails from temp/thumbnails subdir', async () => {
+      const metadata = {
+        id: 'test123',
+        title: 'Test Video'
+      };
+
+      mockMkdir.mockResolvedValue(undefined);
+      mockReaddir.mockImplementation((dir: string) => {
+        if (dir === '/test/temp') return Promise.resolve(['Test_Video-test123.mp4']);
+        if (dir === '/test/temp/thumbnails') return Promise.resolve(['Test_Video-test123.jpg']);
+        return Promise.resolve([]);
+      });
+      mockRename.mockResolvedValue(undefined);
+
+      await manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata);
+
+      expect(mockRename).toHaveBeenCalledWith('/test/temp/Test_Video-test123.mp4', '/test/videos/Test_Video-test123.mp4');
+      expect(mockRename).toHaveBeenCalledWith('/test/temp/thumbnails/Test_Video-test123.jpg', '/test/videos/Test_Video-test123.jpg');
+    });
+
+    it('should handle missing temp/thumbnails subdir gracefully', async () => {
+      const metadata = {
+        id: 'test123',
+        title: 'Test Video'
+      };
+
+      mockMkdir.mockResolvedValue(undefined);
+      mockReaddir.mockImplementation((dir: string) => {
+        if (dir === '/test/temp') return Promise.resolve(['Test_Video-test123.mp4']);
+        const err = new Error('ENOENT') as NodeJS.ErrnoException;
+        err.code = 'ENOENT';
+        return Promise.reject(err);
+      });
+      mockRename.mockResolvedValue(undefined);
+
+      // Should not throw when thumbnails subdir does not exist
+      await expect(manager.moveToLibrary('/test/temp/Test_Video-test123.mp4', metadata)).resolves.toBeDefined();
+      expect(mockRename).toHaveBeenCalledWith('/test/temp/Test_Video-test123.mp4', '/test/videos/Test_Video-test123.mp4');
     });
 
     it('should handle move failures', async () => {
@@ -100,7 +149,10 @@ describe('VideoFileManager', () => {
       };
 
       mockMkdir.mockResolvedValue(undefined);
-      mockReaddir.mockResolvedValue(['Test_Video_Special_CharactersAndMore!-test123.mp4']);
+      mockReaddir.mockImplementation((dir: string) => {
+        if (dir === '/test/temp') return Promise.resolve(['Test_Video_Special_CharactersAndMore!-test123.mp4']);
+        return Promise.resolve([]);
+      });
       mockRename.mockResolvedValue(undefined);
 
       const result = await manager.moveToLibrary('/test/temp/file.mp4', metadata);

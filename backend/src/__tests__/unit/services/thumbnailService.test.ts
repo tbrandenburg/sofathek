@@ -24,7 +24,7 @@ describe('ThumbnailService', () => {
   let service: ThumbnailService;
 
   beforeEach(() => {
-    service = new ThumbnailService('/test/temp', '/test/thumbnails');
+    service = new ThumbnailService('/test/temp');
     jest.clearAllMocks();
     mockMkdir.mockResolvedValue(undefined);
   });
@@ -36,10 +36,10 @@ describe('ThumbnailService', () => {
 
       const result = await service.generateThumbnail('/test/video.mp4');
 
-      expect(result).toBe('/test/thumbnails/video.jpg');
+      expect(result).toBe('/test/video.jpg');
       expect(mockExeca).toHaveBeenCalledWith(
         expect.any(String),
-        expect.arrayContaining(['-i', '/test/video.mp4', '/test/thumbnails/video.jpg'])
+        expect.arrayContaining(['-i', '/test/video.mp4', '/test/video.jpg'])
       );
     });
 
@@ -100,8 +100,8 @@ describe('ThumbnailService', () => {
   });
 
   describe('getThumbnailPath', () => {
-    it('should return correct thumbnail path', () => {
-      expect(service.getThumbnailPath('/test/video.mp4')).toBe('/test/thumbnails/video.jpg');
+    it('should return correct thumbnail path alongside video', () => {
+      expect(service.getThumbnailPath('/test/video.mp4')).toBe('/test/video.jpg');
     });
   });
 
@@ -132,10 +132,9 @@ describe('ThumbnailService - Real FFmpeg Integration', () => {
   const { ThumbnailService: RealThumbnailService } = jest.requireActual('../../../services/thumbnailService');
   let realService: any;
   const tempDir = '/tmp/test-thumbnails';
-  const thumbnailsDir = '/tmp/test-thumbnails/output';
 
   beforeAll(async () => {
-    realService = new RealThumbnailService(tempDir, thumbnailsDir);
+    realService = new RealThumbnailService(tempDir);
     try {
       const fs = await import('fs/promises');
       await fs.rm(tempDir, { recursive: true, force: true });
@@ -176,7 +175,7 @@ describe('ThumbnailService Configuration', () => {
   it('should handle module import without throwing errors', () => {
     expect(() => {
       const { ThumbnailService: T } = require('../../../services/thumbnailService');
-      new T('/test', '/test');
+      new T('/test');
     }).not.toThrow();
   });
 

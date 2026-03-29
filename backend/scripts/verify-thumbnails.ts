@@ -15,7 +15,7 @@ async function main() {
     console.log('🔍 Verifying thumbnails for all videos...\n');
     
     // Initialize thumbnail service
-    const thumbnailService = new ThumbnailService(config.tempDir, config.thumbnailsDir);
+    const thumbnailService = new ThumbnailService(config.tempDir);
     
     // Get all video files
     const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.m4v'];

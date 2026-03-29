@@ -107,7 +107,7 @@ export async function getVideoServiceHealth(): Promise<VideoServiceHealth> {
 
   try {
     const { VideoService } = await import('../../services/videoService');
-    const videoService = new VideoService(getVideosDirectory(), config.thumbnailsDir);
+    const videoService = new VideoService(getVideosDirectory());
     const result = await videoService.scanVideoDirectory();
 
     health.lastScan = new Date().toISOString();
