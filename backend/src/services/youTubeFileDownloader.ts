@@ -32,7 +32,7 @@ export class YouTubeFileDownloader {
       // Pass 1: download best video+audio merged as MP4 (prefer) or WebM (fallback), plus subtitles
       const videoSubprocess = youtubedl.exec(url, {
         output: outputTemplate,
-        format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio',
+        format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=mp4]/best[ext=webm]',
         mergeOutputFormat: 'mp4/webm',
         writeSub: true,
         writeAutoSub: true,
