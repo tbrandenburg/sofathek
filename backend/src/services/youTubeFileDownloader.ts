@@ -41,6 +41,7 @@ export class YouTubeFileDownloader {
         output: outputTemplate,
         format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=mp4]/best[ext=webm]',
         mergeOutputFormat: 'mp4/webm',
+        writeThumbnail: true,
         writeSub: true,
         writeAutoSub: true,
         subLang: 'sv.*,en.*,de.*',

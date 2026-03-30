@@ -21,6 +21,26 @@ describe('YouTubeFileDownloader', () => {
   });
 
   describe('download', () => {
+    it('should configure yt-dlp with writeThumbnail: true for video pass', async () => {
+      const metadata = { id: 'test123', title: 'Test Video' };
+      const mkSub = () => Object.assign(Promise.resolve(), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
+      mockExec.mockImplementation(mkSub);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
+
+      // First call is the video pass
+      expect(mockExec).toHaveBeenNthCalledWith(
+        1,
+        expect.any(String),
+        expect.objectContaining({ writeThumbnail: true })
+      );
+    });
+
     it('should download video file successfully', async () => {
       const metadata = {
         id: 'test123',
