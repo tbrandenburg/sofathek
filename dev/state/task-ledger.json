@@ -227,8 +227,25 @@
     "last_verified": "2026-03-30T19:16:00Z"
   },
   "ISSUE_266_COMMIT_AND_PUSH": {
-    "status": "in_progress",
-    "evidence": [],
+    "status": "done",
+    "evidence": [
+      "Commits eb616b0 pushed to origin/fix/issue-264-auto-regenerate-thumbnails",
+      "PR #265 created and CI passed (all 6 levels)"
+    ],
     "last_verified": "2026-03-30T19:16:00Z"
+  },
+  "PR_265_MERGE_CONFLICT_RESOLUTION": {
+    "status": "done",
+    "evidence": [
+      "5xWhy RCA: PR #265 showed UNKNOWN mergeable state because origin/main diverged (commit 39d731f merged H.264 AV1 fix) after PR branch was created",
+      "Conflict was in dev/state/task-ledger.json - both branches appended different trailing entries",
+      "Fix: git merge origin/main into fix/issue-264-auto-regenerate-thumbnails — resolved cleanly by ORT strategy (no manual conflict resolution needed)",
+      "youTubeFileDownloader.ts and its test auto-merged (non-conflicting changes from main)",
+      "type-check: PASS (tsc --noEmit, 0 errors)",
+      "lint: PASS (eslint src/**/*.ts, 0 errors)",
+      "unit tests: 239 passed, 1 skipped, 0 failed (npx jest --testPathIgnorePatterns=integration|e2e)",
+      "Merge commit c3ae77b pushed to origin/fix/issue-264-auto-regenerate-thumbnails"
+    ],
+    "last_verified": "2026-03-31T00:00:00Z"
   }
 }
