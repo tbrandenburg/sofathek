@@ -121,7 +121,7 @@ function QueueItemComponent({ item, onCancel, className = '' }: QueueItemCompone
 
         {/* Progress bar for processing items */}
         {item.status === 'processing' && (
-          <div className="mt-3">
+          <div className="mt-3 pb-2">
             <div 
               className="w-full bg-gray-200 rounded-full h-2" 
               role="progressbar"
