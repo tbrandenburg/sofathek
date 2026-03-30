@@ -186,10 +186,15 @@ export class VideoService {
     // Try to read info sidecar for rich metadata
     const infoSidecar = await this.readInfoSidecar(videoFile.path);
 
-    // Check for existing thumbnail (jpg, jpeg, png, webp)
+    // Check for existing thumbnail (jpg, jpeg, png, webp); fall back to sidecar-recorded path.
+    // path.basename() strips any accidental path traversal from the sidecar value.
+    const filesystemThumbnail = await this.findThumbnail(videoFile.path);
+    const sidecarThumbnail = infoSidecar?.localThumbnail
+      ? path.basename(infoSidecar.localThumbnail) || null
+      : null;
     const thumbnail = existingThumbnail !== undefined
       ? existingThumbnail
-      : await this.findThumbnail(videoFile.path);
+      : filesystemThumbnail ?? sidecarThumbnail;
     const audio = await this.findAudio(videoFile.path);
     const transcripts = await this.findTranscripts(videoFile.path);
 

@@ -607,6 +607,59 @@ describe('VideoService', () => {
     });
   });
 
+  describe('extractMetadata - thumbnail fallback', () => {
+    const baseVideoFile = {
+      path: '/test/videos/video-abc123.mp4',
+      name: 'video-abc123.mp4',
+      size: 1000000,
+      extension: 'mp4',
+      lastModified: new Date()
+    };
+
+    it('should use infoSidecar.localThumbnail when filesystem scan returns null', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        duration: 120,
+        localThumbnail: 'video-abc123.jpg'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.thumbnail).toBe('video-abc123.jpg');
+    });
+
+    it('should prefer filesystem thumbnail over infoSidecar.localThumbnail', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        duration: 120,
+        localThumbnail: 'old-sidecar.jpg'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockResolvedValue(undefined); // filesystem finds video-abc123.jpg
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.thumbnail).toBe('video-abc123.jpg');
+    });
+
+    it('should return null for thumbnail when neither filesystem nor sidecar has it', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        duration: 120
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.thumbnail).toBeUndefined();
+    });
+  });
+
   describe('extractMetadata with sidecar', () => {
     it('should populate rich metadata fields from sidecar', async () => {
       const sidecar = {
