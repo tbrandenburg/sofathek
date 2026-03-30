@@ -855,8 +855,8 @@ describe('VideoService', () => {
       (service as any).scheduleRegeneration('/test/videos/video1.mp4');
       await new Promise(resolve => setImmediate(resolve));
 
-      // While first is still running, trigger drain again
-      (service as any).drainRegenerationQueue();
+      // While first is still running, trigger drain again (void — intentionally skipped by isRegenerating guard)
+      void (service as any).drainRegenerationQueue();
 
       // Only one call so far (second drain skipped due to isRegenerating flag)
       expect(mockThumbnailService.generateThumbnail).toHaveBeenCalledTimes(1);
