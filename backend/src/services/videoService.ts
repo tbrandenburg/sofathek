@@ -3,6 +3,7 @@ import { getErrorMessage } from '../utils/error';
 import path from 'path';
 import { config } from '../config';
 import { logger } from '../utils/logger';
+import { ThumbnailService } from './thumbnailService';
 import { 
   VideoFile, 
   VideoMetadata, 
@@ -26,8 +27,41 @@ export class VideoService {
   private readonly TRANSCRIPT_EXTENSION = '.srt';
   private readonly INFO_EXTENSION = '.info.json';
 
-  constructor(videosDirectory: string) {
+  private readonly pendingRegeneration = new Set<string>();
+  private isRegenerating = false;
+  private readonly thumbnailService: ThumbnailService | null;
+
+  constructor(videosDirectory: string, thumbnailService?: ThumbnailService) {
     this.videosDirectory = videosDirectory;
+    this.thumbnailService = thumbnailService ?? null;
+  }
+
+  private scheduleRegeneration(videoPath: string): void {
+    if (!this.thumbnailService) return;
+    if (this.pendingRegeneration.has(videoPath)) return;
+    this.pendingRegeneration.add(videoPath);
+    setImmediate(() => this.drainRegenerationQueue());
+  }
+
+  private async drainRegenerationQueue(): Promise<void> {
+    if (!this.thumbnailService) return;
+    if (this.isRegenerating) return;
+    this.isRegenerating = true;
+    try {
+      for (const videoPath of this.pendingRegeneration) {
+        this.pendingRegeneration.delete(videoPath);
+        try {
+          await this.thumbnailService.generateThumbnail(videoPath);
+          const videoDir = path.dirname(videoPath);
+          this.thumbnailCache.delete(videoDir);
+          logger.info('Auto-regenerated missing thumbnail', { videoPath });
+        } catch (err) {
+          logger.warn('Auto-regeneration failed, skipping', { videoPath, error: getErrorMessage(err) });
+        }
+      }
+    } finally {
+      this.isRegenerating = false;
+    }
   }
 
   /**
@@ -82,6 +116,10 @@ export class VideoService {
 
         videos.push(video);
         totalSize += videoFile.size;
+
+        if (!thumbnail && this.thumbnailService) {
+          this.scheduleRegeneration(videoFile.path);
+        }
       }
 
     } catch (error) {
@@ -395,5 +433,6 @@ export class VideoService {
  * Uses environment variable or default path
  */
 export const videoService = new VideoService(
-  config.videosDir
+  config.videosDir,
+  new ThumbnailService(config.tempDir)
 );
