@@ -39,24 +39,35 @@ export class VideoService {
   private scheduleRegeneration(videoPath: string): void {
     if (!this.thumbnailService) return;
     if (this.pendingRegeneration.has(videoPath)) return;
+    const wasEmpty = this.pendingRegeneration.size === 0;
     this.pendingRegeneration.add(videoPath);
-    setImmediate(() => this.drainRegenerationQueue());
+    // Only schedule a drain callback when the queue transitions from empty to non-empty.
+    // This avoids N callbacks for N videos and ensures paths added during an active drain
+    // are processed in the same run (the while loop below re-checks the set).
+    if (wasEmpty) {
+      setImmediate(() => this.drainRegenerationQueue().catch(err =>
+        logger.error('Unexpected drain failure', { error: getErrorMessage(err) })
+      ));
+    }
   }
 
   private async drainRegenerationQueue(): Promise<void> {
     if (!this.thumbnailService) return;
+    // Guards against concurrent invocations from rapid back-to-back scans
     if (this.isRegenerating) return;
     this.isRegenerating = true;
     try {
-      for (const videoPath of this.pendingRegeneration) {
-        this.pendingRegeneration.delete(videoPath);
-        try {
-          await this.thumbnailService.generateThumbnail(videoPath);
-          const videoDir = path.dirname(videoPath);
-          this.thumbnailCache.delete(videoDir);
-          logger.info('Auto-regenerated missing thumbnail', { videoPath });
-        } catch (err) {
-          logger.warn('Auto-regeneration failed, skipping', { videoPath, error: getErrorMessage(err) });
+      while (this.pendingRegeneration.size > 0) {
+        for (const videoPath of this.pendingRegeneration) {
+          this.pendingRegeneration.delete(videoPath);
+          try {
+            await this.thumbnailService.generateThumbnail(videoPath);
+            const videoDir = path.dirname(videoPath);
+            this.thumbnailCache.delete(videoDir);
+            logger.info('Auto-regenerated missing thumbnail', { videoPath });
+          } catch (err) {
+            logger.warn('Auto-regeneration failed, skipping', { videoPath, error: getErrorMessage(err) });
+          }
         }
       }
     } finally {
@@ -429,10 +440,7 @@ export class VideoService {
 }
 
 /**
- * Default video service instance
- * Uses environment variable or default path
+ * Default video service instance (no ThumbnailService — callers should inject one via constructor).
+ * The production API route wires ThumbnailService via routes/api.ts using the shared singleton.
  */
-export const videoService = new VideoService(
-  config.videosDir,
-  new ThumbnailService(config.tempDir)
-);
+export const videoService = new VideoService(config.videosDir);
