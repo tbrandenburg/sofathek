@@ -196,5 +196,39 @@
       "Merge commit a4e5fc2 brings fix into PR branch - push to remote pending"
     ],
     "last_verified": "2026-03-28T20:14:00Z"
+  },
+  "ISSUE_266_ROOT_CAUSE_ANALYSIS": {
+    "status": "done",
+    "evidence": [
+      "gh issue view 266 -> 'HIGH: Missing E2E integration test for auto-thumbnail-regeneration (PR #265 merge blocker)'",
+      "5xWhy RCA:",
+      "Why1: PR #265 blocked because missing E2E integration test for auto-thumbnail-regeneration",
+      "Why2: Only mocked unit tests added for VideoService — real-fs integration path never exercised",
+      "Why3: Unit test pattern chosen over real E2E because setup.ts globally mocks fs/promises and ffmpeggy",
+      "Why4: Global mocks prevent real ffmpeg invocation in normal test flow without explicit unmocking",
+      "Why5: drainRegenerationQueue→ThumbnailService.generateThumbnail chain was never validated end-to-end",
+      "Root cause: Missing real-filesystem integration test validating the full auto-regeneration pipeline"
+    ],
+    "last_verified": "2026-03-30T19:15:00Z"
+  },
+  "ISSUE_266_IMPLEMENT_E2E_TEST": {
+    "status": "done",
+    "evidence": [
+      "Created backend/src/__tests__/integration/thumbnail-regeneration.integration.test.ts",
+      "Uses jest.resetModules() + jest.unmock('fs/promises') to bypass global mocks",
+      "Sets process.env.FFMPEG_BIN='/usr/bin/ffmpeg' so ffmpeg-static resolves to real system binary",
+      "Copies real Lavar.mp4 (16MB) fixture into isolated temp dir without .jpg thumbnail",
+      "Test 1: first scan returns video WITHOUT thumbnail (no .jpg exists yet)",
+      "Test 2: polls until real ffmpeg writes Lavar.jpg (verified file size > 0)",
+      "Test 3: second scan returns video WITH thumbnail = 'Lavar.jpg' in response",
+      "npx jest --testPathPattern=thumbnail-regeneration.integration -> 3 passed (5.051s)",
+      "Full suite: npx jest -> 297 passed, 5 skipped (real-YouTube tests), 0 failures"
+    ],
+    "last_verified": "2026-03-30T19:16:00Z"
+  },
+  "ISSUE_266_COMMIT_AND_PUSH": {
+    "status": "in_progress",
+    "evidence": [],
+    "last_verified": "2026-03-30T19:16:00Z"
   }
 }
