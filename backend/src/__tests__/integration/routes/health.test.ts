@@ -31,6 +31,7 @@ describe('Health Route', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     process.env = originalEnv;
     fs.rmSync(testRootDir, { recursive: true, force: true });
   });
@@ -43,6 +44,25 @@ describe('Health Route', () => {
 
       expect(response.body.status).toBeDefined();
       expect(response.body.service).toBe('sofathek-backend');
+    });
+
+    it('should not trigger thumbnail generation during health check', async () => {
+      // Place a video file with no matching thumbnail so VideoService would call
+      // generateThumbnail if a ThumbnailService were injected — making the assertion
+      // genuinely load-bearing rather than vacuously true on an empty directory.
+      fs.writeFileSync(path.join(testRootDir, 'videos', 'test.mp4'), '');
+
+      // The require hits the module already loaded by beforeEach (same registry — no
+      // jest.resetModules() between beforeEach and here), so the spy lands on the
+      // prototype used by the running healthRouter.
+      const spy = jest.spyOn(
+        require('../../../services/thumbnailService').ThumbnailService.prototype,
+        'generateThumbnail'
+      );
+
+      await request(app).get('/').expect(200);
+
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 });
