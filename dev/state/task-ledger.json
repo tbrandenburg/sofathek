@@ -247,5 +247,19 @@
       "Merge commit c3ae77b pushed to origin/fix/issue-264-auto-regenerate-thumbnails"
     ],
     "last_verified": "2026-03-31T00:00:00Z"
+  },
+  "PR_265_MERGEABLE_STATE_RCA": {
+    "status": "done",
+    "evidence": [
+      "gh pr view 265 --json mergeable,mergeStateStatus -> {\"mergeable\":\"UNKNOWN\",\"mergeStateStatus\":\"UNKNOWN\"}",
+      "5xWhy RCA: UNKNOWN state caused by GitHub stale mergeability cache after commit 49767ba (PR #270) landed on main after PR branch last merge-in (c3ae77b)",
+      "49767ba only touches backend/src/services/youTubeFileDownloader.ts and its test — PR #265 does not modify these files",
+      "Dry-run: git checkout pr265-merge-test origin/fix/issue-264-auto-regenerate-thumbnails && git merge --no-commit --no-ff origin/main -> 'Automatic merge went well; stopped before committing as requested'",
+      "Zero code conflict confirmed — purely a GitHub cache staleness artifact",
+      "After GitHub recomputed: gh pr view 265 -> {\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}",
+      "All 6 CI checks: SUCCESS (Level 1-5 + CI Pipeline Complete, runs/23770044084)",
+      "Resolution: no code change required; stale cache self-resolved on re-query"
+    ],
+    "last_verified": "2026-03-31T02:00:00Z"
   }
 }
