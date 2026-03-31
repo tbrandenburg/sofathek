@@ -4,7 +4,7 @@
   "description": "Backend API server for Sofathek family media center",
   "main": "dist/server.js",
   "scripts": {
-    "postinstall": "node -e \"const{mkdirSync,symlinkSync,existsSync}=require('fs');const t='node_modules/youtube-dl-exec/bin/yt-dlp';if(!existsSync(t)){mkdirSync('node_modules/youtube-dl-exec/bin',{recursive:true});symlinkSync('/usr/local/bin/yt-dlp',t);}const f=require('ffmpeg-static');if(f&&!existsSync(f)){const{execSync}=require('child_process');try{execSync('ffmpeg -version',{stdio:'ignore'});const{mkdirSync:m,symlinkSync:s}=require('fs');m(require('path').dirname(f),{recursive:true});s('/usr/bin/ffmpeg',f);}catch{}}\"",
+    "postinstall": "node scripts/postinstall.js",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
