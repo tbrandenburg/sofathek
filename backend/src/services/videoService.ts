@@ -22,7 +22,8 @@ export class VideoService {
   private readonly videosDirectory: string;
   private thumbnailCache: Map<string, { files: string[]; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000;
-  private readonly THUMBNAIL_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+  // .webp first: YouTube thumbnails are served as .webp and should take priority over ffmpeg-generated .jpg
+  private readonly THUMBNAIL_EXTENSIONS = ['.webp', '.jpg', '.jpeg', '.png'] as const;
   private readonly AUDIO_EXTENSIONS = ['.mp3'];
   private readonly TRANSCRIPT_EXTENSION = '.srt';
   private readonly INFO_EXTENSION = '.info.json';
@@ -361,7 +362,7 @@ export class VideoService {
 
   private isImageFile(filename: string): boolean {
     const ext = path.extname(filename).toLowerCase();
-    return this.THUMBNAIL_EXTENSIONS.includes(ext);
+    return (this.THUMBNAIL_EXTENSIONS as readonly string[]).includes(ext);
   }
 
   private async getOrScanDirectory(dir: string): Promise<string[]> {
