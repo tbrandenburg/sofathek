@@ -44,5 +44,15 @@ describe('Health Route', () => {
       expect(response.body.status).toBeDefined();
       expect(response.body.service).toBe('sofathek-backend');
     });
+
+    it('should not trigger thumbnail generation during health check', async () => {
+      const spy = jest.spyOn(
+        require('../../../services/thumbnailService').ThumbnailService.prototype,
+        'generateThumbnail'
+      );
+      await request(app).get('/').expect(200);
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
   });
 });
