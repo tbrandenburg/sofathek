@@ -72,22 +72,44 @@ export function VideoGrid({
     );
   }
 
+  // Group videos by channel; videos without channel go to "Other" (always last)
+  const groupedVideos = videos.reduce<Record<string, typeof videos>>((acc, video) => {
+    const channel = video.metadata.channel || 'Other';
+    if (!acc[channel]) {
+      acc[channel] = [];
+    }
+    acc[channel].push(video);
+    return acc;
+  }, {});
+
+  // Sort channels alphabetically; "Other" always last
+  const sortedChannels = Object.keys(groupedVideos).sort((a, b) => {
+    if (a === 'Other') return 1;
+    if (b === 'Other') return -1;
+    return a.localeCompare(b);
+  });
+
   return (
     <div className={`video-grid-container ${className}`}>
       <div className="video-stats">
         <p>{videos.length} video{videos.length !== 1 ? 's' : ''} available</p>
       </div>
       
-      <div className="video-grid">
-        {videos.map((video) => (
-          <VideoCard
-            key={video.id}
-            video={video}
-            onClick={onVideoSelect}
-            showMetadata={true}
-          />
-        ))}
-      </div>
+      {sortedChannels.map((channel) => (
+        <div key={channel} className="video-channel-group">
+          <h3 className="video-channel-title">{channel}</h3>
+          <div className="video-grid">
+            {groupedVideos[channel].map((video) => (
+              <VideoCard
+                key={video.id}
+                video={video}
+                onClick={onVideoSelect}
+                showMetadata={true}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

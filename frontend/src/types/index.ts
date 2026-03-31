@@ -38,6 +38,8 @@ export interface VideoMetadata {
   audio?: string;
   /** Available transcript/subtitle files */
   transcripts?: TranscriptFile[];
+  /** Channel/uploader name from .info.json sidecar (if available) */
+  channel?: string;
 }
 
 export interface TranscriptFile {

@@ -235,7 +235,10 @@ export class VideoService {
       ...(infoSidecar?.tbr !== undefined && { bitrate: infoSidecar.tbr }),
       ...(thumbnail && { thumbnail }),
       ...(audio && { audio }),
-      ...(transcripts.length > 0 && { transcripts })
+      ...(transcripts.length > 0 && { transcripts }),
+      ...((infoSidecar?.uploader ?? infoSidecar?.channel) && {
+        channel: infoSidecar?.uploader ?? infoSidecar?.channel
+      })
     };
   }
 
