@@ -197,7 +197,7 @@ cp backend/.env.example backend/.env
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3001` | Backend server port |
+| `SOFATHEK_BACKEND_PORT` | `3010` | Backend server port |
 | `NODE_ENV` | `development` | Runtime environment |
 | `LOG_LEVEL` | `info` | Winston logger level |
 | `VIDEOS_DIR` | `backend/data/videos` (via `cwd/data/videos`) | Path to video storage directory |
@@ -208,6 +208,8 @@ cp backend/.env.example backend/.env
 | `THUMBNAIL_CACHE_DURATION` | `86400` | Thumbnail cache max-age in seconds |
 | `FFMPEG_PATH` | `/usr/bin/ffmpeg` | FFmpeg binary path override (highest priority; takes precedence over ffmpeg-static and system PATH) |
 | `FFPROBE_PATH` | `/usr/bin/ffprobe` | FFprobe binary path (falls back to /usr/bin/ffprobe if unset) |
+| `RATE_LIMIT_MAX_REQUESTS` | `5` | Maximum requests per window (rate limiting) |
+| `RATE_LIMIT_WINDOW_MS` | `3600000` (1 hour) | Rate limiting window in milliseconds |
 
 ## Requirements
 
