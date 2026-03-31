@@ -72,44 +72,52 @@ export function VideoGrid({
     );
   }
 
-  // Group videos by channel; videos without channel go to "Other" (always last)
-  const groupedVideos = videos.reduce<Record<string, typeof videos>>((acc, video) => {
-    const channel = video.metadata.channel || 'Other';
-    if (!acc[channel]) {
-      acc[channel] = [];
-    }
-    acc[channel].push(video);
-    return acc;
-  }, {});
+  // Group videos by channel; videos without channel go into a separate "uncategorised" bucket
+  // Using a Map + separate array avoids sentinel-string collision if a real channel is named "Other"
+  const channelMap = new Map<string, typeof videos>();
+  const uncategorised: typeof videos = [];
 
-  // Sort channels alphabetically; "Other" always last
-  const sortedChannels = Object.keys(groupedVideos).sort((a, b) => {
-    if (a === 'Other') return 1;
-    if (b === 'Other') return -1;
-    return a.localeCompare(b);
-  });
+  for (const video of videos) {
+    const ch = video.metadata.channel?.trim();
+    if (ch) {
+      const bucket = channelMap.get(ch) ?? [];
+      bucket.push(video);
+      channelMap.set(ch, bucket);
+    } else {
+      uncategorised.push(video);
+    }
+  }
+
+  // Sort named channels alphabetically; "Other" bucket always last
+  const sortedChannels = Array.from(channelMap.keys()).sort((a, b) => a.localeCompare(b));
+  const groupCount = sortedChannels.length + (uncategorised.length > 0 ? 1 : 0);
+  // Only show section headers when there is more than one group
+  const showHeaders = groupCount > 1;
+
+  const renderGroup = (key: string, label: string, group: typeof videos) => (
+    <div key={key} className="video-channel-group">
+      {showHeaders && <h3 className="video-channel-title">{label}</h3>}
+      <div className="video-grid">
+        {group.map((video) => (
+          <VideoCard
+            key={video.id}
+            video={video}
+            onClick={onVideoSelect}
+            showMetadata={true}
+          />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className={`video-grid-container ${className}`}>
       <div className="video-stats">
         <p>{videos.length} video{videos.length !== 1 ? 's' : ''} available</p>
       </div>
-      
-      {sortedChannels.map((channel) => (
-        <div key={channel} className="video-channel-group">
-          <h3 className="video-channel-title">{channel}</h3>
-          <div className="video-grid">
-            {groupedVideos[channel].map((video) => (
-              <VideoCard
-                key={video.id}
-                video={video}
-                onClick={onVideoSelect}
-                showMetadata={true}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+
+      {sortedChannels.map((ch) => renderGroup(ch, ch, channelMap.get(ch)!))}
+      {uncategorised.length > 0 && renderGroup('__other__', 'Other', uncategorised)}
     </div>
   );
 }

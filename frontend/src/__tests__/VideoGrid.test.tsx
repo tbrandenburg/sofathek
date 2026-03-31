@@ -183,4 +183,54 @@ describe('VideoGrid Component', () => {
     expect(channelTitles[1]).toBe('ZenChannel');
     expect(channelTitles[2]).toBe('Other');
   });
+
+  test('should not show section headers when there is only one group', () => {
+    const singleChannelVideos: Video[] = [
+      {
+        id: 'video-1',
+        file: { name: 'video1.mp4', size: 1024, path: '/videos/video1.mp4', extension: 'mp4', lastModified: new Date() },
+        metadata: { title: 'Video 1', channel: 'OnlyChannel' },
+        viewCount: 0
+      },
+      {
+        id: 'video-2',
+        file: { name: 'video2.mp4', size: 2048, path: '/videos/video2.mp4', extension: 'mp4', lastModified: new Date() },
+        metadata: { title: 'Video 2', channel: 'OnlyChannel' },
+        viewCount: 0
+      }
+    ];
+
+    render(<VideoGrid videos={singleChannelVideos} />);
+
+    const headers = document.querySelectorAll('.video-channel-title');
+    expect(headers.length).toBe(0);
+  });
+
+  test('should not merge a real channel named "Other" with uncategorised videos', () => {
+    const collisionVideos: Video[] = [
+      {
+        id: 'video-1',
+        file: { name: 'video1.mp4', size: 1024, path: '/videos/video1.mp4', extension: 'mp4', lastModified: new Date() },
+        metadata: { title: 'Video 1', channel: 'Other' },
+        viewCount: 0
+      },
+      {
+        id: 'video-2',
+        file: { name: 'video2.mp4', size: 2048, path: '/videos/video2.mp4', extension: 'mp4', lastModified: new Date() },
+        metadata: { title: 'Video 2' },
+        viewCount: 0
+      }
+    ];
+
+    render(<VideoGrid videos={collisionVideos} />);
+
+    // Two groups: named "Other" channel + uncategorised "Other" fallback → two headers both labelled "Other"
+    const headers = document.querySelectorAll('.video-channel-title');
+    expect(headers.length).toBe(2);
+    expect(Array.from(headers).every(h => h.textContent === 'Other')).toBe(true);
+
+    // Both videos must still appear
+    const videoCards = screen.getAllByTestId('video-card');
+    expect(videoCards).toHaveLength(2);
+  });
 });
