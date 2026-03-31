@@ -4,7 +4,6 @@ import os from 'os';
 import path from 'path';
 import { config } from '../../config';
 import { logger } from '../../utils/logger';
-import { thumbnailService } from '../../services';
 import { DirectoryDiskSpace, DirectoryHealth, VideoServiceHealth } from './types';
 
 const DISK_SPACE_WARNING_THRESHOLD = 0.9;
@@ -108,7 +107,10 @@ export async function getVideoServiceHealth(): Promise<VideoServiceHealth> {
 
   try {
     const { VideoService } = await import('../../services/videoService');
-    const videoService = new VideoService(getVideosDirectory(), thumbnailService);
+    // Keep health probe intentionally read-only — auto-regeneration is a maintenance
+    // task, not a liveness check. Health probes must return in milliseconds, not
+    // trigger expensive FFmpeg thumbnail generation. See: api.ts for the scan path.
+    const videoService = new VideoService(getVideosDirectory());
     const result = await videoService.scanVideoDirectory();
 
     health.lastScan = new Date().toISOString();
