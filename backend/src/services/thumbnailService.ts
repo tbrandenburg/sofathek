@@ -14,11 +14,11 @@ let resolutionPromise: Promise<string> | null = null;
 
 /**
  * Resolve an executable ffmpeg binary path.
- * Priority: ffmpeg-static path (if executable) → 'ffmpeg' on PATH → '/usr/bin/ffmpeg'
+ * Priority: FFMPEG_PATH env var (explicit override) → ffmpeg-static path → 'ffmpeg' on PATH → '/usr/bin/ffmpeg'
  * Throws AppError if none is found.
  */
 async function resolveFfmpegBinary(): Promise<string> {
-  const candidates = [ffmpegBin, 'ffmpeg', '/usr/bin/ffmpeg'].filter(Boolean) as string[];
+  const candidates = [process.env.FFMPEG_PATH, ffmpegBin, 'ffmpeg', '/usr/bin/ffmpeg'].filter(Boolean) as string[];
 
   for (const candidate of candidates) {
     try {

@@ -188,3 +188,68 @@ describe('ThumbnailService Configuration', () => {
     expect(() => nodeFs.accessSync(ffmpegStatic, nodeFs.constants.X_OK)).not.toThrow();
   });
 });
+
+describe('resolveFfmpegBinary - FFMPEG_PATH override', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it('should use FFMPEG_PATH env var as first candidate when set to an executable path', async () => {
+    const customPath = '/custom/ffmpeg';
+    process.env = { ...originalEnv, FFMPEG_PATH: customPath };
+
+    const capturedArgs: string[] = [];
+    jest.doMock('fs/promises', () => ({
+      // Allow all access checks to pass (binary exists + thumbnail written)
+      access: jest.fn().mockResolvedValue(undefined),
+      mkdir: jest.fn().mockResolvedValue(undefined),
+    }));
+    jest.doMock('execa', () => {
+      const fn = jest.fn().mockImplementation((binary: string, _args: string[]) => {
+        capturedArgs.push(binary);
+        return Promise.resolve({ exitCode: 0 });
+      });
+      return fn;
+    });
+
+    const { ThumbnailService: IsolatedService } = require('../../../services/thumbnailService');
+    const service = new IsolatedService('/tmp');
+    await service.generateThumbnail('/test/video.mp4');
+
+    // The ffmpeg binary invoked for thumbnail generation must be the custom path
+    expect(capturedArgs).toContain(customPath);
+  });
+
+  it('should fall back to ffmpeg-static when FFMPEG_PATH is not set', async () => {
+    process.env = { ...originalEnv };
+    delete process.env.FFMPEG_PATH;
+
+    const ffmpegStaticPath = require('ffmpeg-static');
+    const capturedArgs: string[] = [];
+
+    jest.doMock('fs/promises', () => ({
+      access: jest.fn().mockResolvedValue(undefined),
+      mkdir: jest.fn().mockResolvedValue(undefined),
+    }));
+    jest.doMock('execa', () => {
+      const fn = jest.fn().mockImplementation((binary: string, _args: string[]) => {
+        capturedArgs.push(binary);
+        return Promise.resolve({ exitCode: 0 });
+      });
+      return fn;
+    });
+
+    const { ThumbnailService: IsolatedService } = require('../../../services/thumbnailService');
+    const service = new IsolatedService('/tmp');
+    await service.generateThumbnail('/test/video.mp4');
+
+    // Without FFMPEG_PATH override, ffmpeg-static path must be used
+    expect(capturedArgs).toContain(ffmpegStaticPath);
+  });
+});
