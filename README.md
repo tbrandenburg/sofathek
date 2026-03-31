@@ -206,8 +206,8 @@ cp backend/.env.example backend/.env
 | `ALLOWED_ORIGINS` | `http://localhost:5183` | Comma-separated CORS allowlist for production |
 | `THUMBNAIL_MAX_SIZE` | `10485760` (10MB) | Maximum thumbnail size in bytes; larger files return HTTP 413; inaccessible thumbnail files return HTTP 403 |
 | `THUMBNAIL_CACHE_DURATION` | `86400` | Thumbnail cache max-age in seconds |
-| `FFMPEG_PATH` | `/usr/bin/ffmpeg` | FFmpeg binary path used when static binary is unavailable |
-| `FFPROBE_PATH` | `/usr/bin/ffprobe` | FFprobe binary path used when static binary is unavailable |
+| `FFMPEG_PATH` | `/usr/bin/ffmpeg` | FFmpeg binary path override (highest priority; takes precedence over ffmpeg-static and system PATH) |
+| `FFPROBE_PATH` | `/usr/bin/ffprobe` | FFprobe binary path (falls back to /usr/bin/ffprobe if unset) |
 
 ## Requirements
 
