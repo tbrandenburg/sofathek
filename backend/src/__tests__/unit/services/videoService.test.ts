@@ -721,25 +721,28 @@ describe('VideoService', () => {
     });
   });
 
-  describe('auto-regeneration', () => {
+  describe('scanVideoDirectory with ThumbnailService injection', () => {
     let mockThumbnailService: jest.Mocked<Pick<ThumbnailService, 'generateThumbnail'>>;
 
     beforeEach(() => {
       mockThumbnailService = {
-        generateThumbnail: jest.fn().mockResolvedValue('/test/videos/video1.jpg'),
+        generateThumbnail: jest.fn()
       };
       jest.clearAllMocks();
       const enoentError = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
       mockFs.readFile.mockRejectedValue(enoentError);
     });
 
-    it('should schedule regeneration for videos without thumbnails when thumbnailService is provided', async () => {
-      const service = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+    it('should call generateThumbnail for videos without thumbnails when ThumbnailService is injected', async () => {
+      const serviceWithThumb = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+      mockThumbnailService.generateThumbnail.mockResolvedValue('/test/videos/video1.jpg');
 
-      mockFs.access.mockResolvedValue(undefined); // directory exists
+      mockFs.access.mockResolvedValue(undefined);
+      // readdir: first call lists video files, then two calls for findThumbnailsBatch and findThumbnail fallback
       mockFs.readdir
-        .mockResolvedValueOnce(['video1.mp4'] as any) // first pass: directory listing
-        .mockResolvedValueOnce([] as any);            // second pass: no thumbnails
+        .mockResolvedValueOnce(['video1.mp4'] as any)   // directory listing
+        .mockResolvedValueOnce([] as any)               // findThumbnailsBatch: no thumbnails found
+        .mockResolvedValueOnce(['video1.jpg'] as any);  // findThumbnail after regeneration
       mockFs.stat.mockResolvedValue({
         isDirectory: () => false,
         isFile: () => true,
@@ -747,18 +750,15 @@ describe('VideoService', () => {
         mtime: new Date('2024-01-01')
       } as any);
 
-      await service.scanVideoDirectory();
-
-      // Drain setImmediate queue
-      await new Promise(resolve => setImmediate(resolve));
+      await serviceWithThumb.scanVideoDirectory();
 
       expect(mockThumbnailService.generateThumbnail).toHaveBeenCalledWith(
         path.join(testVideosDir, 'video1.mp4')
       );
     });
 
-    it('should NOT schedule regeneration when no thumbnailService is provided', async () => {
-      const service = new VideoService(testVideosDir);
+    it('should not call generateThumbnail when ThumbnailService is not injected', async () => {
+      const serviceWithoutThumb = new VideoService(testVideosDir);
 
       mockFs.access.mockResolvedValue(undefined);
       mockFs.readdir
@@ -771,61 +771,19 @@ describe('VideoService', () => {
         mtime: new Date('2024-01-01')
       } as any);
 
-      await service.scanVideoDirectory();
-      await new Promise(resolve => setImmediate(resolve));
+      await serviceWithoutThumb.scanVideoDirectory();
 
-      // No thumbnail service — nothing should be called
       expect(mockThumbnailService.generateThumbnail).not.toHaveBeenCalled();
     });
 
-    it('should not re-queue the same video path', () => {
-      const service = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
-      const videoPath = '/test/videos/video1.mp4';
-
-      (service as any).scheduleRegeneration(videoPath);
-      (service as any).scheduleRegeneration(videoPath);
-
-      expect((service as any).pendingRegeneration.size).toBe(1);
-    });
-
-    it('should handle regeneration failure gracefully without stopping other videos', async () => {
-      mockThumbnailService.generateThumbnail
-        .mockRejectedValueOnce(new Error('ffmpeg failed'))
-        .mockResolvedValueOnce('/test/videos/video2.jpg');
-
-      const service = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
-
-      (service as any).scheduleRegeneration('/test/videos/video1.mp4');
-      (service as any).scheduleRegeneration('/test/videos/video2.mp4');
-
-      await new Promise(resolve => setImmediate(resolve));
-
-      // Both were attempted despite first failure
-      expect(mockThumbnailService.generateThumbnail).toHaveBeenCalledTimes(2);
-    });
-
-    it('should invalidate thumbnail cache for directory after successful regeneration', async () => {
-      const service = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
-      const videoPath = path.join(testVideosDir, 'video1.mp4');
-
-      // Pre-populate cache
-      (service as any).thumbnailCache.set(testVideosDir, { files: ['video1.jpg'], timestamp: Date.now() });
-      expect((service as any).thumbnailCache.has(testVideosDir)).toBe(true);
-
-      (service as any).scheduleRegeneration(videoPath);
-      await new Promise(resolve => setImmediate(resolve));
-
-      // Cache should be cleared for that directory
-      expect((service as any).thumbnailCache.has(testVideosDir)).toBe(false);
-    });
-
-    it('should NOT schedule regeneration when thumbnail already exists', async () => {
-      const service = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+    it('should handle thumbnail generation errors gracefully and continue scan', async () => {
+      const serviceWithThumb = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+      mockThumbnailService.generateThumbnail.mockRejectedValue(new Error('Generation failed'));
 
       mockFs.access.mockResolvedValue(undefined);
       mockFs.readdir
-        .mockResolvedValueOnce(['video1.mp4', 'video1.jpg'] as any) // directory listing
-        .mockResolvedValueOnce(['video1.mp4', 'video1.jpg'] as any); // thumbnail batch scan
+        .mockResolvedValueOnce(['video1.mp4'] as any)
+        .mockResolvedValueOnce([] as any);
       mockFs.stat.mockResolvedValue({
         isDirectory: () => false,
         isFile: () => true,
@@ -833,36 +791,30 @@ describe('VideoService', () => {
         mtime: new Date('2024-01-01')
       } as any);
 
-      await service.scanVideoDirectory();
-      await new Promise(resolve => setImmediate(resolve));
+      const result = await serviceWithThumb.scanVideoDirectory();
 
-      // Thumbnail found — no regeneration needed
-      expect(mockThumbnailService.generateThumbnail).not.toHaveBeenCalled();
+      // Scan should complete despite thumbnail error
+      expect(result.videos).toHaveLength(1);
+      expect(result.errors).toContainEqual(expect.stringContaining('Failed to generate thumbnail for video1.mp4'));
     });
 
-    it('should not run concurrent drainRegenerationQueue calls', async () => {
-      let resolveFirst: () => void;
-      const firstCallPromise = new Promise<string>(resolve => {
-        resolveFirst = () => resolve('/test/videos/video1.jpg');
-      });
+    it('should not call generateThumbnail when thumbnail already exists', async () => {
+      const serviceWithThumb = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
 
-      mockThumbnailService.generateThumbnail
-        .mockReturnValueOnce(firstCallPromise)
-        .mockResolvedValueOnce('/test/videos/video2.jpg');
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readdir
+        .mockResolvedValueOnce(['video1.mp4'] as any)
+        .mockResolvedValueOnce(['video1.mp4', 'video1.jpg'] as any); // thumbnail already present
+      mockFs.stat.mockResolvedValue({
+        isDirectory: () => false,
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
 
-      const service = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+      await serviceWithThumb.scanVideoDirectory();
 
-      (service as any).scheduleRegeneration('/test/videos/video1.mp4');
-      await new Promise(resolve => setImmediate(resolve));
-
-      // While first is still running, trigger drain again (void — intentionally skipped by isRegenerating guard)
-      void (service as any).drainRegenerationQueue();
-
-      // Only one call so far (second drain skipped due to isRegenerating flag)
-      expect(mockThumbnailService.generateThumbnail).toHaveBeenCalledTimes(1);
-
-      resolveFirst!();
-      await new Promise(resolve => setImmediate(resolve));
+      expect(mockThumbnailService.generateThumbnail).not.toHaveBeenCalled();
     });
   });
 });

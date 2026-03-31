@@ -2,7 +2,7 @@
  * E2E Integration Test: Auto-thumbnail-regeneration on library scan
  *
  * Tests the full chain:
- *   missing thumbnail → GET /api/videos scan → background regeneration (real ffmpeg) → thumbnail present on re-scan
+ *   missing thumbnail → GET /api/videos scan → inline regeneration (real ffmpeg) → thumbnail present in response and on disk
  *
  * Uses real filesystem and real ffmpeg (no mocking).
  * Addresses issue #266 — explicit acceptance criterion for PR #265.
@@ -18,22 +18,7 @@ import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 // Source video fixture — 16 MB, no dependencies; small enough for CI
 const SOURCE_VIDEO = path.resolve(__dirname, '../../../data/videos/Lavar.mp4');
 
-const POLL_INTERVAL_MS = 500;
 const REGEN_TIMEOUT_MS = 30_000;
-
-/** Poll until thumbnailPath exists on disk or timeout expires. */
-async function waitForThumbnail(thumbnailPath: string, timeoutMs: number): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    try {
-      await nodeFs.access(thumbnailPath);
-      return; // file exists
-    } catch {
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-  }
-  throw new Error(`Thumbnail not generated within ${timeoutMs} ms: ${thumbnailPath}`);
-}
 
 describe('Auto-thumbnail-regeneration integration', () => {
   let app: express.Application;
@@ -93,36 +78,34 @@ describe('Auto-thumbnail-regeneration integration', () => {
     }
   });
 
-  it('first scan returns video without thumbnail', async () => {
+  it('first scan triggers inline thumbnail generation via real ffmpeg and returns thumbnail in response', async () => {
+    // Before scan: no thumbnail on disk
+    const expectedThumbnail = path.join(videosDir, 'Lavar.jpg');
+    await expect(nodeFs.access(expectedThumbnail)).rejects.toThrow();
+
+    // Scan: inline regeneration runs during scan (synchronous, not background)
     const res = await request(app).get('/api/videos').expect(200);
 
     expect(res.body.status).toBe('success');
     const videos = res.body.data.videos as Array<{ metadata: { thumbnail?: string } }>;
     expect(videos).toHaveLength(1);
-    // No thumbnail file exists yet → metadata must not carry one
-    expect(videos[0]?.metadata.thumbnail).toBeUndefined();
-  });
-
-  it('background regeneration produces a real .jpg via ffmpeg', async () => {
-    const expectedThumbnail = path.join(videosDir, 'Lavar.jpg');
-    // The first scan (above test) already scheduled regeneration via setImmediate.
-    // Poll until ffmpeg writes the file.
-    await waitForThumbnail(expectedThumbnail, REGEN_TIMEOUT_MS);
-
-    const stat = await nodeFs.stat(expectedThumbnail);
-    expect(stat.size).toBeGreaterThan(0);
+    // Inline regeneration completes before scan returns, so thumbnail is present in response
+    expect(videos[0]?.metadata.thumbnail).toBe('Lavar.jpg');
   }, REGEN_TIMEOUT_MS + 5_000);
 
-  it('second scan returns video with thumbnail present', async () => {
-    // By now ffmpeg has finished; ensure the thumbnail is readable
+  it('inline regeneration produces a real .jpg on disk via ffmpeg', async () => {
     const expectedThumbnail = path.join(videosDir, 'Lavar.jpg');
-    await waitForThumbnail(expectedThumbnail, REGEN_TIMEOUT_MS);
+    // File must already exist after the first scan completed
+    const stat = await nodeFs.stat(expectedThumbnail);
+    expect(stat.size).toBeGreaterThan(0);
+  });
 
+  it('second scan returns video with thumbnail still present', async () => {
     const res = await request(app).get('/api/videos').expect(200);
 
     expect(res.body.status).toBe('success');
     const videos = res.body.data.videos as Array<{ metadata: { thumbnail?: string } }>;
     expect(videos).toHaveLength(1);
     expect(videos[0]?.metadata.thumbnail).toBe('Lavar.jpg');
-  }, REGEN_TIMEOUT_MS + 5_000);
+  });
 });

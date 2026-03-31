@@ -11,7 +11,7 @@ import youtubeRouter from './youtube';
 
 const router = Router();
 
-// Initialize video service (in production this would come from DI container)
+// Initialize video service with ThumbnailService for auto-regeneration
 const videosDirectory = config.videosDir;
 const videoService = new VideoService(videosDirectory, thumbnailService);
 const MAX_THUMBNAIL_SIZE = config.thumbnailMaxSize;

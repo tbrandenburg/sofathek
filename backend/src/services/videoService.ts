@@ -26,52 +26,12 @@ export class VideoService {
   private readonly AUDIO_EXTENSIONS = ['.mp3'];
   private readonly TRANSCRIPT_EXTENSION = '.srt';
   private readonly INFO_EXTENSION = '.info.json';
-
-  private readonly pendingRegeneration = new Set<string>();
-  private isRegenerating = false;
-  private readonly thumbnailService: ThumbnailService | null;
+  private readonly thumbnailService?: ThumbnailService;
 
   constructor(videosDirectory: string, thumbnailService?: ThumbnailService) {
     this.videosDirectory = videosDirectory;
-    this.thumbnailService = thumbnailService ?? null;
-  }
-
-  private scheduleRegeneration(videoPath: string): void {
-    if (!this.thumbnailService) return;
-    if (this.pendingRegeneration.has(videoPath)) return;
-    const wasEmpty = this.pendingRegeneration.size === 0;
-    this.pendingRegeneration.add(videoPath);
-    // Only schedule a drain callback when the queue transitions from empty to non-empty.
-    // This avoids N callbacks for N videos and ensures paths added during an active drain
-    // are processed in the same run (the while loop below re-checks the set).
-    if (wasEmpty) {
-      setImmediate(() => this.drainRegenerationQueue().catch(err =>
-        logger.error('Unexpected drain failure', { error: getErrorMessage(err) })
-      ));
-    }
-  }
-
-  private async drainRegenerationQueue(): Promise<void> {
-    if (!this.thumbnailService) return;
-    // Guards against concurrent invocations from rapid back-to-back scans
-    if (this.isRegenerating) return;
-    this.isRegenerating = true;
-    try {
-      while (this.pendingRegeneration.size > 0) {
-        for (const videoPath of this.pendingRegeneration) {
-          this.pendingRegeneration.delete(videoPath);
-          try {
-            await this.thumbnailService.generateThumbnail(videoPath);
-            const videoDir = path.dirname(videoPath);
-            this.thumbnailCache.delete(videoDir);
-            logger.info('Auto-regenerated missing thumbnail', { videoPath });
-          } catch (err) {
-            logger.warn('Auto-regeneration failed, skipping', { videoPath, error: getErrorMessage(err) });
-          }
-        }
-      }
-    } finally {
-      this.isRegenerating = false;
+    if (thumbnailService) {
+      this.thumbnailService = thumbnailService;
     }
   }
 
@@ -119,6 +79,26 @@ export class VideoService {
       // Second pass: resolve thumbnails in batches per directory
       const thumbnailMap = await this.findThumbnailsBatch(videoFiles);
 
+      // Auto-regenerate missing thumbnails if ThumbnailService is available
+      if (this.thumbnailService) {
+        for (const videoFile of videoFiles) {
+          if (!thumbnailMap.has(videoFile.path)) {
+            try {
+              await this.thumbnailService.generateThumbnail(videoFile.path);
+              // Re-scan to pick up the newly generated thumbnail
+              const newThumbnail = await this.findThumbnail(videoFile.path);
+              if (newThumbnail) {
+                thumbnailMap.set(videoFile.path, newThumbnail);
+              }
+            } catch (error) {
+              const errorMessage = getErrorMessage(error);
+              errors.push(`Failed to generate thumbnail for ${videoFile.name}: ${errorMessage}`);
+              logger.warn(`Thumbnail auto-regeneration failed for ${videoFile.name}`, { error: errorMessage });
+            }
+          }
+        }
+      }
+
       // Third pass: create videos with metadata
       for (const videoFile of videoFiles) {
         const thumbnail = thumbnailMap.get(videoFile.path);
@@ -127,10 +107,6 @@ export class VideoService {
 
         videos.push(video);
         totalSize += videoFile.size;
-
-        if (!thumbnail && this.thumbnailService) {
-          this.scheduleRegeneration(videoFile.path);
-        }
       }
 
     } catch (error) {
@@ -440,7 +416,9 @@ export class VideoService {
 }
 
 /**
- * Default video service instance (no ThumbnailService — callers should inject one via constructor).
- * The production API route wires ThumbnailService via routes/api.ts using the shared singleton.
+ * Default video service instance
+ * Uses environment variable or default path
  */
-export const videoService = new VideoService(config.videosDir);
+export const videoService = new VideoService(
+  config.videosDir
+);
