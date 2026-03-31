@@ -207,7 +207,7 @@ cp backend/.env.example backend/.env
 | `THUMBNAIL_MAX_SIZE` | `10485760` (10MB) | Maximum thumbnail size in bytes; larger files return HTTP 413; inaccessible thumbnail files return HTTP 403 |
 | `THUMBNAIL_CACHE_DURATION` | `86400` | Thumbnail cache max-age in seconds |
 | `FFMPEG_PATH` | `/usr/bin/ffmpeg` | FFmpeg binary path override (highest priority; takes precedence over ffmpeg-static and system PATH) |
-| `FFPROBE_PATH` | `/usr/bin/ffprobe` | FFprobe binary path (falls back to /usr/bin/ffprobe if unset) |
+| `FFPROBE_PATH` | `/usr/bin/ffprobe` | FFprobe binary path; sets config.ffprobePath only — not consumed by any service at runtime |
 | `RATE_LIMIT_MAX_REQUESTS` | `5` | Maximum requests per window (rate limiting) |
 | `RATE_LIMIT_WINDOW_MS` | `3600000` (1 hour) | Rate limiting window in milliseconds |
 
