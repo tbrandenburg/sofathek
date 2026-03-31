@@ -7,6 +7,8 @@ const ROOT = path.resolve(__dirname, '..');
 
 function isExecutable(filePath) {
   try {
+    const stat = fs.statSync(filePath);
+    if (!stat.isFile()) return false;
     fs.accessSync(filePath, fs.constants.X_OK);
     return true;
   } catch {
