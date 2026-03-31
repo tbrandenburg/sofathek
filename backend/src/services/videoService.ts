@@ -84,12 +84,15 @@ export class VideoService {
         for (const videoFile of videoFiles) {
           if (!thumbnailMap.has(videoFile.path)) {
             try {
-              await this.thumbnailService.generateThumbnail(videoFile.path);
-              // Re-scan to pick up the newly generated thumbnail
-              const newThumbnail = await this.findThumbnail(videoFile.path);
-              if (newThumbnail) {
-                thumbnailMap.set(videoFile.path, newThumbnail);
-              }
+              const generatedPath = await this.thumbnailService.generateThumbnail(videoFile.path);
+              logger.info('Auto-regenerated missing thumbnail', { videoFile: videoFile.path, generatedPath });
+
+              // Invalidate cache so the next scan reads fresh thumbnail state
+              const dir = path.dirname(videoFile.path);
+              this.thumbnailCache.delete(dir);
+
+              // Use the returned path directly instead of re-scanning the filesystem
+              thumbnailMap.set(videoFile.path, path.basename(generatedPath));
             } catch (error) {
               const errorMessage = getErrorMessage(error);
               errors.push(`Failed to generate thumbnail for ${videoFile.name}: ${errorMessage}`);
