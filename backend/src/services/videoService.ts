@@ -419,9 +419,17 @@ export class VideoService {
 }
 
 /**
+ * Shared thumbnail service instance for the default video service singleton.
+ * Kept separate from services/index.ts to avoid circular dependencies.
+ */
+const defaultThumbnailService = new ThumbnailService(config.tempDir);
+
+/**
  * Default video service instance
- * Uses environment variable or default path
+ * Uses environment variable or default path.
+ * Injects ThumbnailService to enable auto-regeneration of missing thumbnails.
  */
 export const videoService = new VideoService(
-  config.videosDir
+  config.videosDir,
+  defaultThumbnailService
 );
