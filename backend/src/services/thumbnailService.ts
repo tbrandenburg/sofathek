@@ -9,8 +9,8 @@ import { AppError } from '../middleware/errorHandler';
 // Import static binary for reliable FFmpeg path
 import ffmpegBin from 'ffmpeg-static';
 
-/** Cached result of binary resolution — resolved once per process */
-let resolvedFfmpegBin: string | null = null;
+/** Cached in-flight resolution promise — collapses concurrent callers onto one probe */
+let resolutionPromise: Promise<string> | null = null;
 
 /**
  * Resolve an executable ffmpeg binary path.
@@ -22,16 +22,14 @@ async function resolveFfmpegBinary(): Promise<string> {
 
   for (const candidate of candidates) {
     try {
-      // For absolute paths, check execute permission directly
-      if (candidate.startsWith('/')) {
+      if (path.isAbsolute(candidate)) {
+        // For absolute paths, check execute permission directly
         await fs.access(candidate, fsConstants.X_OK);
         return candidate;
       }
-      // For bare names (e.g. 'ffmpeg'), try spawning with --version to confirm it resolves on PATH
-      const result = await execa(candidate, ['-version'], { timeout: 5000 });
-      if (result.exitCode === 0) {
-        return candidate;
-      }
+      // For bare names (e.g. 'ffmpeg'), confirm it resolves on PATH by probing with -version
+      await execa(candidate, ['-version'], { timeout: 5000 });
+      return candidate;
     } catch {
       // Try next candidate
     }
@@ -44,11 +42,13 @@ async function resolveFfmpegBinary(): Promise<string> {
 }
 
 async function getFfmpegBin(): Promise<string> {
-  if (!resolvedFfmpegBin) {
-    resolvedFfmpegBin = await resolveFfmpegBinary();
-    logger.info('FFmpeg binary resolved', { path: resolvedFfmpegBin });
+  if (!resolutionPromise) {
+    resolutionPromise = resolveFfmpegBinary().then(binPath => {
+      logger.info('FFmpeg binary resolved', { path: binPath });
+      return binPath;
+    });
   }
-  return resolvedFfmpegBin;
+  return resolutionPromise;
 }
 
 /**
