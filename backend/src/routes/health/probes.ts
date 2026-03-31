@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import { config } from '../../config';
 import { logger } from '../../utils/logger';
+import { thumbnailService } from '../../services';
 import { DirectoryDiskSpace, DirectoryHealth, VideoServiceHealth } from './types';
 
 const DISK_SPACE_WARNING_THRESHOLD = 0.9;
@@ -107,7 +108,7 @@ export async function getVideoServiceHealth(): Promise<VideoServiceHealth> {
 
   try {
     const { VideoService } = await import('../../services/videoService');
-    const videoService = new VideoService(getVideosDirectory());
+    const videoService = new VideoService(getVideosDirectory(), thumbnailService);
     const result = await videoService.scanVideoDirectory();
 
     health.lastScan = new Date().toISOString();

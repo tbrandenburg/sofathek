@@ -22,6 +22,7 @@ jest.mock('fs', () => ({
 }));
 
 import { VideoService } from '../../../services/videoService';
+import { ThumbnailService } from '../../../services/thumbnailService';
 import { promises as fs } from 'fs';
 
 // Get references to the mocked functions
@@ -717,6 +718,103 @@ describe('VideoService', () => {
       expect(result.width).toBeUndefined();
       expect(result.height).toBeUndefined();
       expect(result.format).toBe('MP4');
+    });
+  });
+
+  describe('scanVideoDirectory with ThumbnailService injection', () => {
+    let mockThumbnailService: jest.Mocked<Pick<ThumbnailService, 'generateThumbnail'>>;
+
+    beforeEach(() => {
+      mockThumbnailService = {
+        generateThumbnail: jest.fn()
+      };
+      jest.clearAllMocks();
+      const enoentError = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      mockFs.readFile.mockRejectedValue(enoentError);
+    });
+
+    it('should call generateThumbnail for videos without thumbnails when ThumbnailService is injected', async () => {
+      const serviceWithThumb = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+      mockThumbnailService.generateThumbnail.mockResolvedValue('/test/videos/video1.jpg');
+
+      mockFs.access.mockResolvedValue(undefined);
+      // readdir: first call lists video files, then two calls for findThumbnailsBatch and findThumbnail fallback
+      mockFs.readdir
+        .mockResolvedValueOnce(['video1.mp4'] as any)   // directory listing
+        .mockResolvedValueOnce([] as any)               // findThumbnailsBatch: no thumbnails found
+        .mockResolvedValueOnce(['video1.jpg'] as any);  // findThumbnail after regeneration
+      mockFs.stat.mockResolvedValue({
+        isDirectory: () => false,
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      await serviceWithThumb.scanVideoDirectory();
+
+      expect(mockThumbnailService.generateThumbnail).toHaveBeenCalledWith(
+        path.join(testVideosDir, 'video1.mp4')
+      );
+    });
+
+    it('should not call generateThumbnail when ThumbnailService is not injected', async () => {
+      const serviceWithoutThumb = new VideoService(testVideosDir);
+
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readdir
+        .mockResolvedValueOnce(['video1.mp4'] as any)
+        .mockResolvedValueOnce([] as any);
+      mockFs.stat.mockResolvedValue({
+        isDirectory: () => false,
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      await serviceWithoutThumb.scanVideoDirectory();
+
+      expect(mockThumbnailService.generateThumbnail).not.toHaveBeenCalled();
+    });
+
+    it('should handle thumbnail generation errors gracefully and continue scan', async () => {
+      const serviceWithThumb = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+      mockThumbnailService.generateThumbnail.mockRejectedValue(new Error('Generation failed'));
+
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readdir
+        .mockResolvedValueOnce(['video1.mp4'] as any)
+        .mockResolvedValueOnce([] as any);
+      mockFs.stat.mockResolvedValue({
+        isDirectory: () => false,
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      const result = await serviceWithThumb.scanVideoDirectory();
+
+      // Scan should complete despite thumbnail error
+      expect(result.videos).toHaveLength(1);
+      expect(result.errors).toContainEqual(expect.stringContaining('Failed to generate thumbnail for video1.mp4'));
+    });
+
+    it('should not call generateThumbnail when thumbnail already exists', async () => {
+      const serviceWithThumb = new VideoService(testVideosDir, mockThumbnailService as unknown as ThumbnailService);
+
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readdir
+        .mockResolvedValueOnce(['video1.mp4'] as any)
+        .mockResolvedValueOnce(['video1.mp4', 'video1.jpg'] as any); // thumbnail already present
+      mockFs.stat.mockResolvedValue({
+        isDirectory: () => false,
+        isFile: () => true,
+        size: 1000000,
+        mtime: new Date('2024-01-01')
+      } as any);
+
+      await serviceWithThumb.scanVideoDirectory();
+
+      expect(mockThumbnailService.generateThumbnail).not.toHaveBeenCalled();
     });
   });
 });

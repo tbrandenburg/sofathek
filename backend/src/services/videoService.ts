@@ -3,6 +3,7 @@ import { getErrorMessage } from '../utils/error';
 import path from 'path';
 import { config } from '../config';
 import { logger } from '../utils/logger';
+import { ThumbnailService } from './thumbnailService';
 import { 
   VideoFile, 
   VideoMetadata, 
@@ -25,9 +26,13 @@ export class VideoService {
   private readonly AUDIO_EXTENSIONS = ['.mp3'];
   private readonly TRANSCRIPT_EXTENSION = '.srt';
   private readonly INFO_EXTENSION = '.info.json';
+  private readonly thumbnailService?: ThumbnailService;
 
-  constructor(videosDirectory: string) {
+  constructor(videosDirectory: string, thumbnailService?: ThumbnailService) {
     this.videosDirectory = videosDirectory;
+    if (thumbnailService) {
+      this.thumbnailService = thumbnailService;
+    }
   }
 
   /**
@@ -73,6 +78,26 @@ export class VideoService {
 
       // Second pass: resolve thumbnails in batches per directory
       const thumbnailMap = await this.findThumbnailsBatch(videoFiles);
+
+      // Auto-regenerate missing thumbnails if ThumbnailService is available
+      if (this.thumbnailService) {
+        for (const videoFile of videoFiles) {
+          if (!thumbnailMap.has(videoFile.path)) {
+            try {
+              await this.thumbnailService.generateThumbnail(videoFile.path);
+              // Re-scan to pick up the newly generated thumbnail
+              const newThumbnail = await this.findThumbnail(videoFile.path);
+              if (newThumbnail) {
+                thumbnailMap.set(videoFile.path, newThumbnail);
+              }
+            } catch (error) {
+              const errorMessage = getErrorMessage(error);
+              errors.push(`Failed to generate thumbnail for ${videoFile.name}: ${errorMessage}`);
+              logger.warn(`Thumbnail auto-regeneration failed for ${videoFile.name}`, { error: errorMessage });
+            }
+          }
+        }
+      }
 
       // Third pass: create videos with metadata
       for (const videoFile of videoFiles) {
