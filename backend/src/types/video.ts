@@ -39,6 +39,8 @@ export interface VideoMetadata {
   audio?: string;
   /** Matching subtitle files (relative to videos directory) */
   transcripts?: TranscriptFile[];
+  /** Channel/uploader name from .info.json sidecar (if available) */
+  channel?: string;
 }
 
 /**
@@ -66,6 +68,7 @@ export interface VideoInfoFile {
   // Channel
   uploader?: string;
   uploaderId?: string;
+  channel?: string;
   channelId?: string;
   channelUrl?: string;
   channelFollowerCount?: number;

@@ -72,14 +72,33 @@ export function VideoGrid({
     );
   }
 
-  return (
-    <div className={`video-grid-container ${className}`}>
-      <div className="video-stats">
-        <p>{videos.length} video{videos.length !== 1 ? 's' : ''} available</p>
-      </div>
-      
+  // Group videos by channel; videos without channel go into a separate "uncategorised" bucket
+  // Using a Map + separate array avoids sentinel-string collision if a real channel is named "Other"
+  const channelMap = new Map<string, typeof videos>();
+  const uncategorised: typeof videos = [];
+
+  for (const video of videos) {
+    const ch = video.metadata.channel?.trim();
+    if (ch) {
+      const bucket = channelMap.get(ch) ?? [];
+      bucket.push(video);
+      channelMap.set(ch, bucket);
+    } else {
+      uncategorised.push(video);
+    }
+  }
+
+  // Sort named channels alphabetically; "Other" bucket always last
+  const sortedChannels = Array.from(channelMap.keys()).sort((a, b) => a.localeCompare(b));
+  const groupCount = sortedChannels.length + (uncategorised.length > 0 ? 1 : 0);
+  // Only show section headers when there is more than one group
+  const showHeaders = groupCount > 1;
+
+  const renderGroup = (key: string, label: string, group: typeof videos) => (
+    <div key={key} className="video-channel-group">
+      {showHeaders && <h3 className="video-channel-title">{label}</h3>}
       <div className="video-grid">
-        {videos.map((video) => (
+        {group.map((video) => (
           <VideoCard
             key={video.id}
             video={video}
@@ -88,6 +107,17 @@ export function VideoGrid({
           />
         ))}
       </div>
+    </div>
+  );
+
+  return (
+    <div className={`video-grid-container ${className}`}>
+      <div className="video-stats">
+        <p>{videos.length} video{videos.length !== 1 ? 's' : ''} available</p>
+      </div>
+
+      {sortedChannels.map((ch) => renderGroup(ch, ch, channelMap.get(ch)!))}
+      {uncategorised.length > 0 && renderGroup('__other__', 'Other', uncategorised)}
     </div>
   );
 }

@@ -721,6 +721,107 @@ describe('VideoService', () => {
     });
   });
 
+  describe('extractMetadata - channel extraction', () => {
+    const baseVideoFile = {
+      path: '/test/videos/video-abc123.mp4',
+      name: 'video-abc123.mp4',
+      size: 1000000,
+      extension: 'mp4',
+      lastModified: new Date()
+    };
+
+    it('should extract channel from uploader field in sidecar', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        uploader: 'TestChannel',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBe('TestChannel');
+    });
+
+    it('should extract channel from channel field when uploader is absent', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        channel: 'AnotherChannel',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBe('AnotherChannel');
+    });
+
+    it('should prefer uploader over channel when both present', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        uploader: 'UploaderName',
+        channel: 'ChannelName',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBe('UploaderName');
+    });
+
+    it('should not include channel field when neither uploader nor channel is present', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBeUndefined();
+    });
+
+    it('should fall back to channel when uploader is empty string', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        uploader: '',
+        channel: 'FallbackChannel',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBe('FallbackChannel');
+    });
+
+    it('should trim whitespace from channel name', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        uploader: '  TrimmedChannel  ',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBe('TrimmedChannel');
+    });
+  });
+
   describe('scanVideoDirectory with ThumbnailService injection', () => {
     let mockThumbnailService: jest.Mocked<Pick<ThumbnailService, 'generateThumbnail'>>;
 
