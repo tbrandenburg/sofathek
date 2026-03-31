@@ -157,18 +157,6 @@ describe('ThumbnailService - Real FFmpeg Integration', () => {
       realService.generateThumbnail('/nonexistent/video.mp4')
     ).rejects.toThrow();
   });
-
-  it.skip('should generate thumbnail from real video file with actual FFmpeg', async () => {
-    const fs = await import('fs/promises');
-    const testVideoPath = `/tmp/test-video-${Date.now()}.mp4`;
-    try {
-      const thumbnailPath = await realService.generateThumbnail(testVideoPath);
-      expect(thumbnailPath).toBeDefined();
-      await fs.access(thumbnailPath);
-    } catch (error) {
-      expect(error).toBeDefined();
-    }
-  });
 });
 
 describe('ThumbnailService Configuration', () => {
