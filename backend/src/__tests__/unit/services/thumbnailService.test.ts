@@ -223,7 +223,8 @@ describe('resolveFfmpegBinary - FFMPEG_PATH override', () => {
     await service.generateThumbnail('/test/video.mp4');
 
     // The ffmpeg binary invoked for thumbnail generation must be the custom path
-    expect(capturedArgs).toContain(customPath);
+    // Use [0] to verify FFMPEG_PATH is tried FIRST (highest priority), not just included somewhere
+    expect(capturedArgs[0]).toBe(customPath);
   });
 
   it('should fall back to ffmpeg-static when FFMPEG_PATH is not set', async () => {
@@ -249,7 +250,7 @@ describe('resolveFfmpegBinary - FFMPEG_PATH override', () => {
     const service = new IsolatedService('/tmp');
     await service.generateThumbnail('/test/video.mp4');
 
-    // Without FFMPEG_PATH override, ffmpeg-static path must be used
-    expect(capturedArgs).toContain(ffmpegStaticPath);
+    // Without FFMPEG_PATH override, ffmpeg-static path must be used as first candidate
+    expect(capturedArgs[0]).toBe(ffmpegStaticPath);
   });
 });
