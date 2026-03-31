@@ -272,6 +272,19 @@
     ],
     "last_verified": "2026-03-31T04:25:00Z"
   },
+  "PR_297_CODE_REVIEW_SUGGESTIONS": {
+    "status": "in_progress",
+    "evidence": [
+      "Issue #286 latest open; PR #297 (fix/issue-286-remove-skip-ffmpeg-unit-test) linked",
+      "Automated code review identified 2 non-blocking suggestions:",
+      "1. thumbnailService.test.ts:131 - rename describe 'ThumbnailService - Real FFmpeg Integration' -> 'ThumbnailService - Real FFmpeg (error paths)'",
+      "2. thumbnailService.test.ts:155 - tighten .rejects.toThrow() -> .rejects.toThrow('Failed to generate thumbnail')",
+      "5xWhy RCA: Why1: describe block name misleading (only error-path test inside). Why2: it.skip real-ffmpeg test was removed so describe title no longer accurate. Why3: Original title described integration intent not actual content. Why4: Single test covers only error path (non-existent file). Why5: Self-documenting title required for clarity.",
+      "Fix applied: Edit thumbnailService.test.ts lines 131 and 158",
+      "Verification: cd backend && npm test -- --testPathPattern=thumbnailService --no-coverage -> 16 passed, 0 skipped (2026-03-31)"
+    ],
+    "last_verified": "2026-03-31T12:15:00Z"
+  },
   "PR_265_MERGE_CONFLICT_V2": {
     "status": "in_progress",
     "evidence": [
