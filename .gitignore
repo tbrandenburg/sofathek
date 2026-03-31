@@ -176,3 +176,4 @@ temp/
 # Playwright test artifacts
 playwright-videos/
 test_output.zip
+.playwright-mcp/
