@@ -172,8 +172,8 @@ describe('VideoService', () => {
 
       const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
 
-      expect(result).toBe('Video.jpg');
-      expect(mockFs.access).toHaveBeenCalledWith('/test/videos/Video.jpg');
+      expect(result).toBe('Video.webp');
+      expect(mockFs.access).toHaveBeenCalledWith('/test/videos/Video.webp');
     });
 
     it('should find thumbnail with case mismatch (case-insensitive)', async () => {
@@ -190,7 +190,7 @@ describe('VideoService', () => {
 
       const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
 
-      expect(result).toBe('Video.jpg');
+      expect(result).toBe('Video.webp');
       expect(mockFs.readdir).not.toHaveBeenCalled();
     });
 
@@ -220,37 +220,37 @@ describe('VideoService', () => {
 
       const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
 
-      expect(result).toBe('Video.png');
-    });
-
-    it('should find jpeg thumbnail after jpg misses', async () => {
-      mockFs.access
-        .mockRejectedValueOnce(new Error('ENOENT'))
-        .mockResolvedValueOnce(undefined);
-
-      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
-
       expect(result).toBe('Video.jpeg');
     });
 
-    it('should find webp thumbnail after other extensions miss', async () => {
+    it('should find jpg thumbnail after webp misses', async () => {
       mockFs.access
         .mockRejectedValueOnce(new Error('ENOENT'))
-        .mockRejectedValueOnce(new Error('ENOENT'))
-        .mockRejectedValueOnce(new Error('ENOENT'))
         .mockResolvedValueOnce(undefined);
-
-      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
-
-      expect(result).toBe('Video.webp');
-    });
-
-    it('should prefer jpg over jpeg when both are accessible', async () => {
-      mockFs.access.mockResolvedValue(undefined);
 
       const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
 
       expect(result).toBe('Video.jpg');
+    });
+
+    it('should find png thumbnail after other extensions miss', async () => {
+      mockFs.access
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockResolvedValueOnce(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.png');
+    });
+
+    it('should prefer webp over jpg when both are accessible', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+
+      const result = await (videoService as any).findThumbnail('/test/videos/Video.mp4');
+
+      expect(result).toBe('Video.webp');
       expect(mockFs.access).toHaveBeenCalledTimes(1);
     });
 
@@ -286,7 +286,7 @@ describe('VideoService', () => {
 
       const result = await (videoService as any).findThumbnail('/test/videos/Movie With Spaces.mp4');
 
-      expect(result).toBe('Movie With Spaces.jpg');
+      expect(result).toBe('Movie With Spaces.webp');
     });
 
     it('should return null for permission errors during access checks', async () => {
@@ -534,12 +534,12 @@ describe('VideoService', () => {
     it('should find thumbnail in same directory as video', async () => {
       const service = new VideoService('/test/videos');
 
-      mockFs.access.mockResolvedValueOnce(undefined); // /test/videos/video.jpg found
+      mockFs.access.mockResolvedValueOnce(undefined); // /test/videos/video.webp found
 
       const result = await (service as any).findThumbnail('/test/videos/video.mp4');
 
-      expect(result).toBe('video.jpg');
-      expect(mockFs.access).toHaveBeenCalledWith('/test/videos/video.jpg');
+      expect(result).toBe('video.webp');
+      expect(mockFs.access).toHaveBeenCalledWith('/test/videos/video.webp');
       expect(mockFs.access).toHaveBeenCalledTimes(1);
     });
 
@@ -639,11 +639,11 @@ describe('VideoService', () => {
         localThumbnail: 'old-sidecar.jpg'
       };
       mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
-      mockFs.access.mockResolvedValue(undefined); // filesystem finds video-abc123.jpg
+      mockFs.access.mockResolvedValue(undefined); // filesystem finds video-abc123.webp
 
       const result = await (videoService as any).extractMetadata(baseVideoFile);
 
-      expect(result.thumbnail).toBe('video-abc123.jpg');
+      expect(result.thumbnail).toBe('video-abc123.webp');
     });
 
     it('should return null for thumbnail when neither filesystem nor sidecar has it', async () => {
