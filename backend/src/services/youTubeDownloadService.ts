@@ -75,19 +75,30 @@ export class YouTubeDownloadService {
           tempVideoPath
         });
       } else {
-        try {
-          thumbnailPath = await this.thumbnailService.generateThumbnail(tempVideoPath);
-          logger.info('Thumbnail generated successfully', { 
+        // Priority 1: Use yt-dlp-written thumbnail if available
+        thumbnailPath = await this.findYtDlpThumbnail(tempVideoPath);
+
+        if (thumbnailPath) {
+          logger.info('Using yt-dlp thumbnail', {
             downloadId,
-            thumbnailPath 
+            thumbnailPath
           });
-        } catch (error) {
-          logger.warn('Thumbnail generation failed, continuing without thumbnail', {
-            downloadId,
-            videoPath: tempVideoPath,
-            error: getErrorMessage(error)
-          });
-          thumbnailPath = undefined;
+        } else {
+          // Priority 2: Fallback to ffmpeg generation
+          try {
+            thumbnailPath = await this.thumbnailService.generateThumbnail(tempVideoPath);
+            logger.info('Thumbnail generated successfully', { 
+              downloadId,
+              thumbnailPath 
+            });
+          } catch (error) {
+            logger.warn('Thumbnail generation failed, continuing without thumbnail', {
+              downloadId,
+              videoPath: tempVideoPath,
+              error: getErrorMessage(error)
+            });
+            thumbnailPath = undefined;
+          }
         }
       }
 
@@ -225,5 +236,26 @@ export class YouTubeDownloadService {
       return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
     return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Find a yt-dlp-written thumbnail in the temp directory.
+   * yt-dlp writes thumbnails with the same stem as the video file.
+   */
+  private async findYtDlpThumbnail(videoPath: string): Promise<string | undefined> {
+    const THUMBNAIL_EXTENSIONS = ['.webp', '.jpg', '.jpeg', '.png'];
+    const dir = path.dirname(videoPath);
+    const stem = path.basename(videoPath, path.extname(videoPath));
+
+    for (const ext of THUMBNAIL_EXTENSIONS) {
+      const candidate = path.join(dir, stem + ext);
+      try {
+        await fs.access(candidate);
+        return candidate;
+      } catch {
+        // Not found, try next extension
+      }
+    }
+    return undefined;
   }
 }
