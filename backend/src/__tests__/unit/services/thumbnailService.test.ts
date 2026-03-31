@@ -128,7 +128,7 @@ describe('ThumbnailService', () => {
 });
 
 // Real FFmpeg Integration Tests (no mocks)
-describe('ThumbnailService - Real FFmpeg Integration', () => {
+describe('ThumbnailService - Real FFmpeg (error paths)', () => {
   const { ThumbnailService: RealThumbnailService } = jest.requireActual('../../../services/thumbnailService');
   let realService: any;
   const tempDir = '/tmp/test-thumbnails';
@@ -155,7 +155,7 @@ describe('ThumbnailService - Real FFmpeg Integration', () => {
   it('should handle non-existent video file gracefully', async () => {
     await expect(
       realService.generateThumbnail('/nonexistent/video.mp4')
-    ).rejects.toThrow();
+    ).rejects.toThrow('Failed to generate thumbnail');
   });
 });
 
