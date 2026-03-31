@@ -13,6 +13,7 @@ export interface Config {
   thumbnailMaxSize: number;
   thumbnailCacheDuration: number;
   ffmpegPath: string;
+  /** Populated from FFPROBE_PATH; not yet consumed by any service */
   ffprobePath: string;
   rateLimitMaxRequests: number;
   rateLimitWindowMs: number;
