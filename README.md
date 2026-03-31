@@ -230,6 +230,18 @@ make setup-test-data
 make status
 ```
 
+### FFmpeg Binary (ffmpeg-static)
+
+The thumbnail service uses `ffmpeg-static`, which downloads a platform-specific binary during `npm install` via a postinstall script. This requires network access at install time.
+
+**Verify the binary was installed correctly:**
+
+```bash
+node -e "const p = require('ffmpeg-static'); require('fs').accessSync(p, require('fs').constants.X_OK); console.log('OK:', p)"
+```
+
+If the binary is missing (e.g. due to a failed install), the service automatically falls back to the system `ffmpeg` binary (`/usr/bin/ffmpeg`). If neither is available, thumbnail generation will fail with a clear error message.
+
 For detailed requirements and implementation phases, see [REQUIREMENTS.md](./REQUIREMENTS.md).
 
 # Agent Anti-Deception Rules Integration

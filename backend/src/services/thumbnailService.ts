@@ -2,13 +2,54 @@ import execa from 'execa';
 import { getErrorMessage } from '../utils/error';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { constants as fsConstants } from 'fs';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
 
 // Import static binary for reliable FFmpeg path
 import ffmpegBin from 'ffmpeg-static';
 
-const FFMPEG_BIN = ffmpegBin || 'ffmpeg';
+/** Cached result of binary resolution — resolved once per process */
+let resolvedFfmpegBin: string | null = null;
+
+/**
+ * Resolve an executable ffmpeg binary path.
+ * Priority: ffmpeg-static path (if executable) → 'ffmpeg' on PATH → '/usr/bin/ffmpeg'
+ * Throws AppError if none is found.
+ */
+async function resolveFfmpegBinary(): Promise<string> {
+  const candidates = [ffmpegBin, 'ffmpeg', '/usr/bin/ffmpeg'].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    try {
+      // For absolute paths, check execute permission directly
+      if (candidate.startsWith('/')) {
+        await fs.access(candidate, fsConstants.X_OK);
+        return candidate;
+      }
+      // For bare names (e.g. 'ffmpeg'), try spawning with --version to confirm it resolves on PATH
+      const result = await execa(candidate, ['-version'], { timeout: 5000 });
+      if (result.exitCode === 0) {
+        return candidate;
+      }
+    } catch {
+      // Try next candidate
+    }
+  }
+
+  throw new AppError(
+    'FFmpeg binary not found. Ensure ffmpeg-static installed correctly or system ffmpeg is available.',
+    500
+  );
+}
+
+async function getFfmpegBin(): Promise<string> {
+  if (!resolvedFfmpegBin) {
+    resolvedFfmpegBin = await resolveFfmpegBinary();
+    logger.info('FFmpeg binary resolved', { path: resolvedFfmpegBin });
+  }
+  return resolvedFfmpegBin;
+}
 
 /**
  * Thumbnail generation service using ffmpeg directly via execa.
@@ -36,7 +77,8 @@ export class ThumbnailService {
 
       logger.info('Generating thumbnail', { videoPath, thumbnailPath });
 
-      await execa(FFMPEG_BIN, [
+      const ffmpeg = await getFfmpegBin();
+      await execa(ffmpeg, [
         '-y',
         '-ss', '00:00:01.000',
         '-i', videoPath,

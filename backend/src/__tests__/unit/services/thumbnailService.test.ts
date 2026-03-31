@@ -179,8 +179,12 @@ describe('ThumbnailService Configuration', () => {
     }).not.toThrow();
   });
 
-  it('should have ffmpeg-static available', () => {
+  it('should have ffmpeg-static available and binary exists on disk', () => {
     const ffmpegStatic = require('ffmpeg-static');
     expect(ffmpegStatic).toBeDefined();
+
+    // Verify the binary file actually exists and is executable — not just that the module resolves a path
+    const nodeFs = require('fs');
+    expect(() => nodeFs.accessSync(ffmpegStatic, nodeFs.constants.X_OK)).not.toThrow();
   });
 });

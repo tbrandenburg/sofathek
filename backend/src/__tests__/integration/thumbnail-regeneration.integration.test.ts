@@ -41,8 +41,9 @@ describe('Auto-thumbnail-regeneration integration', () => {
     // Wire env vars so config picks up our temp dirs
     process.env.VIDEOS_DIR = videosDir;
     process.env.TEMP_DIR   = tempDir;
-    // Point ffmpeg-static to the system ffmpeg binary (the static download may not be present in all envs)
-    process.env.FFMPEG_BIN = '/usr/bin/ffmpeg';
+    // Do NOT override FFMPEG_BIN — the integration test must use whatever binary
+    // thumbnailService resolves at runtime (ffmpeg-static or system ffmpeg fallback).
+    // This ensures we catch any binary resolution failure before users do.
 
     // Reset module registry and remove global mocks so real fs and real ffmpeg are used
     jest.resetModules();
