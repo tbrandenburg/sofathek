@@ -225,6 +225,7 @@ export class VideoService {
       : filesystemThumbnail ?? sidecarThumbnail;
     const audio = await this.findAudio(videoFile.path);
     const transcripts = await this.findTranscripts(videoFile.path);
+    const channel = infoSidecar?.uploader?.trim() || infoSidecar?.channel?.trim() || undefined;
 
     return {
       title: infoSidecar?.title ?? title,
@@ -236,9 +237,7 @@ export class VideoService {
       ...(thumbnail && { thumbnail }),
       ...(audio && { audio }),
       ...(transcripts.length > 0 && { transcripts }),
-      ...((infoSidecar?.uploader ?? infoSidecar?.channel) && {
-        channel: infoSidecar?.uploader ?? infoSidecar?.channel
-      })
+      ...(channel && { channel })
     };
   }
 

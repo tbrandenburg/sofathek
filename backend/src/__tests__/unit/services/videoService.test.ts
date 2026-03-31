@@ -789,6 +789,37 @@ describe('VideoService', () => {
 
       expect(result.channel).toBeUndefined();
     });
+
+    it('should fall back to channel when uploader is empty string', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        uploader: '',
+        channel: 'FallbackChannel',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBe('FallbackChannel');
+    });
+
+    it('should trim whitespace from channel name', async () => {
+      const sidecar = {
+        title: 'Test Video',
+        uploader: '  TrimmedChannel  ',
+        downloadedAt: '2026-01-01T00:00:00.000Z'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(sidecar) as any);
+      mockFs.access.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+      mockFs.readdir.mockResolvedValue([] as any);
+
+      const result = await (videoService as any).extractMetadata(baseVideoFile);
+
+      expect(result.channel).toBe('TrimmedChannel');
+    });
   });
 
   describe('scanVideoDirectory with ThumbnailService injection', () => {
