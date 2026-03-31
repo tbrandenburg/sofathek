@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../config';
 import { VideoService } from '../services/videoService';
+import { thumbnailService } from '../services';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
 import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename } from '../utils/fileValidation';
@@ -10,9 +11,9 @@ import youtubeRouter from './youtube';
 
 const router = Router();
 
-// Initialize video service (in production this would come from DI container)
+// Initialize video service with ThumbnailService for auto-regeneration
 const videosDirectory = config.videosDir;
-const videoService = new VideoService(videosDirectory);
+const videoService = new VideoService(videosDirectory, thumbnailService);
 const MAX_THUMBNAIL_SIZE = config.thumbnailMaxSize;
 const THUMBNAIL_CACHE_DURATION = config.thumbnailCacheDuration;
 
