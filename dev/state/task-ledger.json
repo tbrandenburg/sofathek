@@ -196,5 +196,89 @@
       "Merge commit a4e5fc2 brings fix into PR branch - push to remote pending"
     ],
     "last_verified": "2026-03-28T20:14:00Z"
+  },
+  "ISSUE_266_ROOT_CAUSE_ANALYSIS": {
+    "status": "done",
+    "evidence": [
+      "gh issue view 266 -> 'HIGH: Missing E2E integration test for auto-thumbnail-regeneration (PR #265 merge blocker)'",
+      "5xWhy RCA:",
+      "Why1: PR #265 blocked because missing E2E integration test for auto-thumbnail-regeneration",
+      "Why2: Only mocked unit tests added for VideoService — real-fs integration path never exercised",
+      "Why3: Unit test pattern chosen over real E2E because setup.ts globally mocks fs/promises and ffmpeggy",
+      "Why4: Global mocks prevent real ffmpeg invocation in normal test flow without explicit unmocking",
+      "Why5: drainRegenerationQueue→ThumbnailService.generateThumbnail chain was never validated end-to-end",
+      "Root cause: Missing real-filesystem integration test validating the full auto-regeneration pipeline"
+    ],
+    "last_verified": "2026-03-30T19:15:00Z"
+  },
+  "ISSUE_266_IMPLEMENT_E2E_TEST": {
+    "status": "done",
+    "evidence": [
+      "Created backend/src/__tests__/integration/thumbnail-regeneration.integration.test.ts",
+      "Uses jest.resetModules() + jest.unmock('fs/promises') to bypass global mocks",
+      "Sets process.env.FFMPEG_BIN='/usr/bin/ffmpeg' so ffmpeg-static resolves to real system binary",
+      "Copies real Lavar.mp4 (16MB) fixture into isolated temp dir without .jpg thumbnail",
+      "Test 1: first scan returns video WITHOUT thumbnail (no .jpg exists yet)",
+      "Test 2: polls until real ffmpeg writes Lavar.jpg (verified file size > 0)",
+      "Test 3: second scan returns video WITH thumbnail = 'Lavar.jpg' in response",
+      "npx jest --testPathPattern=thumbnail-regeneration.integration -> 3 passed (5.051s)",
+      "Full suite: npx jest -> 297 passed, 5 skipped (real-YouTube tests), 0 failures"
+    ],
+    "last_verified": "2026-03-30T19:16:00Z"
+  },
+  "ISSUE_266_COMMIT_AND_PUSH": {
+    "status": "done",
+    "evidence": [
+      "Commits eb616b0 pushed to origin/fix/issue-264-auto-regenerate-thumbnails",
+      "PR #265 created and CI passed (all 6 levels)"
+    ],
+    "last_verified": "2026-03-30T19:16:00Z"
+  },
+  "PR_265_MERGE_CONFLICT_RESOLUTION": {
+    "status": "done",
+    "evidence": [
+      "5xWhy RCA: PR #265 showed UNKNOWN mergeable state because origin/main diverged (commit 39d731f merged H.264 AV1 fix) after PR branch was created",
+      "Conflict was in dev/state/task-ledger.json - both branches appended different trailing entries",
+      "Fix: git merge origin/main into fix/issue-264-auto-regenerate-thumbnails — resolved cleanly by ORT strategy (no manual conflict resolution needed)",
+      "youTubeFileDownloader.ts and its test auto-merged (non-conflicting changes from main)",
+      "type-check: PASS (tsc --noEmit, 0 errors)",
+      "lint: PASS (eslint src/**/*.ts, 0 errors)",
+      "unit tests: 239 passed, 1 skipped, 0 failed (npx jest --testPathIgnorePatterns=integration|e2e)",
+      "Merge commit c3ae77b pushed to origin/fix/issue-264-auto-regenerate-thumbnails"
+    ],
+    "last_verified": "2026-03-31T00:00:00Z"
+  },
+  "PR_265_MERGEABLE_STATE_RCA": {
+    "status": "done",
+    "evidence": [
+      "gh pr view 265 --json mergeable,mergeStateStatus -> {\"mergeable\":\"UNKNOWN\",\"mergeStateStatus\":\"UNKNOWN\"}",
+      "5xWhy RCA: UNKNOWN state caused by GitHub stale mergeability cache after commit 49767ba (PR #270) landed on main after PR branch last merge-in (c3ae77b)",
+      "49767ba only touches backend/src/services/youTubeFileDownloader.ts and its test — PR #265 does not modify these files",
+      "Dry-run: git checkout pr265-merge-test origin/fix/issue-264-auto-regenerate-thumbnails && git merge --no-commit --no-ff origin/main -> 'Automatic merge went well; stopped before committing as requested'",
+      "Zero code conflict confirmed — purely a GitHub cache staleness artifact",
+      "After GitHub recomputed: gh pr view 265 -> {\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}",
+      "All 6 CI checks: SUCCESS (Level 1-5 + CI Pipeline Complete, runs/23770044084)",
+      "Resolution: no code change required; stale cache self-resolved on re-query"
+    ],
+    "last_verified": "2026-03-31T02:00:00Z"
+  },
+  "PR_265_MERGE_CONFLICT_V2": {
+    "status": "in_progress",
+    "evidence": [
+      "gh api repos/tbrandenburg/sofathek/pulls/265 -> mergeable: false, mergeable_state: dirty",
+      "5xWhy RCA:",
+      "Why1: PR #265 unmergeable (dirty) because main diverged significantly after PR #272 was merged",
+      "Why2: PR #272 (Fix: inject ThumbnailService into VideoService) refactored videoService.ts — replaced queue-based approach with inline synchronous regeneration",
+      "Why3: PR #265 branch still has the old queue-based implementation (pendingRegeneration, scheduleRegeneration, drainRegenerationQueue)",
+      "Why4: Both PRs modified same files (videoService.ts, videoService.test.ts) with incompatible structural changes",
+      "Why5: PR #272 merged as hotfix while PR #265 was still open; PR #265 branch not updated to align with new inline approach",
+      "Plan: merge origin/main into PR branch; accept main's implementation for videoService.ts and unit tests; keep PR branch's integration test",
+      "Conflict files: backend/src/services/videoService.ts, backend/src/__tests__/unit/services/videoService.test.ts",
+      "Resolution: removed queue-based private fields/methods from videoService.ts; adopted main's inline regeneration approach",
+      "Updated unit tests to match new API (4 tests covering inject/no-inject/error/existing-thumbnail cases)",
+      "npx tsc --noEmit -> 0 errors (2026-03-31T)",
+      "npx jest --testPathPattern=videoService.test.ts -> 54 passed, 0 failed (2026-03-31T)"
+    ],
+    "last_verified": "2026-03-31T00:30:00Z"
   }
 }
