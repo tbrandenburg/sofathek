@@ -75,8 +75,12 @@ export async function getDirectoryHealth(dirPath: string): Promise<DirectoryHeal
 
 export async function getDiskSpaceInfo(dirPath: string): Promise<DirectoryDiskSpace | undefined> {
   try {
-    const totalSpace = os.totalmem() * 10;
-    const freeSpace = os.freemem() * 10;
+    const stats = fs.statfsSync(dirPath);
+    const blockSize = stats.bsize;
+    const totalSpace = blockSize * stats.blocks;
+    // Use bavail (not bfree) to match what df reports: blocks available to
+    // unprivileged processes, excluding root-reserved blocks (~5% on ext4).
+    const freeSpace = blockSize * stats.bavail;
     const usedSpace = totalSpace - freeSpace;
     const usagePercent = usedSpace / totalSpace;
 
