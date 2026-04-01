@@ -1,6 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { VideoGrid } from '../components/VideoGrid/VideoGrid';
+import { getGridColsClass } from '../lib/utils';
 import { Video } from '../types';
 
 describe('VideoGrid Component', () => {
@@ -232,5 +233,42 @@ describe('VideoGrid Component', () => {
     // Both videos must still appear
     const videoCards = screen.getAllByTestId('video-card');
     expect(videoCards).toHaveLength(2);
+  });
+
+  test('should not render video-stats div (count is in PageHeader)', () => {
+    render(<VideoGrid videos={mockVideos} />);
+
+    // video-stats div should not exist - count is handled by PageHeader in App.tsx
+    const statsDiv = document.querySelector('.video-stats');
+    expect(statsDiv).toBeNull();
+  });
+
+  test('should apply correct grid columns based on group size', () => {
+    const videosWithSingleChannel: Video[] = [
+      {
+        id: 'video-1',
+        file: { name: 'video1.mp4', size: 1024, path: '/videos/video1.mp4', extension: 'mp4', lastModified: new Date() },
+        metadata: { title: 'Video 1', channel: 'SingleChannel' },
+        viewCount: 0
+      }
+    ];
+
+    render(<VideoGrid videos={videosWithSingleChannel} />);
+
+    // Single video should have grid-cols-1
+    const grid = document.querySelector('.video-grid');
+    expect(grid?.className).toContain('grid-cols-1');
+  });
+});
+
+describe('getGridColsClass', () => {
+  test.each([
+    [1, 'grid-cols-1'],
+    [2, 'grid-cols-2'],
+    [3, 'grid-cols-3'],
+    [4, 'grid-cols-4'],
+    [10, 'grid-cols-4'], // capped at 4 for large groups
+  ])('count %i returns %s', (count, expected) => {
+    expect(getGridColsClass(count)).toBe(expected);
   });
 });

@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { getUserFriendlyErrorMessage } from '../../lib/error';
+import { getGridColsClass } from '../../lib/utils';
 
 export function VideoGrid({ 
   videos, 
@@ -97,7 +98,7 @@ export function VideoGrid({
   const renderGroup = (key: string, label: string, group: typeof videos) => (
     <div key={key} className="video-channel-group">
       {showHeaders && <h3 className="video-channel-title">{label}</h3>}
-      <div className="video-grid">
+      <div className={`video-grid ${getGridColsClass(group.length)}`}>
         {group.map((video) => (
           <VideoCard
             key={video.id}
@@ -112,10 +113,6 @@ export function VideoGrid({
 
   return (
     <div className={`video-grid-container ${className}`}>
-      <div className="video-stats">
-        <p>{videos.length} video{videos.length !== 1 ? 's' : ''} available</p>
-      </div>
-
       {sortedChannels.map((ch) => renderGroup(ch, ch, channelMap.get(ch)!))}
       {uncategorised.length > 0 && renderGroup('__other__', 'Other', uncategorised)}
     </div>
