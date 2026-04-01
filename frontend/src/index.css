@@ -96,30 +96,13 @@
   }
 
   .video-grid {
-    @apply grid gap-6 grid-cols-video-grid p-4;
-  }
-
-  @screen md {
-    .video-grid {
-      @apply grid-cols-2 gap-8 p-6;
-    }
-  }
-
-  @screen lg {
-    .video-grid {
-      @apply grid-cols-3 gap-8 p-8;
-    }
-  }
-
-  @screen xl {
-    .video-grid {
-      @apply grid-cols-4 gap-8 p-8;
-    }
+    @apply grid gap-6 p-4 justify-start;
+    grid-template-columns: repeat(var(--video-grid-columns, 1), 20rem);
   }
 
   /* Video Card Styles */
   .video-card {
-    @apply transition-all duration-200;
+    @apply transition-all duration-200 w-80;
   }
 
   .video-card:hover {
@@ -127,11 +110,12 @@
   }
 
   .video-thumbnail {
-    @apply relative w-full h-45 bg-slate-100 overflow-hidden;
+    @apply relative w-full bg-slate-100 overflow-hidden;
+    aspect-ratio: 16 / 9;
   }
 
   .video-image {
-    @apply w-full h-full object-cover;
+    @apply w-full h-full object-contain;
   }
 
   .video-placeholder {

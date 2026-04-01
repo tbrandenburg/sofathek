@@ -24,7 +24,7 @@ export function VideoGrid({
           <div className="video-grid">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="video-card">
-                <Skeleton className="w-full h-45 rounded-lg mb-4" />
+                <Skeleton className="w-full aspect-video rounded-lg mb-4" />
                 <Skeleton className="h-4 w-3/4 mb-2" />
                 <Skeleton className="h-3 w-1/2 mb-1" />
                 <Skeleton className="h-3 w-2/3" />
@@ -94,11 +94,19 @@ export function VideoGrid({
   const groupCount = sortedChannels.length + (uncategorised.length > 0 ? 1 : 0);
   // Only show section headers when there is more than one group
   const showHeaders = groupCount > 1;
+  const MAX_GRID_COLUMNS = 4;
 
   const renderGroup = (key: string, label: string, group: typeof videos) => (
     <div key={key} className="video-channel-group">
       {showHeaders && <h3 className="video-channel-title">{label}</h3>}
-      <div className={`video-grid ${getGridColsClass(group.length)}`}>
+      <div
+        className={`video-grid ${getGridColsClass(group.length)}`}
+        style={
+          {
+            '--video-grid-columns': Math.min(group.length, MAX_GRID_COLUMNS)
+          } as React.CSSProperties
+        }
+      >
         {group.map((video) => (
           <VideoCard
             key={video.id}
