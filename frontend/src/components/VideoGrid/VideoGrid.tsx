@@ -94,10 +94,17 @@ export function VideoGrid({
   // Only show section headers when there is more than one group
   const showHeaders = groupCount > 1;
 
+  const getGridColsClass = (count: number) => {
+    if (count === 1) return 'grid-cols-1';
+    if (count === 2) return 'grid-cols-2';
+    if (count === 3) return 'grid-cols-3';
+    return 'grid-cols-4';
+  };
+
   const renderGroup = (key: string, label: string, group: typeof videos) => (
     <div key={key} className="video-channel-group">
       {showHeaders && <h3 className="video-channel-title">{label}</h3>}
-      <div className="video-grid">
+      <div className={`video-grid ${getGridColsClass(group.length)}`}>
         {group.map((video) => (
           <VideoCard
             key={video.id}
@@ -112,10 +119,6 @@ export function VideoGrid({
 
   return (
     <div className={`video-grid-container ${className}`}>
-      <div className="video-stats">
-        <p>{videos.length} video{videos.length !== 1 ? 's' : ''} available</p>
-      </div>
-
       {sortedChannels.map((ch) => renderGroup(ch, ch, channelMap.get(ch)!))}
       {uncategorised.length > 0 && renderGroup('__other__', 'Other', uncategorised)}
     </div>
