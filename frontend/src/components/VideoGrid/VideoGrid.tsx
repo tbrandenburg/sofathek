@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { getUserFriendlyErrorMessage } from '../../lib/error';
+import { getGridColsClass } from '../../lib/utils';
 
 export function VideoGrid({ 
   videos, 
@@ -93,13 +94,6 @@ export function VideoGrid({
   const groupCount = sortedChannels.length + (uncategorised.length > 0 ? 1 : 0);
   // Only show section headers when there is more than one group
   const showHeaders = groupCount > 1;
-
-  const getGridColsClass = (count: number) => {
-    if (count === 1) return 'grid-cols-1';
-    if (count === 2) return 'grid-cols-2';
-    if (count === 3) return 'grid-cols-3';
-    return 'grid-cols-4';
-  };
 
   const renderGroup = (key: string, label: string, group: typeof videos) => (
     <div key={key} className="video-channel-group">

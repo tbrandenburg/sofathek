@@ -1,6 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { VideoGrid } from '../components/VideoGrid/VideoGrid';
+import { getGridColsClass } from '../lib/utils';
 import { Video } from '../types';
 
 describe('VideoGrid Component', () => {
@@ -257,5 +258,17 @@ describe('VideoGrid Component', () => {
     // Single video should have grid-cols-1
     const grid = document.querySelector('.video-grid');
     expect(grid?.className).toContain('grid-cols-1');
+  });
+});
+
+describe('getGridColsClass', () => {
+  test.each([
+    [1, 'grid-cols-1'],
+    [2, 'grid-cols-2'],
+    [3, 'grid-cols-3'],
+    [4, 'grid-cols-4'],
+    [10, 'grid-cols-4'], // capped at 4 for large groups
+  ])('count %i returns %s', (count, expected) => {
+    expect(getGridColsClass(count)).toBe(expected);
   });
 });
