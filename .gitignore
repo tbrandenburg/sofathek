@@ -140,6 +140,7 @@ vite.config.ts.timestamp-*
 
 # Sofathek specific ignores
 screenshots/*.png
+/*.png
 e2e-screenshots/
 dev/mock-api/*.log
 backend/backend.log
