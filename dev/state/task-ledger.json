@@ -317,16 +317,31 @@
     "last_verified": "2026-04-07T09:08:00Z"
   },
   "ISSUE_313_COMMIT_PUSH": {
-    "status": "pending",
+    "status": "done",
     "description": "Commit and push to branch fix/issue-313-vite-security",
-    "evidence": [],
-    "last_verified": null
+    "evidence": [
+      "git commit 13f62c6: fix: upgrade vitest ^3.2.4 and vite ^6.4.2 to resolve HIGH security vulnerability (#313)",
+      "git commit cea71da: fix: update root package-lock.json to include vitest 3.x and vite 6.4.2 upgrades",
+      "git push origin fix/issue-313-vite-security -> pre-push hooks (lint, type-check, build) all passed"
+    ],
+    "last_verified": "2026-04-07T09:20:00Z"
   },
   "ISSUE_313_CI_PASS": {
-    "status": "pending",
+    "status": "done",
     "description": "Create PR, observe CI, iterate until all checks pass",
-    "evidence": [],
-    "last_verified": null
+    "evidence": [
+      "PR #314 created: https://github.com/tbrandenburg/sofathek/pull/314",
+      "First CI run 24069194998: Level 1 failed (npm ci lock mismatch - root package-lock.json not committed)",
+      "Fix: committed root package-lock.json (cea71da), pushed",
+      "Second CI run 24069342103: ALL 6 levels PASS",
+      "Level 1 Static Analysis: pass 32s",
+      "Level 2 Build & Functional: pass 33s",
+      "Level 3 Unit Tests: pass 35s",
+      "Level 4 E2E Tests: pass 1m34s",
+      "Level 5 Integration: pass 48s",
+      "CI Pipeline Complete: pass"
+    ],
+    "last_verified": "2026-04-07T09:30:00Z"
   },
   "PR_265_MERGE_CONFLICT_V2": {
     "status": "in_progress",
