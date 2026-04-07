@@ -285,6 +285,49 @@
     ],
     "last_verified": "2026-03-31T12:15:00Z"
   },
+  "ISSUE_313_ROOT_CAUSE_ANALYSIS": {
+    "status": "done",
+    "description": "5xWhy RCA for vite HIGH vulnerability GHSA-p9ff-h696-f583 in issue #313",
+    "evidence": [
+      "npm audit (frontend/) -> vite HIGH GHSA-p9ff-h696-f583 + 5 MODERATE; fixAvailable requires vitest major bump",
+      "5xWhy: Root cause is vitest ^2.1.0 semver cap preventing vite from reaching patched 6.4.2; no overrides in place",
+      "Fix: upgrade vitest ^2.1.0 -> ^3.2.4, vite ^6.0.0 -> ^6.4.2, @vitest/coverage-v8 ^2.1.0 -> ^3.2.4"
+    ],
+    "last_verified": "2026-04-07T09:00:00Z"
+  },
+  "ISSUE_313_UPGRADE_VITEST_VITE": {
+    "status": "done",
+    "description": "Upgrade vitest (and transitively vite) to fix HIGH + MODERATE vulnerabilities",
+    "evidence": [
+      "frontend/package.json: vitest ^2.1.0 -> ^3.2.4, vite ^6.0.0 -> ^6.4.2, @vitest/coverage-v8 ^2.1.0 -> ^3.2.4",
+      "npm install (frontend/) -> added 20 packages, removed 19 packages, found 0 vulnerabilities",
+      "npm audit (frontend/) -> found 0 vulnerabilities (2026-04-07T09:05:00Z)"
+    ],
+    "last_verified": "2026-04-07T09:05:00Z"
+  },
+  "ISSUE_313_RUN_TESTS": {
+    "status": "done",
+    "description": "Run local tests to verify fix does not break anything",
+    "evidence": [
+      "npm run type-check (frontend/) -> 0 errors",
+      "npm run lint (frontend/) -> 0 errors",
+      "npm test (frontend/) -> Test Files 14 passed (14), Tests 182 passed (182)",
+      "npm run build (frontend/) -> vite v6.4.2, built in 7.07s, 0 errors"
+    ],
+    "last_verified": "2026-04-07T09:08:00Z"
+  },
+  "ISSUE_313_COMMIT_PUSH": {
+    "status": "pending",
+    "description": "Commit and push to branch fix/issue-313-vite-security",
+    "evidence": [],
+    "last_verified": null
+  },
+  "ISSUE_313_CI_PASS": {
+    "status": "pending",
+    "description": "Create PR, observe CI, iterate until all checks pass",
+    "evidence": [],
+    "last_verified": null
+  },
   "PR_265_MERGE_CONFLICT_V2": {
     "status": "in_progress",
     "evidence": [
