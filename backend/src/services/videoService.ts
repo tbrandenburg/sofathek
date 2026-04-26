@@ -24,7 +24,7 @@ export class VideoService {
   private readonly CACHE_TTL = 5 * 60 * 1000;
   // .webp first: YouTube thumbnails are served as .webp and should take priority over ffmpeg-generated .jpg
   private readonly THUMBNAIL_EXTENSIONS = ['.webp', '.jpg', '.jpeg', '.png'] as const;
-  private readonly AUDIO_EXTENSIONS = ['.mp3'];
+  private readonly AUDIO_EXTENSIONS = ['.mp3', '.m4a'];
   private readonly TRANSCRIPT_EXTENSION = '.srt';
   private readonly INFO_EXTENSION = '.info.json';
   private readonly thumbnailService?: ThumbnailService;

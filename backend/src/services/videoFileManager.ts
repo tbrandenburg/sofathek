@@ -25,7 +25,7 @@ export class VideoFileManager {
       await fs.mkdir(this.videosDirectory, { recursive: true });
       const tempFiles = await fs.readdir(this.tempDirectory);
 
-      const COMPANION_EXTENSIONS = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.m4v', '.mp3', '.srt', '.vtt', '.info.json', '.jpg', '.jpeg', '.png', '.webp'];
+      const COMPANION_EXTENSIONS = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.m4v', '.mp3', '.m4a', '.srt', '.vtt', '.info.json', '.jpg', '.jpeg', '.png', '.webp'];
       for (const tempFile of tempFiles) {
         if (!tempFile.startsWith(filePrefix)) {
           continue;

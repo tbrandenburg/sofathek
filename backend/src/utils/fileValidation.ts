@@ -4,7 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 
 const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
-const DOWNLOADABLE_EXTENSIONS = [...VIDEO_EXTENSIONS, '.mp3', '.srt'];
+const DOWNLOADABLE_EXTENSIONS = [...VIDEO_EXTENSIONS, '.mp3', '.m4a', '.srt'];
 
 export function validateFilename(filename: string, allowedExtensions: string[]): void {
   if (!filename) {

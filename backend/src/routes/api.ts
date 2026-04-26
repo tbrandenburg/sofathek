@@ -194,8 +194,9 @@ router.get('/download/:filename', catchAsync(async (req: Request, res: Response)
 
   const extension = path.extname(filename).toLowerCase();
   const contentType = extension === '.mp3' ? 'audio/mpeg'
-    : extension === '.srt' ? 'application/x-subrip'
-      : getVideoMimeType(extension);
+    : extension === '.m4a' ? 'audio/mp4'
+      : extension === '.srt' ? 'application/x-subrip'
+        : getVideoMimeType(extension);
 
   res.setHeader('Content-Type', contentType);
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
