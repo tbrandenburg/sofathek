@@ -199,7 +199,9 @@ router.get('/download/:filename', catchAsync(async (req: Request, res: Response)
         : getVideoMimeType(extension);
 
   res.setHeader('Content-Type', contentType);
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  // RFC 5987: use filename* with UTF-8 percent-encoding for non-ASCII filenames
+  const encodedFilename = encodeURIComponent(filename);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename.replace(/[^\x20-\x7E]/g, '_')}"; filename*=UTF-8''${encodedFilename}`);
   fs.createReadStream(filePath).pipe(res);
 }));
 

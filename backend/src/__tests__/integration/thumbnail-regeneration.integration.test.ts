@@ -16,7 +16,7 @@ import * as path from 'path';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 
 // Source video fixture — 16 MB, no dependencies; small enough for CI
-const SOURCE_VIDEO = path.resolve(__dirname, '../../../data/videos/Lavar.mp4');
+const SOURCE_VIDEO = path.resolve(__dirname, '../../../data/videos/Lavar-03gAoNcPO1g.mp4');
 
 const REGEN_TIMEOUT_MS = 30_000;
 

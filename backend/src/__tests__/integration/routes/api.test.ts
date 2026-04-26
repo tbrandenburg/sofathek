@@ -393,6 +393,65 @@ describe('API Routes', () => {
       expect(response.headers['accept-ranges']).toBe('bytes');
     });
   });
+
+  describe('GET /api/download/:filename', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockFsPromises.access.mockResolvedValue(undefined);
+      mockFs.createReadStream.mockReturnValue(Readable.from([Buffer.from('fake-content')]) as any);
+    });
+
+    it('should serve an ASCII filename with correct Content-Disposition', async () => {
+      const response = await request(app)
+        .get('/api/download/simple-video.mp4')
+        .expect(200);
+
+      expect(response.headers['content-type']).toContain('video/mp4');
+      expect(response.headers['content-disposition']).toContain('attachment');
+      expect(response.headers['content-disposition']).toContain('simple-video.mp4');
+    });
+
+    it('should serve a non-ASCII filename (em dash) without throwing ERR_INVALID_CHAR', async () => {
+      const filename = 'Building_pi_in_a_World_of_Slop_\u2014_Mario_Zechner-RjfbvDXpFls.mp4';
+      const response = await request(app)
+        .get(`/api/download/${encodeURIComponent(filename)}`)
+        .expect(200);
+
+      expect(response.headers['content-type']).toContain('video/mp4');
+      // RFC 5987: ASCII fallback uses underscore for non-ASCII chars
+      expect(response.headers['content-disposition']).toMatch(/filename="[^"]*"/);
+      // RFC 5987: UTF-8 encoded filename* preserves the original name
+      expect(response.headers['content-disposition']).toContain("filename*=UTF-8''");
+      expect(response.headers['content-disposition']).toContain(encodeURIComponent(filename));
+    });
+
+    it('should serve an MP3 file with audio/mpeg content type', async () => {
+      const response = await request(app)
+        .get('/api/download/audio-track.mp3')
+        .expect(200);
+
+      expect(response.headers['content-type']).toContain('audio/mpeg');
+      expect(response.headers['content-disposition']).toContain('attachment');
+    });
+
+    it('should return 400 for unsupported file extension', async () => {
+      const response = await request(app)
+        .get('/api/download/malicious.exe')
+        .expect(400);
+
+      expect(response.body.status).toBe('error');
+    });
+
+    it('should return 404 for non-existent file', async () => {
+      mockFsPromises.access.mockRejectedValue(new Error('not found'));
+
+      const response = await request(app)
+        .get('/api/download/missing.mp4')
+        .expect(404);
+
+      expect(response.body.status).toBe('error');
+    });
+  });
 });
 
 afterAll(() => {
