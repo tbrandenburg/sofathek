@@ -419,5 +419,18 @@
       "git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main -> no output, confirming no local merge conflicts"
     ],
     "last_verified": "2026-05-18T19:14:11Z"
+  },
+  "resolve-pr-320-merge-issues-2026-05-18T210623Z": {
+    "status": "in_progress",
+    "evidence": [
+      "Selected task after loading dev/state/task-ledger.json: resolve PR #320 merge issues for latest open issue #319",
+      "5xWhy RCA: Why1 PR was reported as having merge issues because the PR UI can lag or show stale mergeability; Why2 gh API currently reports mergeable=true and mergeable_state=clean; Why3 branch divergence is 0 behind / 7 ahead of origin/main, so the PR branch contains current base; Why4 git merge-tree reports a clean merge with no conflict markers; Why5 current blocker is not a source merge conflict or CI failure, but PR metadata/ledger churn that should be re-verified and recorded.",
+      "gh issue list --state open --limit 1 --json number,title,url,createdAt,updatedAt,author -> latest open issue #319 Fix cleanup race with active re-downloads https://github.com/tbrandenburg/sofathek/issues/319",
+      "gh pr view 320 --json number,title,url,state,headRefName,baseRefName,mergeStateStatus,mergeable,statusCheckRollup -> PR #320 OPEN, mergeable MERGEABLE, mergeStateStatus CLEAN, CI checks SUCCESS",
+      "gh api repos/tbrandenburg/sofathek/pulls/320 --jq '{mergeable: .mergeable, mergeable_state: .mergeable_state, rebaseable: .rebaseable, draft: .draft, state: .state, head: .head.sha, base: .base.sha}' -> mergeable=true, mergeable_state=clean, rebaseable=true, draft=false, state=open",
+      "git rev-list --left-right --count origin/main...HEAD -> 0 7",
+      "git merge-tree $(git merge-base origin/main HEAD) origin/main HEAD -> merged results for changed files and no conflict markers"
+    ],
+    "last_verified": "2026-05-18T21:06:23Z"
   }
 }
