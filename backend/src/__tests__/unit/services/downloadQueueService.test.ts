@@ -137,6 +137,43 @@ describe('DownloadQueueService', () => {
       expect(mockDownloadVideo).toHaveBeenCalledTimes(1);
     });
 
+    it('should share pending startup cleanup across concurrent idle enqueues', async () => {
+      let finishCleanup: (() => void) | undefined;
+      const cleanupOldResources = jest.fn().mockImplementationOnce(() => new Promise<void>((resolve) => {
+        finishCleanup = resolve;
+      }));
+      const cleanupService = { cleanupOldResources } as unknown as VideoCleanupService;
+      const serviceWithCleanup = new DownloadQueueService('/test/temp', mockYoutubeService, cleanupService);
+      mockReadFile.mockRejectedValue(new Error('File not found'));
+      await serviceWithCleanup.initialize();
+
+      const firstAdd = serviceWithCleanup.addToQueue({
+        url: 'https://youtu.be/test-video-1',
+        requestId: 'req-1',
+        requestedAt: new Date()
+      });
+      const secondAdd = serviceWithCleanup.addToQueue({
+        url: 'https://youtu.be/test-video-2',
+        requestId: 'req-2',
+        requestedAt: new Date()
+      });
+
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(cleanupOldResources).toHaveBeenCalledTimes(1);
+      expect(mockDownloadVideo).not.toHaveBeenCalled();
+
+      if (!finishCleanup) {
+        throw new Error('Expected cleanup promise to be created');
+      }
+
+      finishCleanup();
+      await Promise.all([firstAdd, secondAdd]);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(mockDownloadVideo).toHaveBeenCalledTimes(2);
+    });
+
     it('should not run video resource cleanup while processing is active', async () => {
       let finishDownload: (() => void) | undefined;
       mockDownloadVideo.mockImplementationOnce(() => new Promise((resolve) => {
