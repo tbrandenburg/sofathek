@@ -395,5 +395,16 @@
       "gh pr checks 320 -> CI Pipeline Complete pass; Level 5 Integration pass; Static Analysis pass; Build & Functional pass; Unit Tests pass; E2E Tests pass"
     ],
     "last_verified": "2026-05-18T17:17:09Z"
+  },
+  "resolve-pr-320-merge-issues-fresh-verification": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 1 --json number,title,url,createdAt,updatedAt -> #319 Fix cleanup race with active re-downloads https://github.com/tbrandenburg/sofathek/issues/319",
+      "gh pr view 320 --json number,title,url,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup -> #320 Fix: run cleanup before queue processing (#319), mergeable=MERGEABLE, mergeStateStatus=CLEAN, all six CI check runs conclusion=SUCCESS",
+      "gh api repos/tbrandenburg/sofathek/pulls/320 --jq '{number, html_url, mergeable, mergeable_state, draft, state, head: .head.ref, base: .base.ref}' -> mergeable=true, mergeable_state=clean, draft=false, state=open",
+      "git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main -> no output, no local merge conflicts",
+      "git rev-parse --verify HEAD && git rev-parse --verify origin/fix/issue-319-cleanup-race -> both 4247b6fe7123e8fb065762dda221695d793cca57"
+    ],
+    "last_verified": "2026-05-18T18:49:01Z"
   }
 }
