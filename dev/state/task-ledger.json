@@ -403,8 +403,8 @@
       "gh pr view 320 --json number,title,url,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup -> #320 Fix: run cleanup before queue processing (#319), mergeable=MERGEABLE, mergeStateStatus=CLEAN, all six CI check runs conclusion=SUCCESS",
       "gh api repos/tbrandenburg/sofathek/pulls/320 --jq '{number, html_url, mergeable, mergeable_state, draft, state, head: .head.ref, base: .base.ref}' -> mergeable=true, mergeable_state=clean, draft=false, state=open",
       "git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main -> no output, no local merge conflicts",
-      "git rev-parse --verify HEAD && git rev-parse --verify origin/fix/issue-319-cleanup-race -> both 4247b6fe7123e8fb065762dda221695d793cca57"
+      "git rev-parse --verify HEAD && git rev-parse --verify origin/fix/issue-319-cleanup-race -> both 740f3430d9f1b4ba6cb5f887744aab06fb6c6451"
     ],
-    "last_verified": "2026-05-18T18:49:01Z"
+    "last_verified": "2026-05-18T19:03:00Z"
   }
 }
