@@ -24,6 +24,11 @@ function parseIntOrDefault(value: string | undefined, defaultValue: number): num
   if (!value) {
     return defaultValue;
   }
+
+  if (!/^\d+$/.test(value)) {
+    return defaultValue;
+  }
+
   const parsed = parseInt(value, 10);
   return Number.isNaN(parsed) ? defaultValue : parsed;
 }

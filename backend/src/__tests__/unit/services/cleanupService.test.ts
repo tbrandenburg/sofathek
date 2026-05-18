@@ -58,16 +58,30 @@ describe('VideoCleanupService', () => {
     expect(mockUnlink).not.toHaveBeenCalled();
   });
 
-  it('should fall back to mtime when .info.json is missing', async () => {
+  it('should fall back to mtime when .info.json has no usable downloadedAt', async () => {
     const oldMtime = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
-    mockReaddir.mockResolvedValue(['Old_Video-dQw4w9WgXcQ.mp4']);
+    mockReaddir.mockResolvedValue([
+      'Old_Video-dQw4w9WgXcQ.mp4',
+      'Old_Video-dQw4w9WgXcQ.info.json',
+    ]);
+    mockReadFile.mockResolvedValue(JSON.stringify({ id: 'dQw4w9WgXcQ' }));
     mockStat.mockResolvedValue({ mtimeMs: oldMtime.getTime() });
     mockUnlink.mockResolvedValue(undefined);
 
     const removed = await service.cleanupOldResources();
 
-    expect(removed).toBe(1);
-    expect(mockUnlink).toHaveBeenCalledTimes(1);
+    expect(removed).toBe(2);
+    expect(mockUnlink).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not remove old media files without a sidecar', async () => {
+    mockReaddir.mockResolvedValue(['Old_Video-dQw4w9WgXcQ.mp4']);
+
+    const removed = await service.cleanupOldResources();
+
+    expect(removed).toBe(0);
+    expect(mockStat).not.toHaveBeenCalled();
+    expect(mockUnlink).not.toHaveBeenCalled();
   });
 
   it('should not remove unrelated files in the videos directory', async () => {

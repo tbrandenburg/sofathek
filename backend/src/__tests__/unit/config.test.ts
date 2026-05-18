@@ -57,7 +57,7 @@ describe('config', () => {
   });
 
   it('should use default VIDEO_MAX_AGE_DAYS when invalid or destructive', () => {
-    for (const value of ['invalid', '0', '-1']) {
+    for (const value of ['invalid', '1abc', '0', '-1']) {
       jest.resetModules();
       process.env = { ...originalEnv, VIDEO_MAX_AGE_DAYS: value };
 
