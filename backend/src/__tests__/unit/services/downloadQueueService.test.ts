@@ -104,20 +104,37 @@ describe('DownloadQueueService', () => {
       expect(status.totalItems).toBe(1);
     });
 
-    it('should trigger video resource cleanup after adding to queue', async () => {
+    it('should trigger video resource cleanup before processing the queue', async () => {
+      let finishCleanup: (() => void) | undefined;
       const cleanupOldResources = jest.fn().mockResolvedValue(0);
+      cleanupOldResources.mockImplementationOnce(() => new Promise<void>((resolve) => {
+        finishCleanup = resolve;
+      }));
       const cleanupService = { cleanupOldResources } as unknown as VideoCleanupService;
       const serviceWithCleanup = new DownloadQueueService('/test/temp', mockYoutubeService, cleanupService);
       mockReadFile.mockRejectedValue(new Error('File not found'));
       await serviceWithCleanup.initialize();
 
-      await serviceWithCleanup.addToQueue({
+      const addPromise = serviceWithCleanup.addToQueue({
         url: 'https://youtu.be/test-video',
         requestId: 'req-1',
         requestedAt: new Date()
       });
 
+      await new Promise((resolve) => setImmediate(resolve));
+
       expect(cleanupOldResources).toHaveBeenCalledTimes(1);
+      expect(mockDownloadVideo).not.toHaveBeenCalled();
+
+      if (!finishCleanup) {
+        throw new Error('Expected cleanup promise to be created');
+      }
+
+      finishCleanup();
+      await addPromise;
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(mockDownloadVideo).toHaveBeenCalledTimes(1);
     });
   });
 
