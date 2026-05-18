@@ -361,5 +361,15 @@
       "npx jest --testPathPattern=videoService.test.ts -> 54 passed, 0 failed (2026-03-31T)"
     ],
     "last_verified": "2026-03-31T00:30:00Z"
+  },
+  "resolve-pr-316-merge-issues": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 1 --json number,title,url,createdAt,updatedAt,author -> #315 Recurring cleanup https://github.com/tbrandenburg/sofathek/issues/315",
+      "gh pr view 316 --json number,title,url,headRefName,baseRefName,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup,commits,files,body -> mergeable=MERGEABLE mergeStateStatus=UNSTABLE; Level 1 SUCCESS; Level 2 IN_PROGRESS; Level 3 IN_PROGRESS",
+      "gh run watch 26041923551 --exit-status -> Level 1 Static Analysis SUCCESS; Level 2 Build & Functional SUCCESS; Level 3 Unit Tests SUCCESS; Level 4 E2E Tests SUCCESS; Level 5 Integration SUCCESS; CI Pipeline Complete SUCCESS",
+      "gh pr view 316 --json mergeable,mergeStateStatus,statusCheckRollup,url -> mergeable=MERGEABLE mergeStateStatus=CLEAN; all six CI check runs conclusion=SUCCESS"
+    ],
+    "last_verified": "2026-05-18T15:09:43Z"
   }
 }
