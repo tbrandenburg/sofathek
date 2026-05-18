@@ -429,8 +429,11 @@
       "gh pr view 320 --json number,title,url,state,headRefName,baseRefName,mergeStateStatus,mergeable,statusCheckRollup -> PR #320 OPEN, mergeable MERGEABLE, mergeStateStatus CLEAN, CI checks SUCCESS",
       "gh api repos/tbrandenburg/sofathek/pulls/320 --jq '{mergeable: .mergeable, mergeable_state: .mergeable_state, rebaseable: .rebaseable, draft: .draft, state: .state, head: .head.sha, base: .base.sha}' -> mergeable=true, mergeable_state=clean, rebaseable=true, draft=false, state=open",
       "git rev-list --left-right --count origin/main...HEAD -> 0 7",
-      "git merge-tree $(git merge-base origin/main HEAD) origin/main HEAD -> merged results for changed files and no conflict markers"
+      "git merge-tree $(git merge-base origin/main HEAD) origin/main HEAD -> merged results for changed files and no conflict markers",
+      "node -e \"JSON.parse(require('fs').readFileSync('dev/state/task-ledger.json','utf8')); console.log('task-ledger.json valid')\" -> task-ledger.json valid",
+      "git push -u origin HEAD -> pre-push validation passed: linting passed, type checking passed, build validation passed",
+      "gh pr checks 320 --watch -> CI Pipeline Complete pass; Level 4 E2E Tests pass; Level 1 Static Analysis pass; Level 5 Integration pass; Level 2 Build & Functional pass; Level 3 Unit Tests pass"
     ],
-    "last_verified": "2026-05-18T21:06:23Z"
+    "last_verified": "2026-05-18T21:14:31Z"
   }
 }
