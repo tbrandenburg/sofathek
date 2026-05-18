@@ -17,14 +17,25 @@ export interface Config {
   ffprobePath: string;
   rateLimitMaxRequests: number;
   rateLimitWindowMs: number;
+  videoMaxAgeDays: number;
 }
 
 function parseIntOrDefault(value: string | undefined, defaultValue: number): number {
   if (!value) {
     return defaultValue;
   }
+
+  if (!/^\d+$/.test(value)) {
+    return defaultValue;
+  }
+
   const parsed = parseInt(value, 10);
   return Number.isNaN(parsed) ? defaultValue : parsed;
+}
+
+function parsePositiveIntOrDefault(value: string | undefined, defaultValue: number): number {
+  const parsed = parseIntOrDefault(value, defaultValue);
+  return parsed > 0 ? parsed : defaultValue;
 }
 
 function validateDir(dir: string, name: string): void {
@@ -63,6 +74,7 @@ function getConfig(): Config {
     ffprobePath: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
     rateLimitMaxRequests: parseIntOrDefault(process.env.RATE_LIMIT_MAX_REQUESTS, 5),
     rateLimitWindowMs: parseIntOrDefault(process.env.RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000), // 1 hour
+    videoMaxAgeDays: parsePositiveIntOrDefault(process.env.VIDEO_MAX_AGE_DAYS, 30),
   };
 }
 

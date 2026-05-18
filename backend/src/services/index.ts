@@ -8,13 +8,15 @@ import { YouTubeFileDownloader } from './youTubeFileDownloader';
 import { VideoFileManager } from './videoFileManager';
 import { DownloadQueueService } from './downloadQueueService';
 import { ThumbnailService } from './thumbnailService';
+import { VideoCleanupService } from './cleanupService';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
 // Initialize services with configured directories
 export const thumbnailService = new ThumbnailService(config.tempDir);
 export const youTubeDownloadService = new YouTubeDownloadService(config.videosDir, config.tempDir, thumbnailService);
-export const downloadQueueService = new DownloadQueueService(config.tempDir, youTubeDownloadService);
+export const videoCleanupService = new VideoCleanupService(config.videosDir, config.videoMaxAgeDays);
+export const downloadQueueService = new DownloadQueueService(config.tempDir, youTubeDownloadService, videoCleanupService);
 
 // Initialize queue service
 downloadQueueService.initialize().catch(error => {
@@ -29,5 +31,6 @@ export {
   YouTubeFileDownloader,
   VideoFileManager,
   DownloadQueueService, 
-  ThumbnailService 
+  ThumbnailService,
+  VideoCleanupService
 };
