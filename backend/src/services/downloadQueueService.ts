@@ -28,6 +28,7 @@ export class DownloadQueueService {
   private readonly youtubeDownloadService: YouTubeDownloadService;
   private queue: QueueItem[] = [];
   private isProcessing = false;
+  private queueStartupPromise: Promise<void> | undefined;
 
   constructor(
     tempDirectory: string,
@@ -78,21 +79,12 @@ export class DownloadQueueService {
         queueSize: this.queue.length
       });
 
-      // Start processing if not already running
-      if (!this.isProcessing) {
-        this.runQueueProcessor().catch(error => {
-          logger.error('Queue processing error', {
-            error: getErrorMessage(error)
-          });
-        });
+      if (!this.isProcessing && !this.queueStartupPromise) {
+        this.queueStartupPromise = this.startQueueProcessorAfterCleanup();
       }
 
-      if (this.videoCleanupService) {
-        this.videoCleanupService.cleanupOldResources().catch(error => {
-          logger.error('Video resource cleanup failed', {
-            error: getErrorMessage(error)
-          });
-        });
+      if (this.queueStartupPromise) {
+        await this.queueStartupPromise;
       }
 
       return queueItem;
@@ -217,6 +209,32 @@ export class DownloadQueueService {
     } finally {
       this.isProcessing = false;
       logger.info('Queue processing stopped');
+    }
+  }
+
+  private async startQueueProcessorAfterCleanup(): Promise<void> {
+    try {
+      if (this.videoCleanupService) {
+        try {
+          await this.videoCleanupService.cleanupOldResources();
+        } catch (error) {
+          logger.error('Video resource cleanup failed', {
+            error: getErrorMessage(error)
+          });
+        }
+      }
+
+      // Clean up stale library resources before queue processing starts to avoid
+      // deleting freshly re-downloaded files with the same generated prefix.
+      if (!this.isProcessing) {
+        this.runQueueProcessor().catch(error => {
+          logger.error('Queue processing error', {
+            error: getErrorMessage(error)
+          });
+        });
+      }
+    } finally {
+      this.queueStartupPromise = undefined;
     }
   }
 
