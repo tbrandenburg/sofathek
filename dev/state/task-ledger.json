@@ -406,5 +406,18 @@
       "git rev-parse --verify HEAD && git rev-parse --verify origin/fix/issue-319-cleanup-race -> both 740f3430d9f1b4ba6cb5f887744aab06fb6c6451"
     ],
     "last_verified": "2026-05-18T19:03:00Z"
+  },
+  "resolve-pr-320-merge-issues-2026-05-18T191411Z": {
+    "status": "done",
+    "evidence": [
+      "Selected task after loading dev/state/task-ledger.json: verify and resolve PR #320 merge status for latest open issue #319",
+      "5xWhy RCA: Why1 PR appeared to have merge issues because earlier PR status was UNSTABLE; Why2 status was UNSTABLE because CI was still pending; Why3 CI was pending because the branch had just been updated; Why4 no code merge conflict existed because GitHub API now reports mergeable=true and mergeable_state=clean; Why5 the remaining issue was stale/asynchronous PR status, not a source conflict or test failure",
+      "gh issue list --state open --limit 1 --json number,title,url,createdAt,updatedAt,author,labels -> #319 Fix cleanup race with active re-downloads https://github.com/tbrandenburg/sofathek/issues/319",
+      "gh pr view 320 --json number,title,url,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup -> #320 Fix: run cleanup before queue processing (#319), mergeable=MERGEABLE, mergeStateStatus=CLEAN, all six CI check runs conclusion=SUCCESS",
+      "gh api repos/tbrandenburg/sofathek/pulls/320 --jq '{number, html_url, state, draft, mergeable, mergeable_state, rebaseable, maintainer_can_modify, head: .head.ref, head_sha: .head.sha, base: .base.ref, base_sha: .base.sha, updated_at}' -> mergeable=true, mergeable_state=clean, rebaseable=true, draft=false, state=open, head_sha=d052ca7fc0028f7de6157bc7e8ca4ca79ea264d6",
+      "gh pr checks 320 -> CI Pipeline Complete pass; Level 4 E2E Tests pass; Level 1 Static Analysis pass; Level 5 Integration pass; Level 2 Build & Functional pass; Level 3 Unit Tests pass",
+      "git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main -> no output, confirming no local merge conflicts"
+    ],
+    "last_verified": "2026-05-18T19:14:11Z"
   }
 }
