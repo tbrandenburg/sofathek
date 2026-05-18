@@ -60,7 +60,7 @@ describe('VideoCleanupService', () => {
 
   it('should fall back to mtime when .info.json is missing', async () => {
     const oldMtime = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
-    mockReaddir.mockResolvedValue(['Old_Video-xyz789.mp4']);
+    mockReaddir.mockResolvedValue(['Old_Video-dQw4w9WgXcQ.mp4']);
     mockStat.mockResolvedValue({ mtimeMs: oldMtime.getTime() });
     mockUnlink.mockResolvedValue(undefined);
 
@@ -72,15 +72,14 @@ describe('VideoCleanupService', () => {
 
   it('should not remove unrelated files in the videos directory', async () => {
     const oldMtime = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
-    mockReaddir.mockResolvedValue(['README.md', 'Old_Video-xyz789.mp4']);
+    mockReaddir.mockResolvedValue(['README.md', 'family-video.mp4']);
     mockStat.mockResolvedValue({ mtimeMs: oldMtime.getTime() });
     mockUnlink.mockResolvedValue(undefined);
 
     const removed = await service.cleanupOldResources();
 
-    expect(removed).toBe(1);
-    expect(mockUnlink).toHaveBeenCalledTimes(1);
-    expect(mockUnlink).toHaveBeenCalledWith('/test/videos/Old_Video-xyz789.mp4');
+    expect(removed).toBe(0);
+    expect(mockUnlink).not.toHaveBeenCalled();
   });
 
   it('should not stat or remove unsupported old files', async () => {

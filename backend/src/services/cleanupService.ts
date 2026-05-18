@@ -36,7 +36,7 @@ export class VideoCleanupService {
       let removedCount = 0;
 
       for (const [prefix, groupFiles] of grouped) {
-        if (await this.isGroupExpired(groupFiles, cutoffMs)) {
+        if (await this.isGroupExpired(prefix, groupFiles, cutoffMs)) {
           for (const file of groupFiles) {
             try {
               await fs.unlink(path.join(this.videosDir, file));
@@ -105,7 +105,7 @@ export class VideoCleanupService {
     return ext ? file.slice(0, -ext.length) : file;
   }
 
-  private async isGroupExpired(files: string[], cutoffMs: number): Promise<boolean> {
+  private async isGroupExpired(prefix: string, files: string[], cutoffMs: number): Promise<boolean> {
     const infoJson = files.find((file) => file.endsWith('.info.json'));
 
     if (infoJson) {
@@ -129,11 +129,19 @@ export class VideoCleanupService {
       return false;
     }
 
+    if (!infoJson && !this.hasYouTubeIdSuffix(prefix)) {
+      return false;
+    }
+
     try {
       const stat = await fs.stat(path.join(this.videosDir, targetFile));
       return stat.mtimeMs < cutoffMs;
     } catch {
       return false;
     }
+  }
+
+  private hasYouTubeIdSuffix(prefix: string): boolean {
+    return /-[A-Za-z0-9_-]{11}$/.test(prefix);
   }
 }
