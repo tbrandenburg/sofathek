@@ -4,6 +4,25 @@ import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
 
 export class VideoCleanupService {
+  private readonly resourceExtensions = new Set([
+    '.mp4',
+    '.webm',
+    '.mkv',
+    '.avi',
+    '.mov',
+    '.wmv',
+    '.flv',
+    '.m4v',
+    '.mp3',
+    '.m4a',
+    '.srt',
+    '.vtt',
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.webp',
+  ]);
+
   constructor(
     private readonly videosDir: string,
     private readonly maxAgeDays: number,
@@ -51,6 +70,10 @@ export class VideoCleanupService {
 
     for (const file of files) {
       const prefix = this.getResourcePrefix(file);
+      if (!prefix) {
+        continue;
+      }
+
       const group = groups.get(prefix);
 
       if (group) {
@@ -64,7 +87,7 @@ export class VideoCleanupService {
     return groups;
   }
 
-  private getResourcePrefix(file: string): string {
+  private getResourcePrefix(file: string): string | null {
     if (file.endsWith('.info.json')) {
       return file.slice(0, -'.info.json'.length);
     }
@@ -75,6 +98,10 @@ export class VideoCleanupService {
     }
 
     const ext = path.extname(file);
+    if (!this.resourceExtensions.has(ext.toLowerCase())) {
+      return null;
+    }
+
     return ext ? file.slice(0, -ext.length) : file;
   }
 

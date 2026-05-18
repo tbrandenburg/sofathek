@@ -46,4 +46,25 @@ describe('config', () => {
       expect(config.port).toBe(3010);
     });
   });
+
+  it('should parse VIDEO_MAX_AGE_DAYS as a positive integer', () => {
+    process.env.VIDEO_MAX_AGE_DAYS = '14';
+
+    jest.isolateModules(() => {
+      const { config } = require('../../config');
+      expect(config.videoMaxAgeDays).toBe(14);
+    });
+  });
+
+  it('should use default VIDEO_MAX_AGE_DAYS when invalid or destructive', () => {
+    for (const value of ['invalid', '0', '-1']) {
+      jest.resetModules();
+      process.env = { ...originalEnv, VIDEO_MAX_AGE_DAYS: value };
+
+      jest.isolateModules(() => {
+        const { config } = require('../../config');
+        expect(config.videoMaxAgeDays).toBe(30);
+      });
+    }
+  });
 });

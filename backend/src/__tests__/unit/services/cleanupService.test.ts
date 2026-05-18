@@ -70,6 +70,29 @@ describe('VideoCleanupService', () => {
     expect(mockUnlink).toHaveBeenCalledTimes(1);
   });
 
+  it('should not remove unrelated files in the videos directory', async () => {
+    const oldMtime = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+    mockReaddir.mockResolvedValue(['README.md', 'Old_Video-xyz789.mp4']);
+    mockStat.mockResolvedValue({ mtimeMs: oldMtime.getTime() });
+    mockUnlink.mockResolvedValue(undefined);
+
+    const removed = await service.cleanupOldResources();
+
+    expect(removed).toBe(1);
+    expect(mockUnlink).toHaveBeenCalledTimes(1);
+    expect(mockUnlink).toHaveBeenCalledWith('/test/videos/Old_Video-xyz789.mp4');
+  });
+
+  it('should not stat or remove unsupported old files', async () => {
+    mockReaddir.mockResolvedValue(['notes.md']);
+
+    const removed = await service.cleanupOldResources();
+
+    expect(removed).toBe(0);
+    expect(mockStat).not.toHaveBeenCalled();
+    expect(mockUnlink).not.toHaveBeenCalled();
+  });
+
   it('should group language subtitle companions with their video resources', async () => {
     const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString();
     mockReaddir.mockResolvedValue([

@@ -28,6 +28,11 @@ function parseIntOrDefault(value: string | undefined, defaultValue: number): num
   return Number.isNaN(parsed) ? defaultValue : parsed;
 }
 
+function parsePositiveIntOrDefault(value: string | undefined, defaultValue: number): number {
+  const parsed = parseIntOrDefault(value, defaultValue);
+  return parsed > 0 ? parsed : defaultValue;
+}
+
 function validateDir(dir: string, name: string): void {
   if (!dir || typeof dir !== 'string') {
     throw new Error(`Invalid ${name}: ${dir}`);
@@ -64,7 +69,7 @@ function getConfig(): Config {
     ffprobePath: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
     rateLimitMaxRequests: parseIntOrDefault(process.env.RATE_LIMIT_MAX_REQUESTS, 5),
     rateLimitWindowMs: parseIntOrDefault(process.env.RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000), // 1 hour
-    videoMaxAgeDays: parseIntOrDefault(process.env.VIDEO_MAX_AGE_DAYS, 30),
+    videoMaxAgeDays: parsePositiveIntOrDefault(process.env.VIDEO_MAX_AGE_DAYS, 30),
   };
 }
 
