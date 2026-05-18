@@ -136,6 +136,46 @@ describe('DownloadQueueService', () => {
 
       expect(mockDownloadVideo).toHaveBeenCalledTimes(1);
     });
+
+    it('should not run video resource cleanup while processing is active', async () => {
+      let finishDownload: (() => void) | undefined;
+      mockDownloadVideo.mockImplementationOnce(() => new Promise((resolve) => {
+        finishDownload = () => resolve({
+          status: 'success',
+          videoPath: '/test/output/video.mp4'
+        });
+      }));
+      const cleanupOldResources = jest.fn().mockResolvedValue(0);
+      const cleanupService = { cleanupOldResources } as unknown as VideoCleanupService;
+      const serviceWithCleanup = new DownloadQueueService('/test/temp', mockYoutubeService, cleanupService);
+      mockReadFile.mockRejectedValue(new Error('File not found'));
+      await serviceWithCleanup.initialize();
+
+      await serviceWithCleanup.addToQueue({
+        url: 'https://youtu.be/test-video-1',
+        requestId: 'req-1',
+        requestedAt: new Date()
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(cleanupOldResources).toHaveBeenCalledTimes(1);
+      expect(mockDownloadVideo).toHaveBeenCalledTimes(1);
+
+      await serviceWithCleanup.addToQueue({
+        url: 'https://youtu.be/test-video-2',
+        requestId: 'req-2',
+        requestedAt: new Date()
+      });
+
+      expect(cleanupOldResources).toHaveBeenCalledTimes(1);
+
+      if (!finishDownload) {
+        throw new Error('Expected download promise to be created');
+      }
+
+      finishDownload();
+      await new Promise((resolve) => setImmediate(resolve));
+    });
   });
 
   describe('cancelDownload', () => {
