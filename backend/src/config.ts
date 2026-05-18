@@ -17,6 +17,7 @@ export interface Config {
   ffprobePath: string;
   rateLimitMaxRequests: number;
   rateLimitWindowMs: number;
+  videoMaxAgeDays: number;
 }
 
 function parseIntOrDefault(value: string | undefined, defaultValue: number): number {
@@ -63,6 +64,7 @@ function getConfig(): Config {
     ffprobePath: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
     rateLimitMaxRequests: parseIntOrDefault(process.env.RATE_LIMIT_MAX_REQUESTS, 5),
     rateLimitWindowMs: parseIntOrDefault(process.env.RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000), // 1 hour
+    videoMaxAgeDays: parseIntOrDefault(process.env.VIDEO_MAX_AGE_DAYS, 30),
   };
 }
 

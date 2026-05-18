@@ -8,6 +8,7 @@ import { DownloadRequest, QueueItem, QueueStatus } from '../types/youtube';
 import { YouTubeDownloadService } from './youTubeDownloadService';
 import { loadQueue, saveQueue } from './queuePersistence';
 import { processQueue } from './queueScheduler';
+import { VideoCleanupService } from './cleanupService';
 
 interface CancelResult {
   success: boolean;
@@ -30,7 +31,8 @@ export class DownloadQueueService {
 
   constructor(
     tempDirectory: string,
-    youtubeDownloadService: YouTubeDownloadService
+    youtubeDownloadService: YouTubeDownloadService,
+    private readonly videoCleanupService?: VideoCleanupService
   ) {
     this.queueFilePath = path.join(tempDirectory, 'download-queue.json');
     this.youtubeDownloadService = youtubeDownloadService;
@@ -80,7 +82,15 @@ export class DownloadQueueService {
       if (!this.isProcessing) {
         this.runQueueProcessor().catch(error => {
           logger.error('Queue processing error', {
-        error: getErrorMessage(error)
+            error: getErrorMessage(error)
+          });
+        });
+      }
+
+      if (this.videoCleanupService) {
+        this.videoCleanupService.cleanupOldResources().catch(error => {
+          logger.error('Video resource cleanup failed', {
+            error: getErrorMessage(error)
           });
         });
       }

@@ -1,4 +1,5 @@
 import { DownloadQueueService } from '../../../services/downloadQueueService';
+import { VideoCleanupService } from '../../../services/cleanupService';
 
 // Simple mocks
 const mockReadFile = jest.fn();
@@ -101,6 +102,22 @@ describe('DownloadQueueService', () => {
       
       const status = await service.getQueueStatus();
       expect(status.totalItems).toBe(1);
+    });
+
+    it('should trigger video resource cleanup after adding to queue', async () => {
+      const cleanupOldResources = jest.fn().mockResolvedValue(0);
+      const cleanupService = { cleanupOldResources } as unknown as VideoCleanupService;
+      const serviceWithCleanup = new DownloadQueueService('/test/temp', mockYoutubeService, cleanupService);
+      mockReadFile.mockRejectedValue(new Error('File not found'));
+      await serviceWithCleanup.initialize();
+
+      await serviceWithCleanup.addToQueue({
+        url: 'https://youtu.be/test-video',
+        requestId: 'req-1',
+        requestedAt: new Date()
+      });
+
+      expect(cleanupOldResources).toHaveBeenCalledTimes(1);
     });
   });
 
