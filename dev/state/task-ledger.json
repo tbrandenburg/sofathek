@@ -361,5 +361,27 @@
       "npx jest --testPathPattern=videoService.test.ts -> 54 passed, 0 failed (2026-03-31T)"
     ],
     "last_verified": "2026-03-31T00:30:00Z"
+  },
+  "ISSUE_315_PR_317_MERGE_CHECK": {
+    "status": "done",
+    "description": "Verify latest open issue #315 and its linked PR #317 for merge or CI problems",
+    "evidence": [
+      "gh issue list --state open --limit 1 --json number,title,url,createdAt,updatedAt,author -> #315 Recurring cleanup https://github.com/tbrandenburg/sofathek/issues/315",
+      "gh pr list --state open --limit 20 --json number,title,url,headRefName,baseRefName,isDraft,mergeStateStatus,statusCheckRollup,body,createdAt,updatedAt -> PR #317 body contains Fixes #315",
+      "gh pr view 317 --json number,title,url,state,mergeable,mergeStateStatus,reviewDecision,isDraft,baseRefName,headRefName,statusCheckRollup,comments,reviews -> mergeable: MERGEABLE, mergeStateStatus: CLEAN",
+      "gh pr checks 317 --watch --interval 10 -> all 6 checks pass: Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, CI Pipeline Complete",
+      "5xWhy RCA: Why1 no fix was applied because PR #317 has no current merge issue; Why2 reported issue was not reproducible through GitHub API; Why3 checks had completed successfully before verification; Why4 mergeStateStatus is CLEAN; Why5 the issue-linked PR is ready from CI/mergeability perspective"
+    ],
+    "last_verified": "2026-05-18T16:29:21Z"
+  },
+  "PR_318_CI_OBSERVATION": {
+    "status": "done",
+    "description": "Verify current branch PR #318 because it initially showed unstable checks",
+    "evidence": [
+      "git branch --show-current -> chore/add-continuous-issue-resolution-backup",
+      "gh pr checks 318 --watch --interval 10 -> all 6 checks pass after pending jobs completed: Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, CI Pipeline Complete",
+      "No code change, commit, or push was needed because the observed PR state resolved by CI completion rather than a source failure"
+    ],
+    "last_verified": "2026-05-18T16:29:21Z"
   }
 }
