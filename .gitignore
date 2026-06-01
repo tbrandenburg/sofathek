@@ -155,6 +155,11 @@ data/videos/
 dev/
 .worktrees/
 
+# Development investigation artifacts (RCA docs, analysis notes, task tracking)
+.ghar/
+task-ledger.json
+tmp-workflow-final-run/
+
 # Build artifacts
 build/
 dist/
