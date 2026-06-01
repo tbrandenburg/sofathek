@@ -111,7 +111,11 @@ start_time=$(date +%s)
 
 # Step 0: Trailing whitespace check
 print_step "📝 Step 0: Checking for trailing whitespace..."
-trailing_whitespace_files=$(git grep -n ' $' -- '*.md' '*.yml' '*.yaml' '*.json' '*.js' '*.ts' '*.jsx' '*.tsx' '*.css' '*.html' 2>/dev/null | grep -v '.claude' || true)
+changed_files=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+trailing_whitespace_files=""
+if [ -n "$changed_files" ]; then
+  trailing_whitespace_files=$(echo "$changed_files" | xargs grep -l ' $' 2>/dev/null || true)
+fi
 if [ -n "$trailing_whitespace_files" ]; then
     print_error "Trailing whitespace found in the following files:"
     echo "$trailing_whitespace_files" | head -20
