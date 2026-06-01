@@ -93,7 +93,7 @@ make lint        # Fix code style
 make test        # Run tests
 make build       # Verify build works
 
-# Production deployment  
+# Production deployment
 make start       # Or use make docker
 ```
 
