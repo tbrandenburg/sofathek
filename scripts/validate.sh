@@ -111,7 +111,7 @@ start_time=$(date +%s)
 
 # Step 0: Trailing whitespace check
 print_step "📝 Step 0: Checking for trailing whitespace..."
-trailing_whitespace_files=$(grep -rn ' $' --include='*.md' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.js' --include='*.ts' --include='*.jsx' --include='*.tsx' --include='*.css' --include='*.html' . 2>/dev/null | grep -v node_modules | grep -v '.git' | grep -v '.claude' || true)
+trailing_whitespace_files=$(grep -rn ' $' --include='*.md' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.js' --include='*.ts' --include='*.jsx' --include='*.tsx' --include='*.css' --include='*.html' . 2>/dev/null | grep -v node_modules | grep -v '.git' | grep -v '.claude' | grep -v '/coverage/' || true)
 if [ -n "$trailing_whitespace_files" ]; then
     print_error "Trailing whitespace found in the following files:"
     echo "$trailing_whitespace_files" | head -20
