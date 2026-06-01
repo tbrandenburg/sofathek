@@ -8,15 +8,13 @@
  * Addresses issue #266 — explicit acceptance criterion for PR #265.
  */
 
+import * as nodeChildProcess from 'node:child_process';
 import request from 'supertest';
 import express from 'express';
 import * as nodeFs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
-
-// Source video fixture — 16 MB, no dependencies; small enough for CI
-const SOURCE_VIDEO = path.resolve(__dirname, '../../../data/videos/Lavar-03gAoNcPO1g.mp4');
 
 const REGEN_TIMEOUT_MS = 30_000;
 
@@ -34,9 +32,17 @@ describe('Auto-thumbnail-regeneration integration', () => {
     await nodeFs.mkdir(videosDir, { recursive: true });
     await nodeFs.mkdir(tempDir, { recursive: true });
 
-    // Copy fixture video into temp videos dir (no .jpg alongside it)
+    // Generate minimal test video (no .jpg alongside it)
     testVideoPath = path.join(videosDir, 'Lavar.mp4');
-    await nodeFs.copyFile(SOURCE_VIDEO, testVideoPath);
+    await new Promise<void>((resolve, reject) => {
+      nodeChildProcess.execFile('ffmpeg', [
+        '-y', '-f', 'lavfi', '-i', 'color=c=blue:size=1280x720:d=5',
+        '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo',
+        '-shortest', '-c:v', 'libx264', '-preset', 'ultrafast',
+        '-crf', '28', '-c:a', 'aac', '-pix_fmt', 'yuv420p',
+        testVideoPath,
+      ], { timeout: 15_000 }, (err) => err ? reject(err) : resolve());
+    });
 
     // Wire env vars so config picks up our temp dirs
     process.env.VIDEOS_DIR = videosDir;
