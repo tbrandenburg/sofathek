@@ -46,7 +46,6 @@ make docker
 docker-compose up -d
 ```
 
-
 ### Network Access Configuration
 
 By default, the frontend now calls the backend via a **same-origin relative path** (`/api`).
