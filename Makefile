@@ -1,7 +1,7 @@
 # Sofathek - Family Media Center
 # Essential development commands
 
-.PHONY: help install build test lint clean dev start stop docker playwright-install playwright-test e2e-test e2e-docker clean-ports
+.PHONY: help install build test lint clean dev start stop docker playwright-install playwright-install-ci playwright-test e2e-test e2e-docker clean-ports
 
 # Port configuration (override via: make dev SOFATHEK_BACKEND_PORT=4000)
 SOFATHEK_BACKEND_PORT ?= 3010
@@ -30,6 +30,11 @@ playwright-install: ## Install Playwright browsers and dependencies
 	@echo "Installing Playwright browsers..."
 	cd frontend && npx playwright install
 	@echo "Playwright browsers installed successfully"
+
+playwright-install-ci: ## Install only Chromium for CI (faster)
+	@echo "Installing Playwright Chromium for CI..."
+	cd frontend && npx playwright install chromium
+	@echo "Playwright Chromium installed successfully"
 
 playwright-test: ## Run Playwright E2E tests locally
 	@echo "Running E2E tests with Playwright..."

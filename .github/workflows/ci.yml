@@ -132,8 +132,9 @@ jobs:
           echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
         timeout-minutes: 5
         
-      - name: Install Playwright browsers
-        run: make playwright-install
+      - name: Install Playwright Chromium (CI)
+        run: make playwright-install-ci
+        timeout-minutes: 5
         
       - name: Prepare for E2E tests
         env:
@@ -155,6 +156,7 @@ jobs:
           echo "Environment prepared. Servers will be started in E2E test step."
           
       - name: Run Playwright E2E tests
+        timeout-minutes: 15
         env:
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
