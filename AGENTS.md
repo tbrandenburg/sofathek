@@ -22,11 +22,11 @@
 
 ### Rule 1: Evidence-First Reporting
 **NEVER report completion without verified evidence.**
-- ❌ FORBIDDEN: "Feature implemented successfully"  
+- ❌ FORBIDDEN: "Feature implemented successfully"
 - ✅ REQUIRED: "Feature tested with [specific evidence]: [actual results]"
 - **Enforcement**: Every completion claim MUST include command output, screenshots, or measurable proof
 
-### Rule 2: Failure-First Validation  
+### Rule 2: Failure-First Validation
 **ALWAYS assume code is broken until proven working.**
 - ❌ FORBIDDEN: "Code exists, therefore it works"
 - ✅ REQUIRED: "Code exists, testing reveals [specific failures/successes]"
@@ -76,7 +76,7 @@
 
 ### Rule 10: Accountability Timestamps
 **Every claim MUST include when it was last verified with real evidence.**
-- ❌ FORBIDDEN: Undated claims or "it was working before"  
+- ❌ FORBIDDEN: Undated claims or "it was working before"
 - ✅ REQUIRED: "Verified working at [timestamp] with [command] producing [result]"
 - **Enforcement**: Claims expire after 24 hours without re-verification
 

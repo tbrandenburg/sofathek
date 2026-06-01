@@ -109,6 +109,25 @@ fi
 
 start_time=$(date +%s)
 
+# Step 0: Trailing whitespace check
+print_step "📝 Step 0: Checking for trailing whitespace..."
+changed_files=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+trailing_whitespace_files=""
+if [ -n "$changed_files" ]; then
+  trailing_whitespace_files=$(echo "$changed_files" | xargs grep -l ' $' 2>/dev/null || true)
+fi
+if [ -n "$trailing_whitespace_files" ]; then
+    print_error "Trailing whitespace found in the following files:"
+    echo "$trailing_whitespace_files" | head -20
+    print_quick_fixes \
+        "Run: grep -rn ' \$' --include='*.md' . | grep -v node_modules" \
+        "Configure your editor to trim trailing whitespace on save"
+    exit 1
+fi
+print_success "No trailing whitespace found"
+show_elapsed
+echo ""
+
 # Step 1: Linting
 print_step "📝 Step 1: Linting code..."
 if [ "$VERBOSE" = true ]; then
@@ -159,7 +178,7 @@ fi
 if [ "$SKIP_BUILD" = false ]; then
     echo ""
     print_step "🏗️  Step 3: Build validation..."
-    
+
     if [ "$VERBOSE" = true ]; then
         make build
         build_result=$?
