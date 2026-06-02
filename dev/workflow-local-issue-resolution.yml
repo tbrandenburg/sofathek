@@ -1,0 +1,1655 @@
+workflows:
+- id: wf_local_issue_resolution
+  name: Local Issue Resolution
+  steps:
+  - type: bash
+    run: |
+      if [[ -z "${ISSUE_NUMBER}" ]]; then
+        echo "ERROR: ISSUE_NUMBER is not set." >&2
+        exit 1
+      fi
+      ISSUE_STATE=$(gh issue view "${ISSUE_NUMBER}" --json state -q '.state' 2>/dev/null || true)
+      if [[ "$ISSUE_STATE" != "OPEN" ]]; then
+        echo "ERROR: Issue #${ISSUE_NUMBER} is not open on GitHub (state: '${ISSUE_STATE:-not found}')." >&2
+        exit 1
+      fi
+      BRANCH=$(git branch --show-current)
+      if [[ "$BRANCH" != "main" ]]; then
+        echo "ERROR: Must be on main branch (currently on '$BRANCH')" >&2
+        exit 1
+      fi
+      if ! git diff --quiet || ! git diff --cached --quiet; then
+        echo "ERROR: Working directory is not clean. Commit or stash your changes first." >&2
+        git status --short >&2
+        exit 1
+      fi
+  - type: agent
+    agent: explore
+    expandPrompt: true
+    prompt: |
+      Investigate issue #${ISSUE_NUMBER} thoroughly and produce a comprehensive implementation plan.
+
+      # Investigate Issue
+
+      **Input**: Issue #${ISSUE_NUMBER}
+
+      ## Your Mission
+
+      Investigate the issue/problem and produce a comprehensive implementation plan that:
+
+      1. Is posted as a GitHub comment
+      2. Captures all context needed for one-pass implementation
+
+      **Golden Rule**: The artifact you produce IS the specification. The implementing agent should be able to work from it without asking questions.
+
+      ## Phase 1: PARSE - Understand Input
+
+      ### 1.1 Load the issue
+
+      ```bash
+      gh issue view ${ISSUE_NUMBER} --json title,body,labels,comments,state,url,author
+      ```
+
+      ### 1.2 Extract Context
+
+      - Title: What's the reported problem?
+      - Body: Details, reproduction steps, expected vs actual
+      - Labels: bug? enhancement? documentation?
+      - Comments: Additional context from discussion
+      - State: Is it still open?
+
+      ### 1.3 Classify Issue Type
+
+      | Type          | Indicators                                              |
+      | ------------- | ------------------------------------------------------- |
+      | BUG           | "broken", "error", "crash", "doesn't work", stack trace |
+      | ENHANCEMENT   | "add", "support", "feature", "would be nice"            |
+      | REFACTOR      | "clean up", "improve", "simplify", "reorganize"         |
+      | CHORE         | "update", "upgrade", "maintenance", "dependency"        |
+      | DOCUMENTATION | "docs", "readme", "clarify", "example"                  |
+
+      ### 1.4 Assess Severity/Priority, Complexity, and Confidence
+
+      Each assessment requires a **one-sentence reasoning** explaining WHY you chose that value.
+
+      **For BUG issues - Severity:**
+
+      | Severity | Criteria                                                            |
+      | -------- | ------------------------------------------------------------------- |
+      | CRITICAL | System down, data loss, security vulnerability, no workaround       |
+      | HIGH     | Major feature broken, significant user impact, difficult workaround |
+      | MEDIUM   | Feature partially broken, moderate impact, workaround exists        |
+      | LOW      | Minor issue, cosmetic, edge case, easy workaround                   |
+
+      **For ENHANCEMENT/REFACTOR/CHORE/DOCUMENTATION - Priority:**
+
+      | Priority | Criteria                                                   |
+      | -------- | ---------------------------------------------------------- |
+      | HIGH     | Blocking other work, frequently requested, high user value |
+      | MEDIUM   | Important but not urgent, moderate user value              |
+      | LOW      | Nice to have, low urgency, minimal user impact             |
+
+      **Complexity** (based on codebase findings):
+
+      | Complexity | Criteria                                                                |
+      | ---------- | ----------------------------------------------------------------------- |
+      | HIGH       | 5+ files, multiple integration points, architectural changes, high risk |
+      | MEDIUM     | 2-4 files, some integration points, moderate risk                       |
+      | LOW        | 1-2 files, isolated change, low risk                                    |
+
+      **Confidence** (based on evidence quality):
+
+      | Confidence | Criteria                                                     |
+      | ---------- | ------------------------------------------------------------ |
+      | HIGH       | Clear root cause, strong evidence, well-understood code path |
+      | MEDIUM     | Likely root cause, some assumptions, partially understood    |
+      | LOW        | Uncertain root cause, limited evidence, many unknowns        |
+
+      **PHASE_1_CHECKPOINT:**
+
+      - [ ] Issue content extracted
+      - [ ] Type classified
+      - [ ] Severity (bug) or Priority (other) assessed with reasoning
+      - [ ] Complexity assessed with reasoning (after Phase 2)
+      - [ ] Confidence assessed with reasoning (after Phase 3)
+      - [ ] Confirmed it's open and not already has PR
+
+      ## Phase 2: EXPLORE - Codebase Intelligence
+
+      ### 2.1 Search for Relevant Code
+
+      Explore the codebase to understand the issue:
+
+      DISCOVER:
+      1. Files directly related to this functionality
+      2. How the current implementation works
+      3. Integration points - what calls this, what it calls
+      4. Similar patterns elsewhere to mirror
+      5. Existing test patterns for this area
+      6. Error handling patterns used
+
+      Return:
+      - File paths with specific line numbers
+      - Actual code snippets (not summaries)
+      - Dependencies and data flow
+
+      ### 2.2 Document Findings
+
+      | Area       | File:Lines            | Notes                  |
+      | ---------- | --------------------- | ---------------------- |
+      | Core logic | `src/x.ts:10-50`      | Main function affected |
+      | Callers    | `src/y.ts:20-30`      | Uses the core function |
+      | Types      | `src/types/x.ts:5-15` | Relevant interfaces    |
+      | Tests      | `src/x.test.ts:1-100` | Existing test patterns |
+      | Similar    | `src/z.ts:40-60`      | Pattern to mirror      |
+
+      **PHASE_2_CHECKPOINT:**
+
+      - [ ] Core files identified with line numbers
+      - [ ] Integration points mapped
+      - [ ] Similar patterns found to mirror
+      - [ ] Test patterns documented
+
+      ## Phase 3: ANALYZE - Form Approach
+
+      ### 3.1 For BUG Issues - Root Cause Analysis
+
+      Apply the 5 Whys:
+
+      ```
+      WHY 1: Why does [symptom] occur?
+      → Because [cause A]
+      → Evidence: `file.ts:123` - {code snippet}
+
+      WHY 2: Why does [cause A] happen?
+      → Because [cause B]
+      → Evidence: {proof}
+
+      ... continue until you reach fixable code ...
+
+      ROOT CAUSE: [the specific code/logic to change]
+      Evidence: `source.ts:456` - {the problematic code}
+      ```
+
+      **Check git history:**
+
+      ```bash
+      git log --oneline -10 -- {affected-file}
+      git blame -L {start},{end} {affected-file}
+      ```
+
+      ### 3.2 For ENHANCEMENT/REFACTOR Issues
+
+      **Identify:**
+
+      - What needs to be added/changed?
+      - Where does it integrate?
+      - What are the scope boundaries?
+      - What should NOT be changed?
+
+      ### 3.3 For All Issues
+
+      **Determine:**
+
+      - Files to CREATE (new files)
+      - Files to UPDATE (existing files)
+      - Files to DELETE (if any)
+      - Dependencies and order of changes
+      - Edge cases and risks
+      - Validation strategy
+
+      **PHASE_3_CHECKPOINT:**
+
+      - [ ] Root cause identified (for bugs) OR change rationale clear (for enhancements)
+      - [ ] All affected files listed with specific changes
+      - [ ] Scope boundaries defined (what NOT to change)
+      - [ ] Risks and edge cases identified
+      - [ ] Validation approach defined
+
+      ## Phase 4: GENERATE - Create Artifact
+
+      ### 4.1 Artifact Path
+
+      ```bash
+      mkdir -p .ghar/issues
+      ```
+
+      **Path:** `.ghar/issues/issue-${ISSUE_NUMBER}.md`
+
+      ### 4.2 Artifact Template
+
+      Write this structure to the artifact file.
+
+      **Note on Severity vs Priority:**
+
+      - Use **Severity** for BUG type (CRITICAL, HIGH, MEDIUM, LOW)
+      - Use **Priority** for all other types (HIGH, MEDIUM, LOW)
+
+      **Important:** Each assessment must include a one-sentence reasoning based on your investigation findings.
+
+      ```markdown
+      # Investigation: {Title}
+
+      **Issue**: #${ISSUE_NUMBER} ({url})
+      **Type**: {BUG|ENHANCEMENT|REFACTOR|CHORE|DOCUMENTATION}
+      **Investigated**: {ISO timestamp}
+
+      ### Assessment
+
+      | Metric     | Value                         | Reasoning                                                                |
+      | ---------- | ----------------------------- | ------------------------------------------------------------------------ |
+      | Severity   | {CRITICAL\|HIGH\|MEDIUM\|LOW} | {Why this severity? Based on user impact, workarounds, scope of failure} |
+      | Complexity | {LOW\|MEDIUM\|HIGH}           | {Why this complexity? Based on files affected, integration points, risk} |
+      | Confidence | {HIGH\|MEDIUM\|LOW}           | {Why this confidence? Based on evidence quality, unknowns, assumptions}  |
+
+      <!-- For non-BUG types, replace Severity row with Priority:
+      | Priority | {HIGH\|MEDIUM\|LOW} | {Why this priority? Based on user value, blocking status, frequency} |
+      -->
+
+      ## Problem Statement
+
+      {Clear 2-3 sentence description of what's wrong or what's needed}
+
+      ## Analysis
+
+      ### Root Cause / Change Rationale
+
+      {For BUG: The 5 Whys chain with evidence}
+      {For ENHANCEMENT: Why this change and what it enables}
+
+      ### Evidence Chain
+
+      WHY: {symptom}
+      ↓ BECAUSE: {cause 1}
+      Evidence: `file.ts:123` - `{code snippet}`
+
+      ↓ BECAUSE: {cause 2}
+      Evidence: `file.ts:456` - `{code snippet}`
+
+      ↓ ROOT CAUSE: {the fixable thing}
+      Evidence: `file.ts:789` - `{problematic code}`
+
+      ### Affected Files
+
+      | File            | Lines | Action | Description    |
+      | --------------- | ----- | ------ | -------------- |
+      | `src/x.ts`      | 45-60 | UPDATE | {what changes} |
+      | `src/x.test.ts` | NEW   | CREATE | {test to add}  |
+
+      ### Integration Points
+
+      - `src/y.ts:20` calls this function
+      - `src/z.ts:30` depends on this behavior
+
+      ### Git History
+
+      - **Introduced**: {commit} - {date} - "{message}"
+      - **Last modified**: {commit} - {date}
+      - **Implication**: {regression? original bug? long-standing?}
+
+      ## Implementation Plan
+
+      ### Step 1: {First change description}
+
+      **File**: `src/x.ts`
+      **Lines**: 45-60
+      **Action**: UPDATE
+
+      **Current code:**
+
+      ```typescript
+      {actual current code}
+      ```
+
+      **Required change:**
+
+      ```typescript
+      {the fix/change}
+      ```
+
+      **Why**: {brief rationale}
+
+      ### Step 2: {Second change description}
+
+      {Same structure...}
+
+      ### Step N: Add/Update Tests
+
+      **File**: `src/x.test.ts`
+      **Action**: {CREATE|UPDATE}
+
+      **Test cases to add:**
+
+      ```typescript
+      describe("{feature}", () => {
+        it("should {expected behavior}", () => {
+          // Test the fix
+        });
+
+        it("should handle {edge case}", () => {
+          // Test edge case
+        });
+      });
+      ```
+
+      ## Patterns to Follow
+
+      **From codebase - mirror these exactly:**
+
+      ```typescript
+      // SOURCE: src/similar.ts:20-30
+      // Pattern for {what this demonstrates}
+      {actual code snippet from codebase}
+      ```
+
+      ## Edge Cases & Risks
+
+      | Risk/Edge Case | Mitigation      |
+      | -------------- | --------------- |
+      | {risk 1}       | {how to handle} |
+      | {edge case}    | {how to handle} |
+
+      ## Validation
+
+      ### Automated Checks
+
+      ```bash
+      {runner} run type-check
+      {runner} test {relevant-pattern}
+      {runner} run lint
+      ```
+
+      ### Manual Verification
+
+      1. {Step to verify the fix/feature works}
+      2. {Step to verify no regression}
+
+      ## Scope Boundaries
+
+      **IN SCOPE:**
+
+      - {what we're changing}
+
+      **OUT OF SCOPE (do not touch):**
+
+      - {what to leave alone}
+      - {future improvements to defer}
+
+      ## Metadata
+
+      - **Investigated by**: GHAR
+      - **Timestamp**: {ISO timestamp}
+      - **Artifact**: `.ghar/issues/issue-${ISSUE_NUMBER}.md`
+      ```
+
+      **PHASE_4_CHECKPOINT:**
+      - [ ] Artifact file created
+      - [ ] All sections filled with specific content
+      - [ ] Code snippets are actual (not invented)
+      - [ ] Steps are actionable without clarification
+
+      ## Phase 5: POST - GitHub Comment
+
+      Post the complete artifact content to GitHub:
+
+      ```bash
+      gh issue comment ${ISSUE_NUMBER} --body "$(cat .ghar/issues/issue-${ISSUE_NUMBER}.md)"
+      ```
+
+      **PHASE_5_CHECKPOINT:**
+      - [ ] Complete artifact content posted to GitHub
+
+      ## Phase 6: REPORT - Output to User
+
+      ```markdown
+      ## Investigation Complete
+
+      **Issue**: #${ISSUE_NUMBER} - {title}
+      **Type**: {BUG|ENHANCEMENT|REFACTOR|...}
+
+      ### Assessment
+
+      | Metric | Value | Reasoning |
+      |--------|-------|-----------|
+      | {Severity or Priority} | {value} | {why - based on investigation} |
+      | Complexity | {LOW\|MEDIUM\|HIGH} | {why - based on files/integration/risk} |
+      | Confidence | {HIGH\|MEDIUM\|LOW} | {why - based on evidence/unknowns} |
+
+      ### Key Findings
+
+      - **Root Cause**: {one-line summary}
+      - **Files Affected**: {count} files
+      - **Estimated Changes**: {brief scope}
+
+      ### Files to Modify
+
+      | File | Action |
+      |------|--------|
+      | `src/x.ts` | UPDATE |
+      | `src/x.test.ts` | CREATE |
+
+      ### GitHub
+
+      Posted to issue #${ISSUE_NUMBER}
+      ```
+
+      ## Handling Edge Cases
+
+      ### Issue is already closed
+
+      - Report: "Issue #{number} is already closed"
+      - Still create artifact if user wants analysis
+
+      ### Not reproducible / no implementation needed
+
+      - If investigation concludes the reported issue is already fixed, not reproducible, or does not require a code change:
+      - Start the GitHub comment with exactly: `<decision>NO_IMPLEMENTATION_NEEDED</decision>`
+      - Explain the evidence briefly
+      - Close the GitHub issue with `gh issue close ${ISSUE_NUMBER} --comment <summary>`
+      - Do not propose or imply implementation steps
+
+      ### Issue already has linked PR
+
+      - Warn: "PR #{pr} already addresses this issue"
+      - Ask if user wants to continue anyway
+
+      ### Can't determine root cause
+
+      - Document what you found
+      - Set confidence to LOW
+      - Note uncertainty in artifact
+      - Proceed with best hypothesis
+
+      ### Very large scope
+
+      - Suggest breaking into smaller issues
+      - Focus on core problem first
+      - Note deferred items in "Out of Scope"
+
+      ## Success Criteria
+
+      - **ARTIFACT_COMPLETE**: All sections filled with specific, actionable content
+      - **EVIDENCE_BASED**: Every claim has file:line reference or proof
+      - **IMPLEMENTABLE**: Another agent can execute without questions
+      - **GITHUB_POSTED**: Complete artifact posted to issue
+  - type: bash
+    run: |
+      ISSUE_STATE=$(gh issue view "${ISSUE_NUMBER}" --json state -q '.state' 2>/dev/null || echo "UNKNOWN")
+      LATEST_COMMENT=$(gh issue view "${ISSUE_NUMBER}" --json comments -q '.comments[-1].body // ""' 2>/dev/null || true)
+
+      if [[ "$ISSUE_STATE" == "CLOSED" ]]; then
+        echo "Issue #${ISSUE_NUMBER} is already closed after investigation; skipping implementation" >&2
+        exit 42
+      fi
+
+      if grep -Fq '<decision>NO_IMPLEMENTATION_NEEDED</decision>' <<<"$LATEST_COMMENT"; then
+        echo "Issue #${ISSUE_NUMBER} marked as no implementation needed; skipping implementation" >&2
+        exit 42
+      fi
+  - type: agent
+    agent: build
+    expandPrompt: true
+    prompt: |
+      Implement the fix for issue #${ISSUE_NUMBER}. Take its investigation comment as the implementation plan, but also check if there is already a linked PR to continue.
+
+      # Implement Issue Fix
+
+      ## Your Mission
+
+      Execute the implementation plan from:
+
+      1. Load and validate the artifact
+      2. Ensure git state is correct
+      3. Implement the changes exactly as specified
+      4. Run validation
+      5. Create PR linked to issue
+      6. Run self-review and post findings
+      7. Archive the artifact
+
+      **Golden Rule**: Follow the artifact. If something seems wrong, validate it first - don't silently deviate.
+
+      ## Phase 1: LOAD - Get the Artifact
+
+      ### 1.1 Load the issue
+
+      * Use `gh` CLI to get issue #${ISSUE_NUMBER} and its investigation plan
+      * Check if that issue already has an implementation plan comment
+      * If not, IMMEDIATELY STOP here!
+
+      ### 1.2 Load and Parse Artifact
+
+      **Extract from artifact:**
+
+      - Issue number and title
+      - Type (BUG/ENHANCEMENT/etc)
+      - Files to modify (with line numbers)
+      - Implementation steps
+      - Validation commands
+      - Test cases to add
+
+      **Hard stop rules:**
+
+      - If the investigation comment starts with `<decision>NO_IMPLEMENTATION_NEEDED</decision>`, STOP and do not create a branch, commit, or PR
+      - If the investigation concludes the issue is not reproducible, already fixed, or needs no code change, STOP and leave the issue closed/resolved
+      - Never substitute an unrelated cleanup, refactor, dependency upgrade, or opportunistic fix for the investigated issue
+
+      **PHASE_1_CHECKPOINT:**
+      - [ ] Artifact found and loaded
+      - [ ] Key sections parsed (files, steps, validation)
+      - [ ] Issue number extracted (if applicable)
+
+      ## Phase 2: VALIDATE - Sanity Check
+
+      ### 2.1 Verify Plan Accuracy
+
+      For each file mentioned in the artifact:
+
+      - Read the actual current code
+      - Compare to what artifact expects
+      - Check if the "current code" snippets match reality
+
+      **If significant drift detected:**
+
+      ⚠️ Code has changed since investigation:
+
+      File: src/x.ts:45
+      - Artifact expected: {snippet}
+      - Actual code: {different snippet}
+
+      Options:
+      1. Re-run /ghar-issue-investigate to get fresh analysis
+      2. Proceed carefully with manual adjustments
+
+      ### 2.2 Confirm Approach Makes Sense
+
+      Ask yourself:
+
+      - Does the proposed fix actually address the root cause?
+      - Are there obvious problems with the approach?
+      - Has something changed that invalidates the plan?
+
+      **If plan seems wrong:**
+
+      - STOP
+      - Explain what's wrong
+      - Suggest re-investigation
+
+      **PHASE_2_CHECKPOINT:**
+
+      - [ ] Artifact matches current codebase state
+      - [ ] Approach still makes sense
+      - [ ] No blocking issues identified
+
+      ## Phase 3: GIT-CHECK - Ensure Correct State
+
+      ### 3.1 Check Current Git State
+
+      ```bash
+      git branch --show-current
+      git rev-parse --show-toplevel
+      git worktree list
+      git status --porcelain
+      git fetch origin
+      git status
+      ```
+
+      ### 3.2 Decision Tree
+
+      ┌─ IN WORKTREE?
+      │  └─ YES → Use it (assume it's for this work)
+      │           Log: "Using worktree at {path}"
+      │
+      ├─ ON MAIN/MASTER?
+      │  └─ Q: Working directory clean?
+      │     ├─ YES → Create branch: fix/issue-${ISSUE_NUMBER}-{slug}
+      │     │        git checkout -b fix/issue-${ISSUE_NUMBER}-{slug}
+      │     └─ NO  → Warn user:
+      │              "Working directory has uncommitted changes.
+      │               Please commit or stash before proceeding."
+      │              STOP
+      │
+      ├─ ON FEATURE/FIX BRANCH?
+      │  └─ Use it (assume it's for this work)
+      │     If branch name doesn't contain issue number:
+      │       Warn: "Branch '{name}' may not be for issue #${ISSUE_NUMBER}"
+      │
+      └─ DIRTY STATE?
+         └─ Warn and suggest: git stash or git commit
+            STOP
+
+      ### 3.3 Ensure Up-to-Date
+
+      ```bash
+      git pull --rebase origin main 2>/dev/null || git pull origin main
+      ```
+
+      **PHASE_3_CHECKPOINT:**
+
+      - [ ] Git state is clean and correct
+      - [ ] On appropriate branch (created or existing)
+      - [ ] Up to date with main
+
+      ## Phase 4: IMPLEMENT - Make Changes
+
+      ### 4.1 Execute Each Step
+
+      For each step in the artifact's Implementation Plan:
+
+      1. **Read the target file** - understand current state
+      2. **Make the change** - exactly as specified
+      3. **Verify types compile** - run the project's type-check command
+
+      ### 4.2 Implementation Rules
+
+      **DO:**
+
+      - Follow artifact steps in order
+      - Match existing code style exactly
+      - Copy patterns from "Patterns to Follow" section
+      - Add tests as specified
+
+      **DON'T:**
+
+      - Refactor unrelated code
+      - Add "improvements" not in the plan
+      - Change formatting of untouched lines
+      - Deviate from the artifact without noting it
+
+      ### 4.3 Handle Each File Type
+
+      **For UPDATE files:**
+
+      - Read current content
+      - Find the exact lines mentioned
+      - Make the specified change
+      - Preserve surrounding code
+
+      **For CREATE files:**
+
+      - Use patterns from artifact
+      - Follow existing file structure conventions
+      - Include all specified content
+
+      **For test files:**
+
+      - Add test cases as specified
+      - Follow existing test patterns
+      - Ensure tests actually test the fix
+
+      ### 4.4 Track Deviations
+
+      If you must deviate from the artifact:
+
+      - Note what changed and why
+      - Include in PR description
+
+      **PHASE_4_CHECKPOINT:**
+
+      - [ ] All steps from artifact executed
+      - [ ] Types compile after each change
+      - [ ] Tests added as specified
+      - [ ] Any deviations documented
+
+      ## Phase 5: VERIFY - Run Validation
+
+      ### 5.1 Run Artifact Validation Commands
+
+      Execute each command from the artifact's Validation section.
+
+      Common patterns (adapt to project's toolchain):
+      ```bash
+      {runner} run type-check  # or: mypy ., cargo check, go build ./...
+      {runner} test {pattern-from-artifact}  # or: pytest, cargo test, go test
+      {runner} run lint  # or: ruff check ., cargo clippy
+      ```
+
+      ### 5.2 Check Results
+
+      **All must pass before proceeding.**
+
+      If failures:
+
+      1. Analyze what's wrong
+      2. Fix the issue
+      3. Re-run validation
+      4. Note any fixes in PR description
+
+      ### 5.3 Manual Verification (if specified)
+
+      Execute any manual verification steps from the artifact.
+
+      **PHASE_5_CHECKPOINT:**
+
+      - [ ] Type check passes
+      - [ ] Tests pass
+      - [ ] Lint passes
+      - [ ] Manual verification complete (if applicable)
+
+      ## Phase 6: COMMIT - Save Changes
+
+      ### 6.1 Stage Changes
+
+      ```bash
+      git add -A
+      git status  # Review what's being committed
+      ```
+
+      ### 6.2 Write Commit Message
+
+      **Format:**
+
+      Fix: {brief description} (#${ISSUE_NUMBER})
+
+      {Problem statement from artifact - 1-2 sentences}
+
+      Changes:
+      - {Change 1 from artifact}
+      - {Change 2 from artifact}
+      - Added test for {case}
+
+      Fixes #${ISSUE_NUMBER}
+
+      **Commit:**
+
+      ```bash
+      git commit -m "$(cat <<'EOF'
+      Fix: {title} (#${ISSUE_NUMBER})
+
+      {problem statement}
+
+      Changes:
+      - {change 1}
+      - {change 2}
+
+      Fixes #${ISSUE_NUMBER}
+      EOF
+      )"
+      ```
+
+      **PHASE_6_CHECKPOINT:**
+
+      - [ ] All changes committed
+      - [ ] Commit message references issue
+
+      ## Phase 7: PR - Create Pull Request
+
+      ### 7.1 Push to Remote
+
+      ```bash
+      git push -u origin HEAD
+      ```
+
+      If branch was rebased:
+
+      ```bash
+      git push -u origin HEAD --force-with-lease
+      ```
+
+      ### 7.2 Create PR
+
+      ```bash
+      gh pr create --title "Fix: {title} (#${ISSUE_NUMBER})" --body "$(cat <<'EOF'
+      ## Summary
+
+      {Problem statement from artifact}
+
+      ## Root Cause
+
+      {Root cause summary from artifact}
+
+      ## Changes
+
+      | File | Change |
+      |------|--------|
+      | `src/x.ts` | {description} |
+      | `src/x.test.ts` | Added test for {case} |
+
+      ## Testing
+
+      - [x] Type check passes
+      - [x] Unit tests pass
+      - [x] Lint passes
+      - [x] {Manual verification from artifact}
+
+      ## Validation
+
+      ```bash
+      # Run project's validation commands (adapt to toolchain)
+      {type-check-cmd} && {test-cmd} {pattern} && {lint-cmd}
+      ```
+
+      ## Issue
+
+      Fixes #${ISSUE_NUMBER}
+
+      <details>
+      <summary>📋 Implementation Details</summary>
+
+      ### Implementation followed artifact:
+
+      `.claude/PRPs/issues/issue-${ISSUE_NUMBER}.md`
+
+      ### Deviations from plan:
+
+      {None | List any deviations}
+
+      </details>
+
+      _Automated implementation from investigation artifact_
+      EOF
+      )"
+      ```
+
+      ### 7.3 Get PR Number
+
+      ```bash
+      PR_URL=$(gh pr view --json url -q '.url')
+      PR_NUMBER=$(gh pr view --json number -q '.number')
+      ```
+
+      **PHASE_7_CHECKPOINT:**
+
+      - [ ] Changes pushed to remote
+      - [ ] PR created
+      - [ ] PR linked to issue with "Fixes #${ISSUE_NUMBER}"
+
+      ## Phase 8: REVIEW - Self Code Review
+
+      ### 8.1 Run Code Review
+
+      Use Task tool with subagent_type="code-reviewer":
+
+      Review the changes in this PR for issue #${ISSUE_NUMBER}.
+
+      Focus on:
+      1. Does the fix address the root cause from the investigation?
+      2. Code quality - matches codebase patterns?
+      3. Test coverage - are the new tests sufficient?
+      4. Edge cases - are they handled?
+      5. Security - any concerns?
+      6. Potential bugs - anything that could break?
+
+      Review only the diff, not the entire codebase.
+
+      ### 8.2 Post Review to PR
+
+      ```bash
+      gh pr comment --body "$(cat <<'EOF'
+      ## 🔍 Automated Code Review
+
+      ### Summary
+
+      {1-2 sentence assessment}
+
+      ### Findings
+
+      #### ✅ Strengths
+      - {Good thing 1}
+      - {Good thing 2}
+
+      #### ⚠️ Suggestions (non-blocking)
+      - `{file}:{line}` - {suggestion}
+      - {other suggestions}
+
+      #### 🔒 Security
+      - {Any concerns or "No security concerns identified"}
+
+      ### Checklist
+
+      - [x] Fix addresses root cause from investigation
+      - [x] Code follows codebase patterns
+      - [x] Tests cover the change
+      - [x] No obvious bugs introduced
+
+      _Self-reviewed by Claude • Ready for human review_
+      EOF
+      )"
+      ```
+
+      **PHASE_8_CHECKPOINT:**
+
+      - [ ] Code review completed
+      - [ ] Review posted to PR
+
+      ## Phase 9: ARCHIVE - Clean Up
+
+      ### 9.1 Move Artifact to Completed
+
+      ```bash
+      mkdir -p .claude/PRPs/issues/completed
+      mv .claude/PRPs/issues/issue-${ISSUE_NUMBER}.md .claude/PRPs/issues/completed/
+      ```
+
+      ### 9.2 Commit and Push Archive
+
+      ```bash
+      git add .claude/PRPs/issues/
+      git commit -m "Archive investigation for issue #${ISSUE_NUMBER}"
+      git push
+      ```
+
+      **PHASE_9_CHECKPOINT:**
+
+      - [ ] Artifact moved to completed folder
+      - [ ] Archive committed and pushed
+
+      ## Phase 10: REPORT - Output to User
+
+      ## Implementation Complete
+
+      **Issue**: #${ISSUE_NUMBER} - {title}
+      **Branch**: `{branch-name}`
+      **PR**: #{pr-number} - {pr-url}
+
+      ### Changes Made
+
+      | File            | Change        |
+      | --------------- | ------------- |
+      | `src/x.ts`      | {description} |
+      | `src/x.test.ts` | Added test    |
+
+      ### Validation
+
+      | Check      | Result  |
+      | ---------- | ------- |
+      | Type check | ✅ Pass |
+      | Tests      | ✅ Pass |
+      | Lint       | ✅ Pass |
+
+      ### Self-Review
+
+      {Summary of review findings}
+
+      ### Artifact
+
+      📄 Archived to `.claude/PRPs/issues/completed/issue-${ISSUE_NUMBER}.md`
+
+      ### Next Steps
+
+      - Human review of PR #{pr-number}
+      - Merge when approved
+  - type: agent
+    agent: build
+    expandPrompt: true
+    prompt: |
+      Commit and push the fix for issue #${ISSUE_NUMBER}. Follow these instructions:
+
+      # TASK: Commit & Push — Complete Git Workflow
+
+      ## Task Contract
+
+      You are required to execute the full workflow below:
+      - Ensure work is on a non-main branch
+      - Commit the current changes using the specified commit structure
+      - Push the branch to the remote
+      - Create a pull request with a complete description
+
+      **The task is incomplete until the branch is pushed and a PR exists.**
+
+      ## Execution Procedure
+
+      Follow the steps below in order. Do not stop after committing — pushing and PR creation are required.
+
+      ### 1. Check Current Branch Status
+
+      ```bash
+      git status
+      git branch --show-current
+      ```
+
+      **Decision Point:**
+      - If on `main` or `master`: Create a feature branch
+      - If on a feature branch: Continue with that branch
+      - If uncommitted changes exist: They'll move to the new branch
+
+      ### 2. Create Feature Branch (if needed)
+
+      If on main/master, create a descriptive branch:
+
+      ```bash
+      git checkout -b <type>/issue-${ISSUE_NUMBER}-<short-description>
+      ```
+
+      **Branch Types:**
+      - `fix/` - Bug fixes
+      - `feat/` - New features
+      - `refactor/` - Code restructuring
+      - `docs/` - Documentation
+      - `chore/` - Maintenance
+      - `perf/` - Performance improvements
+
+      ### 3. Analyze and Stage Changes
+
+      ```bash
+      git status
+      git diff
+      git add -A  # or selectively add files
+      git diff --staged
+      ```
+
+      **Safety Checks:**
+      - ⚠️ Check for secrets (.env, API keys, credentials)
+      - ⚠️ Verify no unintended files are staged
+      - ⚠️ Ensure changes are related and cohesive
+
+      ### 4. Categorize the Change
+
+      | Type | When to Use | Example |
+      |------|-------------|---------|
+      | `feat` | New functionality | `feat(auth): add JWT refresh token rotation` |
+      | `fix` | Bug fix | `fix(api): handle null response in user fetch` |
+      | `refactor` | Code restructure | `refactor(db): extract query builder to module` |
+      | `docs` | Documentation | `docs(api): add OpenAPI examples` |
+      | `test` | Tests | `test(auth): add edge cases for token expiration` |
+      | `chore` | Maintenance | `chore(deps): upgrade langfuse to v3.0` |
+      | `perf` | Performance | `perf(search): add index for user lookups` |
+      | `style` | Formatting | `style: apply ruff formatting` |
+
+      ### 5. Craft Commit Message
+
+      **Format:**
+      type(scope): concise description (imperative mood)
+
+      [Body - 2-4 sentences explaining WHY and CONTEXT]
+
+      Changes:
+      - Key change 1
+      - Key change 2
+
+      Pattern: [Patterns or conventions followed]
+      Decision: [Key decisions made]
+      Related: [Related files or components]
+
+      **Rules:**
+      1. **Subject line:**
+         - Imperative mood: "add" not "added"
+         - Include scope: `feat(auth)`, `fix(api/users)`
+         - Under 72 characters
+         - Specific and descriptive
+
+      2. **Body:**
+         - Explain WHY, not just what
+         - Mention patterns established
+         - Note non-obvious decisions
+         - Reference related components
+
+      3. **Context for future agents:**
+         - Database locations
+         - File patterns followed
+         - Architecture decisions
+         - Gotchas or edge cases
+
+      ### 6. Execute Commit
+
+      ```bash
+      git commit -m "$(cat <<'EOF'
+      type(scope): description
+
+      Problem or context explaining why this change was needed.
+
+      Changes:
+      - Specific change 1
+      - Specific change 2
+
+      Pattern: Follows existing pattern in path/to/file
+      Decision: Chose approach X because Y
+      Related: Other files or components affected
+      EOF
+      )"
+      ```
+
+      ### 7. Push to Remote
+
+      ```bash
+      git push -u origin $(git branch --show-current)
+      ```
+
+      ### 8. Create Pull Request
+
+      Use GitHub CLI to create PR with rich description:
+
+      ```bash
+      gh pr create --title "Type: Brief description" --body "$(cat <<'EOF'
+      ## Problem
+      [Describe the issue or need this PR addresses]
+      Fixes #${ISSUE_NUMBER}
+
+      ## Solution
+      [Explain the approach taken and why]
+
+      ## Changes
+      - Modified file/component 1
+      - Added feature/fix 2
+      - Updated related component 3
+
+      ## Testing
+      [How this was tested or validated]
+
+      ## Notes
+      [Any additional context, gotchas, or follow-up needed]
+      EOF
+      )"
+      ```
+
+      ### 9. Required Completion Report
+
+      After successful push and PR creation, report:
+
+      ✅ Branch: <branch-name>
+      ✅ Commit: <hash> - <subject>
+      ✅ Files: <count> files changed (+X, -Y lines)
+      ✅ Pushed: origin/<branch-name>
+      ✅ PR: #<number> - <url>
+
+      ## Safety Checks
+
+      - ⚠️ **Never commit to main/master directly** without explicit user confirmation
+      - ⚠️ **Check for secrets** in staged files (.env, API keys, passwords)
+      - ⚠️ **Verify branch name** is descriptive and follows convention
+      - ⚠️ **Review diff** before committing to catch unintended changes
+      - ⚠️ **Test locally** if possible before pushing
+
+      ## Output Format
+
+      After completion, provide:
+
+      ✅ **Workflow Complete**
+
+      **Branch:** fix/issue-${ISSUE_NUMBER}-short-description
+      **Commit:** <hash> - <subject>
+      **Files Changed:** <count> files changed (+X, -Y lines)
+      **Pushed:** origin/fix/issue-${ISSUE_NUMBER}-short-description
+      **PR:** #<number> - <url>
+
+      The changes are ready for review.
+  - type: vars
+    values:
+      PR_NUMBER: |
+        # Resolve PR from the current branch (set by fix/commit-push steps).
+        # Falls back to GitHub's own issue-closing references if the branch already switched.
+        read -r REPO_OWNER REPO_NAME <<<"$(gh repo view --json owner,name -q '.owner.login + " " + .name')"
+
+        pr_closes_issue() {
+          local pr_number=$1
+          gh api graphql \
+            -f query='query($owner:String!, $repo:String!, $pr:Int!) { repository(owner:$owner, name:$repo) { pullRequest(number:$pr) { closingIssuesReferences(first:20) { nodes { number } } } } }' \
+            -F owner="$REPO_OWNER" \
+            -F repo="$REPO_NAME" \
+            -F pr="$pr_number" \
+            --jq '.data.repository.pullRequest.closingIssuesReferences.nodes[].number' 2>/dev/null \
+            | grep -Fxq "${ISSUE_NUMBER}"
+        }
+
+        PR=$(gh pr view --json number -q '.number' 2>/dev/null || true)
+        if [[ -n "$PR" ]] && pr_closes_issue "$PR"; then
+          echo "$PR"
+          exit 0
+        fi
+
+        PR=$(gh api graphql \
+          -f query='query($owner:String!, $repo:String!, $issue:Int!) { repository(owner:$owner, name:$repo) { issue(number:$issue) { timelineItems(first:100, itemTypes:[CROSS_REFERENCED_EVENT]) { nodes { ... on CrossReferencedEvent { willCloseTarget source { __typename ... on PullRequest { number } } } } } } } }' \
+          -F owner="$REPO_OWNER" \
+          -F repo="$REPO_NAME" \
+          -F issue="$ISSUE_NUMBER" \
+          --jq '.data.repository.issue.timelineItems.nodes[] | select(.willCloseTarget == true and .source.__typename == "PullRequest") | .source.number' 2>/dev/null \
+          | head -n 1 || true)
+
+        if [[ -n "$PR" ]]; then
+          echo "$PR"
+          exit 0
+        fi
+
+        ISSUE_STATE=$(gh issue view "${ISSUE_NUMBER}" --json state -q '.state' 2>/dev/null || echo "UNKNOWN")
+        echo "No closing PR found for issue #${ISSUE_NUMBER} (issue state: ${ISSUE_STATE})" >&2
+        exit 42
+  - type: agent
+    agent: build
+    expandPrompt: true
+    prompt: |
+      Issue #${ISSUE_NUMBER} / PR #${PR_NUMBER}: The PR shows merge issues. Follow the instructions below.
+
+      Finish or fix following task(s) completely without stopping:
+
+      1. Analyze the issue and perform a root cause analysis with asking 5xWhy
+      2. Plan the fix
+      3. Implement the plan
+      4. Commit and push
+      5. Observe CI and iterate till it is passing
+
+      For each task create an entry in:
+
+      MANDATORY OUTPUT ARTIFACT: Create `./dev/state/task-ledger.json` newly with schema:
+
+      {
+        "TASK_ID": {
+          "status": "pending | in_progress | blocked | done",
+          "evidence": ["exact command + output snippet"],
+          "last_verified": "ISO-8601 timestamp"
+        }
+      }
+
+      This file is the single source of truth for todo and task tracking
+
+      Before starting any task:
+      - Load task-ledger.json
+      - Restate which task IDs are NOT done
+      - Select exactly ONE task to work on
+
+      After each task:
+      - Update its status
+      - Add new critical or important tasks if needed
+
+      ### Effect
+      - Tasks cannot be forgotten
+      - Every task must be re‑acknowledged continuously
+      - Evidence becomes mandatory, not optional
+  - type: agent
+    agent: build
+    expandPrompt: true
+    prompt: |
+      Issue #${ISSUE_NUMBER} / PR #${PR_NUMBER}: Follow the instructions below for the linked PR.
+
+      # PR Code Review
+
+      ## Your Mission
+
+      Perform a thorough, senior-engineer-level code review on PR #${PR_NUMBER}:
+
+      1. **Understand** what the PR is trying to accomplish
+      2. **Check** the code against project patterns and constraints
+      3. **Run** all validation (type-check, lint, tests, build)
+      4. **Identify** issues by severity
+      5. **Report** findings as PR comment AND local file
+
+      **Golden Rule**: Be constructive and actionable. Every issue should have a clear recommendation. Acknowledge good work too.
+
+      ## Phase 1: FETCH - Get PR Context
+
+      ### 1.1 Get PR Metadata
+
+      ```bash
+      gh pr view ${PR_NUMBER} --json number,title,body,author,headRefName,baseRefName,state,additions,deletions,changedFiles,files,reviews,comments
+      gh pr diff ${PR_NUMBER}
+      gh pr diff ${PR_NUMBER} --name-only
+      ```
+
+      **Extract:**
+      - PR number, title, description
+      - Author
+      - Base and head branches
+      - Files changed with line counts
+      - Existing review comments
+
+      ### 1.2 Checkout PR Branch
+
+      ```bash
+      gh pr checkout ${PR_NUMBER}
+      ```
+
+      ### 1.3 Validate PR State
+
+      | State | Action |
+      |-------|--------|
+      | `MERGED` | STOP: "PR already merged. Nothing to review." |
+      | `CLOSED` | WARN: "PR is closed. Review anyway? (historical analysis)" |
+      | `DRAFT` | NOTE: "Draft PR - focusing on direction, not polish" |
+      | `OPEN` | PROCEED with full review |
+
+      **PHASE_1_CHECKPOINT:**
+      - [ ] PR number identified
+      - [ ] PR metadata fetched
+      - [ ] PR branch checked out
+      - [ ] PR state is reviewable
+
+      ## Phase 2: CONTEXT - Understand the Change
+
+      ### 2.1 Read Project Rules
+
+      Read and internalize:
+
+      ```bash
+      cat CLAUDE.md
+      ls -la .claude/docs/ 2>/dev/null
+      ls -la docs/ 2>/dev/null
+      ```
+
+      **Extract key constraints:**
+      - Type safety requirements
+      - Code style rules
+      - Testing requirements
+      - Architecture patterns
+
+      ### 2.2 Find Implementation Context
+
+      Look for implementation artifacts:
+
+      ```bash
+      ls .claude/PRPs/reports/*{branch-name}*.md 2>/dev/null
+      ls .claude/PRPs/plans/completed/ 2>/dev/null
+      ls .claude/PRPs/issues/completed/ 2>/dev/null
+      ```
+
+      **If implementation report exists:**
+      1. Read the implementation report
+      2. Read the referenced plan
+      3. Note documented deviations - these are INTENTIONAL, not issues
+
+      **If no implementation report:**
+      - PR may not have been created via /prp-implement
+      - Review normally without plan context
+      - Note in review that no implementation report was found
+
+      ### 2.3 Understand PR Intent
+
+      From PR title, description, AND implementation report (if available):
+      - What problem does this solve?
+      - What approach was taken?
+      - Are there notes from the author?
+      - What deviations from plan were documented and why?
+
+      ### 2.4 Analyze Changed Files
+
+      For each changed file, determine:
+      - What type of file? (service, handler, util, test, config)
+      - What existing patterns should it follow?
+      - Scope of change? (new file, modification, deletion)
+
+      **PHASE_2_CHECKPOINT:**
+      - [ ] Project rules read and understood
+      - [ ] Implementation artifacts located (if any)
+      - [ ] PR intent understood
+      - [ ] Changed files categorized
+
+      ## Phase 3: REVIEW - Analyze the Code
+
+      ### 3.1 Read Each Changed File
+
+      For each file in the diff:
+
+      1. **Read the full file** (not just diff) to understand context
+      2. **Read similar files** to understand expected patterns
+      3. **Check specific changes** against patterns
+
+      ### 3.2 Review Checklist
+
+      **For EVERY changed file, check:**
+
+      #### Correctness
+      - [ ] Does the code do what the PR claims?
+      - [ ] Are there logic errors?
+      - [ ] Are edge cases handled?
+      - [ ] Is error handling appropriate?
+
+      #### Type Safety
+      - [ ] Are all types explicit (no implicit `any`)?
+      - [ ] Are return types declared?
+      - [ ] Are interfaces used appropriately?
+      - [ ] Are type guards used where needed?
+
+      #### Pattern Compliance
+      - [ ] Does it follow existing patterns in the codebase?
+      - [ ] Is naming consistent with project conventions?
+      - [ ] Is file organization correct?
+      - [ ] Are imports from the right places?
+
+      #### Security
+      - [ ] Any user input without validation?
+      - [ ] Any secrets that could be exposed?
+      - [ ] Any injection vulnerabilities (SQL, command, etc.)?
+      - [ ] Any unsafe operations?
+
+      #### Performance
+      - [ ] Any obvious N+1 queries or loops?
+      - [ ] Any unnecessary async/await?
+      - [ ] Any memory leaks (unclosed resources, growing arrays)?
+      - [ ] Any blocking operations in hot paths?
+
+      #### Completeness
+      - [ ] Are there tests for new code?
+      - [ ] Is documentation updated if needed?
+      - [ ] Are all TODOs addressed?
+      - [ ] Is error handling complete?
+
+      #### Maintainability
+      - [ ] Is the code readable?
+      - [ ] Is it over-engineered?
+      - [ ] Is it under-engineered (missing necessary abstractions)?
+      - [ ] Are there magic numbers/strings that should be constants?
+
+      ### 3.3 Categorize Issues
+
+      **Important: Check implementation report first!**
+
+      If a deviation from expected patterns is documented in the implementation report with a valid reason, it is NOT an issue - it's an intentional decision. Only flag **undocumented** deviations.
+
+      **Issue Severity Levels:**
+
+      | Level | Criteria | Examples |
+      |-------|----------|----------|
+      | Critical | Blocking - must fix | Security vulnerabilities, data loss potential, crashes |
+      | High | Should fix before merge | Type safety violations, missing error handling, logic errors |
+      | Medium | Should consider | Pattern inconsistencies, missing edge cases, undocumented deviations |
+      | Low | Suggestions | Style preferences, minor optimizations, documentation |
+
+      **PHASE_3_CHECKPOINT:**
+      - [ ] All changed files reviewed
+      - [ ] Issues categorized by severity
+      - [ ] Implementation report deviations accounted for
+      - [ ] Positive aspects noted
+
+      ## Phase 4: VALIDATE - Run Automated Checks
+
+      ### 4.1 Run Validation Suite
+
+      ```bash
+      npm run type-check || bun run type-check || npx tsc --noEmit
+      npm run lint || bun run lint
+      npm test || bun test
+      npm run build || bun run build
+      ```
+
+      **Capture for each:**
+      - Pass/fail status
+      - Error count
+      - Warning count
+      - Any specific failures
+
+      ### 4.2 Specific Validation
+
+      Based on what changed:
+
+      | Change Type | Additional Validation |
+      |-------------|----------------------|
+      | New API endpoint | Test with curl/httpie |
+      | Database changes | Check migration exists |
+      | Config changes | Verify .env.example updated |
+      | New dependencies | Check package.json/lock file |
+
+      ### 4.3 Regression Check
+
+      ```bash
+      npm test || bun test
+      npm test -- {relevant-test-pattern}
+      ```
+
+      **PHASE_4_CHECKPOINT:**
+      - [ ] Type check executed
+      - [ ] Lint executed
+      - [ ] Tests executed
+      - [ ] Build executed
+      - [ ] Results captured
+
+      ## Phase 5: DECIDE - Form Recommendation
+
+      ### 5.1 Decision Logic
+
+      **APPROVE** if:
+      - No critical or high issues
+      - All validation passes
+      - Code follows patterns
+      - Changes match PR intent
+
+      **REQUEST CHANGES** if:
+      - High priority issues exist
+      - Validation fails but is fixable
+      - Pattern violations that need addressing
+      - Missing tests for new functionality
+
+      **BLOCK** if:
+      - Critical security or data issues
+      - Fundamental approach is wrong
+      - Major architectural concerns
+      - Breaking changes without migration
+
+      ### 5.2 Special Cases
+
+      | Situation | Handling |
+      |-----------|----------|
+      | Draft PR | Comment only, no approve/block |
+      | Large PR (>500 lines) | Note thoroughness limits, suggest splitting |
+      | Security-sensitive | Extra scrutiny, err on caution |
+      | Missing tests | Strong recommendation, may not block |
+
+      **PHASE_5_CHECKPOINT:**
+      - [ ] Recommendation determined
+      - [ ] Rationale clear
+
+      ## Phase 6: REPORT - Generate Review
+
+      ### 6.1 Create Report Directory
+
+      ```bash
+      mkdir -p .claude/PRPs/reviews
+      ```
+
+      ### 6.2 Generate Report File
+
+      **Path**: `.claude/PRPs/reviews/pr-${PR_NUMBER}-review.md`
+
+      **PHASE_6_CHECKPOINT:**
+      - [ ] Report file created
+      - [ ] All sections populated
+
+      ## Phase 7: PUBLISH - Post to GitHub
+
+      ### 7.1 Determine Review Action
+
+      Based on recommendation and flags:
+
+      ```bash
+      gh pr review ${PR_NUMBER} --approve --body-file .claude/PRPs/reviews/pr-${PR_NUMBER}-review.md
+      gh pr review ${PR_NUMBER} --request-changes --body-file .claude/PRPs/reviews/pr-${PR_NUMBER}-review.md
+      gh pr comment ${PR_NUMBER} --body-file .claude/PRPs/reviews/pr-${PR_NUMBER}-review.md
+      ```
+
+      ### 7.2 Get Comment URL
+
+      ```bash
+      gh pr view ${PR_NUMBER} --json reviews,comments --jq '.reviews[-1].url // .comments[-1].url'
+      ```
+
+      **PHASE_7_CHECKPOINT:**
+      - [ ] Review/comment posted to PR
+      - [ ] Comment URL captured
+
+      ## Phase 8: OUTPUT - Report to User
+
+      ## PR Review Complete
+
+      **PR**: #${PR_NUMBER} - {TITLE}
+      **URL**: {PR_URL}
+      **Recommendation**: {APPROVE/REQUEST CHANGES/BLOCK}
+
+      ### Issues Found
+
+      | Severity | Count |
+      |----------|-------|
+      | Critical | {N} |
+      | High | {N} |
+      | Medium | {N} |
+      | Suggestions | {N} |
+
+      ### Validation
+
+      | Check | Result |
+      |-------|--------|
+      | Type Check | {PASS/FAIL} |
+      | Lint | {PASS/FAIL} |
+      | Tests | {PASS/FAIL} |
+      | Build | {PASS/FAIL} |
+
+      ### Artifacts
+
+      - Report: `.claude/PRPs/reviews/pr-${PR_NUMBER}-review.md`
+      - PR Comment: {comment_url}
+
+      ### Next Steps
+
+      {Based on recommendation:}
+      - APPROVE: "PR is ready for merge"
+      - REQUEST CHANGES: "Author should address {N} high-priority issues"
+      - BLOCK: "Fundamental issues need resolution before proceeding"
+
+      ## Critical Reminders
+
+      1. **Understand before judging.** Read full context, not just the diff.
+      2. **Be specific.** "This could be better" is useless. "Use execFile instead of exec to prevent command injection at line 45" is helpful.
+      3. **Prioritize.** Not everything is critical. Use severity levels honestly.
+      4. **Be constructive.** Offer solutions, not just problems.
+      5. **Acknowledge good work.** If something is done well, say so.
+      6. **Run validation.** Don't skip automated checks.
+      7. **Check patterns.** Read existing similar code to understand expectations.
+      8. **Think about edge cases.** What happens with null, empty, very large, concurrent?
+      9. **Check implementation report.** Documented deviations are intentional, not issues.
+
+      ## Success Criteria
+
+      - **CONTEXT_GATHERED**: PR metadata, diff, and implementation artifacts reviewed
+      - **CODE_REVIEWED**: All changed files analyzed against checklist
+      - **VALIDATION_RUN**: All automated checks executed
+      - **ISSUES_CATEGORIZED**: Findings organized by severity
+      - **REPORT_GENERATED**: Comprehensive review saved locally
+      - **PR_UPDATED**: Review/comment posted to GitHub
+      - **RECOMMENDATION_CLEAR**: Approve/request-changes/block with rationale
+  - type: agent
+    agent: build
+    expandPrompt: true
+    prompt: |
+      # Post-review actions for Issue #${ISSUE_NUMBER} / PR #${PR_NUMBER}
+
+      ## Your tasks — execute in order, no deviations
+
+      ### 1. Raise new issues for blocking findings (if any)
+
+      - Fetch all PR review comments: `gh pr view ${PR_NUMBER} --json reviews,comments`
+      - For each finding rated HIGH or CRITICAL, or any merge blocker:
+        - Check existing open issues with `gh issue list --search "<title keyword>"` to avoid duplicates
+        - If no duplicate: `gh issue create --title "..." --body "..." --label "bug"`
+      - If no high/critical findings: skip this step entirely
+
+      ### 2. Merge the PR
+
+      - Run: `gh pr merge ${PR_NUMBER} --squash --auto`
+      - If that fails (e.g. branch protection, conflicts): try `gh pr merge ${PR_NUMBER} --merge`
+      - If merge is blocked by CI: report the failure by mentioning the repo owner in a PR comment and stop — do NOT force-merge
+      - If already merged: note it and continue
+
+      ## Hard constraints
+
+      - DO NOT create, modify, or implement any scripts or source files
+      - DO NOT commit or push anything
+      - Your only allowed side-effects are: `gh issue create`, `gh pr merge`, `gh pr comment`, `gh issue comment`
+  - type: agent
+    agent: build
+    prompt: |
+      Switch back to main and do a fresh git pull.
+
+      Run the following commands:
+      ```bash
+      git restore --staged . 2>/dev/null || true
+      git restore . 2>/dev/null || true
+      git switch main
+      git pull --rebase --autostash
+      ```
+
+      Report the final branch and latest commit hash once done.

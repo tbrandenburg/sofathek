@@ -173,7 +173,7 @@ data/
 !backend/data/
 !backend/data/videos/
 backend/data/videos/*
-!backend/data/videos/Lavar.mp4
+!backend/data/videos/Lavar-03gAoNcPO1g.mp4
 temp/
 
 # Playwright test artifacts
