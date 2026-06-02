@@ -54,6 +54,8 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
+        // Use pre-installed google-chrome-stable to avoid slow CDN downloads
+        channel: 'chrome',
         // CI-specific browser configuration
         launchOptions: {
           args: [
@@ -74,6 +76,7 @@ export default defineConfig({
       name: 'integration',
       use: {
         ...devices['Desktop Chrome'],
+        channel: 'chrome',
         launchOptions: {
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         },
