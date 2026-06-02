@@ -132,21 +132,15 @@ jobs:
           echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
         timeout-minutes: 5
         
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: playwright-chromium-
-
-      - name: Install Playwright browser binaries
-        run: cd frontend && npx playwright install chromium
-        timeout-minutes: 15
-
-      - name: Install Playwright system dependencies
-        run: cd frontend && npx playwright install-deps chromium
-        timeout-minutes: 15
+      - name: Set Chromium path to pre-installed Google Chrome
+        run: |
+          CHROME=$(which google-chrome-stable || which google-chrome || which chromium-browser || which chromium || echo "")
+          if [ -z "$CHROME" ]; then echo "❌ No system Chrome found"; exit 1; fi
+          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$CHROME" >> $GITHUB_ENV
+          echo "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" >> $GITHUB_ENV
+          echo "✅ Using system Chrome at: $CHROME"
+          $CHROME --version
+        
         
       - name: Prepare for E2E tests
         env:
