@@ -134,7 +134,7 @@ jobs:
         
       - name: Install Chromium via apt (faster than Playwright CDN)
         run: |
-          sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver ffmpeg
+          sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver
           CHROME_PATH=$(which chromium-browser || which chromium || echo "/usr/bin/chromium-browser")
           echo "CHROMIUM_PATH=$CHROME_PATH" >> $GITHUB_ENV
 
@@ -152,6 +152,20 @@ jobs:
           echo "Headless shell installed at: $HEADLESS_BIN"
           $HEADLESS_BIN --version
         timeout-minutes: 10
+
+      - name: Install Playwright ffmpeg
+        run: |
+          FFMEG_DIR="$HOME/.cache/ms-playwright/ffmpeg-1011"
+          mkdir -p "$FFMEG_DIR"
+          curl -sL --connect-timeout 30 --max-time 120 \
+            "https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-linux.zip" \
+            -o /tmp/ffmpeg-linux.zip
+          echo "Downloaded. Extracting..."
+          unzip -qo /tmp/ffmpeg-linux.zip -d "$FFMEG_DIR"
+          chmod +x "$FFMEG_DIR/ffmpeg-linux"
+          ls -la "$FFMEG_DIR/ffmpeg-linux"
+          echo "FFmpeg installed at: $FFMEG_DIR/ffmpeg-linux"
+        timeout-minutes: 5
 
       - name: Install Playwright system deps
         run: |
