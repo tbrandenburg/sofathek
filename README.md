@@ -64,7 +64,7 @@ Set `VITE_API_BASE_URL` only when you intentionally want the browser to call a s
 
 ```bash
 make help        # Show all available commands
-make install     # Install all dependencies  
+make install     # Install all dependencies
 make dev         # Start development servers (backend:3010, frontend:5183)
 make build       # Build frontend and backend
 make start       # Build and start production servers
@@ -103,13 +103,13 @@ Sofathek includes **automatic pre-push validation** to ensure code quality:
 
 ### **Automatic Validation** (runs on `git push`):
 - 📝 **Linting**: Code style and quality checks
-- 🔍 **Type Checking**: TypeScript validation  
+- 🔍 **Type Checking**: TypeScript validation
 - 🏗️ **Build Testing**: Production build verification
 
 ### **Manual Validation Commands**:
 ```bash
 npm run validate        # Full validation (~60s)
-npm run validate:fast   # Skip build (~30s) 
+npm run validate:fast   # Skip build (~30s)
 npm run validate:skip   # Emergency skip
 ```
 
@@ -214,7 +214,7 @@ cp backend/.env.example backend/.env
 ## Requirements
 
 - **Node.js 18+** (for development and yt-dlp JavaScript runtime)
-- **Make** (for using the Makefile commands)  
+- **Make** (for using the Makefile commands)
 - **Docker and Docker Compose** (for containerized deployment)
 - **Python 3** (for serving production frontend)
 - **ffmpeg** (for video processing - backend feature)
@@ -252,7 +252,7 @@ These rules are now active for all development work:
 
 ## Critical Prevention Rules:
 1. **Evidence-First Reporting** - No claims without proof
-2. **Failure-First Validation** - Assume broken until proven working  
+2. **Failure-First Validation** - Assume broken until proven working
 3. **No Test Theater** - Real tests only, no mocking in final validation
 4. **Mandatory Adversarial Testing** - Must try to break before claiming success
 5. **Task Ledger Integrity** - Verification commands required for completion

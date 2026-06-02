@@ -164,7 +164,11 @@ jobs:
           echo "Environment prepared. Servers will be started in E2E test step."
           
       - name: Run Playwright E2E tests
+        timeout-minutes: 15
         env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
+          CHROMIUM_PATH: /usr/bin/chromium-browser
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
           NODE_ENV: development

@@ -10,14 +10,14 @@ This directory contains PNG screenshots documenting the Sofathek Family Media Ce
 - **Resolution**: Desktop (1920x1080)
 - **Theme**: Dark theme
 - **Content**: Main video library page showing 4 video cards in grid layout
-- **Features**: 
+- **Features**:
   - Clean Netflix-like interface
   - Dark theme with purple gradient video thumbnails
   - Theme toggle button in top-right header
   - "Sofathek - Safe Family Entertainment" branding
 
 #### **02-homepage-light-theme.png**
-- **Resolution**: Desktop (1920x1080) 
+- **Resolution**: Desktop (1920x1080)
 - **Theme**: Light theme
 - **Content**: Video library page in light theme with improved accessibility
 - **Features**:
@@ -59,7 +59,7 @@ This directory contains PNG screenshots documenting the Sofathek Family Media Ce
 
 #### **06-mobile-light-theme.png**
 - **Resolution**: Mobile (375x667)
-- **Theme**: Light theme  
+- **Theme**: Light theme
 - **Content**: Mobile responsive design in light theme
 - **Features**:
   - Optimized for small screens
@@ -146,7 +146,7 @@ This UI was built using:
 - **Resolution**: Desktop (1920x1080)
 - **Theme**: Light theme with accessibility improvements
 - **Date**: March 2, 2026
-- **Changes**: 
+- **Changes**:
   - Fixed poor text contrast issue (#9)
   - Video metadata text now uses theme CSS variables instead of hardcoded gray colors
   - Improved WCAG 2.1 AA compliance with proper contrast ratios

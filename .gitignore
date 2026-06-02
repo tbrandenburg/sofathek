@@ -187,3 +187,9 @@ temp/
 playwright-videos/
 test_output.zip
 .playwright-mcp/
+
+# Ghar issue management artifacts
+.ghar/
+
+# Development tracking artifacts
+task-ledger.json
