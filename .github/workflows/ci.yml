@@ -134,7 +134,7 @@ jobs:
         
       - name: Install Playwright Chromium (CI)
         run: make playwright-install-ci
-        timeout-minutes: 5
+        timeout-minutes: 10
         
       - name: Prepare for E2E tests
         env:
