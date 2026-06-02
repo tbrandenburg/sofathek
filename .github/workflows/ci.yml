@@ -141,17 +141,16 @@ jobs:
       - name: Install Playwright chromium-headless-shell (manual)
         run: |
           HEADLESS_DIR="$HOME/.cache/ms-playwright/chromium_headless_shell-1217"
-          HEADLESS_BIN="$HEADLESS_DIR/chrome-headless-shell-linux64/chrome-headless-shell"
-          mkdir -p "$(dirname "$HEADLESS_BIN")"
-          # Download headless shell zip directly (bypassing Playwright's installer)
+          mkdir -p "$HEADLESS_DIR"
           curl -sL --connect-timeout 30 --max-time 300 \
             "https://cdn.playwright.dev/builds/cft/147.0.7727.15/linux64/chrome-headless-shell-linux64.zip" \
             -o /tmp/headless-shell.zip
           echo "Downloaded. Extracting..."
-          unzip -qo /tmp/headless-shell.zip -d "$(dirname "$HEADLESS_BIN")"
-          chmod +x "$HEADLESS_BIN"
-          ls -la "$HEADLESS_BIN"
+          unzip -qo /tmp/headless-shell.zip -d "$HEADLESS_DIR"
+          find "$HEADLESS_DIR" -name 'chrome-headless-shell*' -type f -exec chmod +x {} \; -print
+          HEADLESS_BIN=$(find "$HEADLESS_DIR" -name 'chrome-headless-shell*' -type f | head -1)
           echo "Headless shell installed at: $HEADLESS_BIN"
+          $HEADLESS_BIN --version
         timeout-minutes: 10
 
       - name: Install Playwright system deps
