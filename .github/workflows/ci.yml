@@ -132,9 +132,16 @@ jobs:
           echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
         timeout-minutes: 5
         
-      - name: Install Playwright Chromium (CI)
-        run: make playwright-install-ci
-        timeout-minutes: 10
+      - name: Install Chromium via apt (faster than Playwright CDN)
+        run: |
+          sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver
+          CHROME_PATH=$(which chromium-browser || which chromium || echo "/usr/bin/chromium-browser")
+          echo "CHROMIUM_PATH=$CHROME_PATH" >> $GITHUB_ENV
+
+      - name: Install Playwright system deps
+        run: |
+          cd frontend && npx playwright install-deps chromium
+        timeout-minutes: 3
         
       - name: Prepare for E2E tests
         env:
@@ -158,6 +165,9 @@ jobs:
       - name: Run Playwright E2E tests
         timeout-minutes: 15
         env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
+          CHROMIUM_PATH: /usr/bin/chromium-browser
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
           NODE_ENV: development
