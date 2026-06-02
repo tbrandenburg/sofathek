@@ -43,8 +43,8 @@ export default defineConfig({
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
     
-    /* Record video on failure */
-    video: 'retain-on-failure',
+    /* Record video on failure - disabled in CI to avoid ffmpeg dependency */
+    video: process.env.CI ? 'off' : 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */
