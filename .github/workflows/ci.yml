@@ -138,10 +138,12 @@ jobs:
           CHROME_PATH=$(which chromium-browser || which chromium || echo "/usr/bin/chromium-browser")
           echo "CHROMIUM_PATH=$CHROME_PATH" >> $GITHUB_ENV
 
-      - name: Install Playwright headless shell (small)
+      - name: Install Playwright chromium-headless-shell (small)
         run: |
-          cd frontend && npx playwright install-deps chromium_headless_shell && npx playwright install chromium_headless_shell --with-deps
+          cd frontend && npx playwright install chromium-headless-shell
         timeout-minutes: 10
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: ''
 
       - name: Install Playwright system deps
         run: |
