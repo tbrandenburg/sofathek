@@ -154,6 +154,9 @@ data/videos/
 dev/state/
 .worktrees/
 
+# Generated harness scripts from uvx flowsh-cli
+.harness/
+
 # Build artifacts
 build/
 dist/
