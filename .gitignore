@@ -150,7 +150,8 @@ backend/temp/
 backend/data/temp/
 data/videos/
 .claude/
-dev/
+# Ignore generated/runtime dev artifacts, but keep source files
+dev/state/
 .worktrees/
 
 # Build artifacts
