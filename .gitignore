@@ -188,5 +188,6 @@ test_output.zip
 .ghar/
 
 # Development tracking artifacts
-task-ledger.json
+dev/
+dev/**
 tmp-cw-run-*/
