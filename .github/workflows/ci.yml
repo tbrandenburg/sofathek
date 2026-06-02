@@ -140,9 +140,13 @@ jobs:
           key: playwright-chromium-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: playwright-chromium-
 
-      - name: Install Playwright browsers
-        run: cd frontend && npx playwright install --with-deps chromium
-        timeout-minutes: 10
+      - name: Install Playwright browser binaries
+        run: cd frontend && npx playwright install chromium
+        timeout-minutes: 5
+
+      - name: Install Playwright system dependencies
+        run: cd frontend && npx playwright install-deps chromium
+        timeout-minutes: 15
         
       - name: Prepare for E2E tests
         env:
