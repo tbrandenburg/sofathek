@@ -142,7 +142,7 @@ jobs:
 
       - name: Install Playwright browser binaries
         run: cd frontend && npx playwright install chromium
-        timeout-minutes: 5
+        timeout-minutes: 15
 
       - name: Install Playwright system dependencies
         run: cd frontend && npx playwright install-deps chromium
