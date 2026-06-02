@@ -185,3 +185,6 @@ test_output.zip
 
 # Ghar issue management artifacts
 .ghar/
+
+# Development tracking artifacts
+task-ledger.json
