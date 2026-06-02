@@ -132,8 +132,17 @@ jobs:
           echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
         timeout-minutes: 5
         
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: playwright-chromium-
+
       - name: Install Playwright browsers
-        run: make playwright-install
+        run: cd frontend && npx playwright install --with-deps chromium
+        timeout-minutes: 10
         
       - name: Prepare for E2E tests
         env:
