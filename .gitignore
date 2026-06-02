@@ -84,7 +84,6 @@ out
 dist
 
 # Gatsby files
-.cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
@@ -94,7 +93,6 @@ dist
 
 # vuepress v2.x temp and cache directory
 .temp
-.cache
 
 # Sveltekit cache directory
 .svelte-kit/
@@ -167,7 +165,6 @@ coverage/
 frontend/playwright-report/
 frontend/test-results/
 backend/temp/test-queue/
-data/videos/*.mp4
 *.zip
 
 # Data
@@ -179,7 +176,6 @@ backend/data/videos/*
 temp/
 
 # Playwright test artifacts
-playwright-videos/
 test_output.zip
 .playwright-mcp/
 
@@ -188,3 +184,4 @@ test_output.zip
 
 # Development tracking artifacts
 task-ledger.json
+tmp-cw-run-*/
