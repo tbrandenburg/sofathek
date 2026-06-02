@@ -138,12 +138,21 @@ jobs:
           CHROME_PATH=$(which chromium-browser || which chromium || echo "/usr/bin/chromium-browser")
           echo "CHROMIUM_PATH=$CHROME_PATH" >> $GITHUB_ENV
 
-      - name: Install Playwright chromium-headless-shell (small)
+      - name: Install Playwright chromium-headless-shell (manual)
         run: |
-          cd frontend && npx playwright install chromium-headless-shell
+          HEADLESS_DIR="$HOME/.cache/ms-playwright/chromium_headless_shell-1217"
+          HEADLESS_BIN="$HEADLESS_DIR/chrome-headless-shell-linux64/chrome-headless-shell"
+          mkdir -p "$(dirname "$HEADLESS_BIN")"
+          # Download headless shell zip directly (bypassing Playwright's installer)
+          curl -sL --connect-timeout 30 --max-time 300 \
+            "https://cdn.playwright.dev/builds/cft/147.0.7727.15/linux64/chrome-headless-shell-linux64.zip" \
+            -o /tmp/headless-shell.zip
+          echo "Downloaded. Extracting..."
+          unzip -qo /tmp/headless-shell.zip -d "$(dirname "$HEADLESS_BIN")"
+          chmod +x "$HEADLESS_BIN"
+          ls -la "$HEADLESS_BIN"
+          echo "Headless shell installed at: $HEADLESS_BIN"
         timeout-minutes: 10
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: ''
 
       - name: Install Playwright system deps
         run: |
