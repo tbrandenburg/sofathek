@@ -134,7 +134,7 @@ jobs:
         
       - name: Install Chromium via apt (faster than Playwright CDN)
         run: |
-          sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver
+          sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver ffmpeg
           CHROME_PATH=$(which chromium-browser || which chromium || echo "/usr/bin/chromium-browser")
           echo "CHROMIUM_PATH=$CHROME_PATH" >> $GITHUB_ENV
 
