@@ -10,21 +10,62 @@
 
 import request from 'supertest';
 import express from 'express';
+import { execFile } from 'node:child_process';
 import * as nodeFs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
+import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 
-// Source video fixture — 16 MB, no dependencies; small enough for CI
-const SOURCE_VIDEO = path.resolve(__dirname, '../../../data/videos/Lavar-03gAoNcPO1g.mp4');
-
 const REGEN_TIMEOUT_MS = 30_000;
+const execFileAsync = promisify(execFile);
+
+async function resolveFfmpegBinary(): Promise<string> {
+  const { default: ffmpegStatic } = await import('ffmpeg-static');
+  const candidates = [process.env.FFMPEG_PATH, ffmpegStatic, 'ffmpeg', '/usr/bin/ffmpeg'].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    try {
+      await execFileAsync(candidate, ['-version'], { timeout: 5_000 });
+      return candidate;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  throw new Error('FFmpeg binary not found for synthetic test video generation');
+}
+
+async function createSyntheticVideo(videoPath: string): Promise<void> {
+  const ffmpeg = await resolveFfmpegBinary();
+
+  await execFileAsync(
+    ffmpeg,
+    [
+      '-y',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'testsrc=duration=2:size=640x360:rate=30',
+      '-pix_fmt',
+      'yuv420p',
+      '-c:v',
+      'mpeg4',
+      videoPath,
+    ],
+    { timeout: 30_000 },
+  );
+}
 
 describe('Auto-thumbnail-regeneration integration', () => {
   let app: express.Application;
   let videosDir: string;
   let tempDir: string;
   let testVideoPath: string;
+  let expectedThumbnail: string;
 
   beforeAll(async () => {
     // Create isolated temporary directories
@@ -34,9 +75,10 @@ describe('Auto-thumbnail-regeneration integration', () => {
     await nodeFs.mkdir(videosDir, { recursive: true });
     await nodeFs.mkdir(tempDir, { recursive: true });
 
-    // Copy fixture video into temp videos dir (no .jpg alongside it)
-    testVideoPath = path.join(videosDir, 'Lavar.mp4');
-    await nodeFs.copyFile(SOURCE_VIDEO, testVideoPath);
+    // Generate a tiny synthetic MP4 in the temp library.
+    testVideoPath = path.join(videosDir, 'synthetic.mp4');
+    await createSyntheticVideo(testVideoPath);
+    expectedThumbnail = path.join(videosDir, 'synthetic.jpg');
 
     // Wire env vars so config picks up our temp dirs
     process.env.VIDEOS_DIR = videosDir;
@@ -81,7 +123,6 @@ describe('Auto-thumbnail-regeneration integration', () => {
 
   it('first scan triggers inline thumbnail generation via real ffmpeg and returns thumbnail in response', async () => {
     // Before scan: no thumbnail on disk
-    const expectedThumbnail = path.join(videosDir, 'Lavar.jpg');
     await expect(nodeFs.access(expectedThumbnail)).rejects.toThrow();
 
     // Scan: inline regeneration runs during scan (synchronous, not background)
@@ -91,11 +132,10 @@ describe('Auto-thumbnail-regeneration integration', () => {
     const videos = res.body.data.videos as Array<{ metadata: { thumbnail?: string } }>;
     expect(videos).toHaveLength(1);
     // Inline regeneration completes before scan returns, so thumbnail is present in response
-    expect(videos[0]?.metadata.thumbnail).toBe('Lavar.jpg');
+    expect(videos[0]?.metadata.thumbnail).toBe('synthetic.jpg');
   }, REGEN_TIMEOUT_MS + 5_000);
 
   it('inline regeneration produces a real .jpg on disk via ffmpeg', async () => {
-    const expectedThumbnail = path.join(videosDir, 'Lavar.jpg');
     // File must already exist after the first scan completed
     const stat = await nodeFs.stat(expectedThumbnail);
     expect(stat.size).toBeGreaterThan(0);
@@ -107,6 +147,6 @@ describe('Auto-thumbnail-regeneration integration', () => {
     expect(res.body.status).toBe('success');
     const videos = res.body.data.videos as Array<{ metadata: { thumbnail?: string } }>;
     expect(videos).toHaveLength(1);
-    expect(videos[0]?.metadata.thumbnail).toBe('Lavar.jpg');
+    expect(videos[0]?.metadata.thumbnail).toBe('synthetic.jpg');
   });
 });
