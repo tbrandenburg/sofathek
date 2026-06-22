@@ -21,9 +21,12 @@
     "last_verified": "2026-06-22T16:56:53Z"
   },
   "TASK_4_COMMIT_PUSH": {
-    "status": "in_progress",
-    "evidence": [],
-    "last_verified": "2026-06-22T16:56:53Z"
+    "status": "done",
+    "evidence": [
+      "git commit -m \"chore: record issue 348 verification\" -> 2b041a1 created",
+      "git push -> fix/issue-348-download-size-limit updated on origin"
+    ],
+    "last_verified": "2026-06-22T16:59:49Z"
   },
   "TASK_5_CI_ITERATE": {
     "status": "done",
