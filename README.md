@@ -210,6 +210,7 @@ cp backend/.env.example backend/.env
 | `FFPROBE_PATH` | `/usr/bin/ffprobe` | FFprobe binary path (sets `config.ffprobePath` only; not consumed by any service at runtime) |
 | `RATE_LIMIT_MAX_REQUESTS` | `5` | Maximum requests per window (rate limiting) |
 | `RATE_LIMIT_WINDOW_MS` | `3600000` (1 hour) | Rate limiting window in milliseconds |
+| `DOWNLOAD_MAX_SIZE_BYTES` | `5368709120` (5GB) | Maximum total download size in bytes; requests exceeding this limit are rejected before any file transfer starts |
 
 ## Requirements
 

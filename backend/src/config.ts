@@ -18,6 +18,7 @@ export interface Config {
   rateLimitMaxRequests: number;
   rateLimitWindowMs: number;
   videoMaxAgeDays: number;
+  downloadMaxSizeBytes: number;
 }
 
 function parseIntOrDefault(value: string | undefined, defaultValue: number): number {
@@ -75,6 +76,7 @@ function getConfig(): Config {
     rateLimitMaxRequests: parseIntOrDefault(process.env.RATE_LIMIT_MAX_REQUESTS, 5),
     rateLimitWindowMs: parseIntOrDefault(process.env.RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000), // 1 hour
     videoMaxAgeDays: parsePositiveIntOrDefault(process.env.VIDEO_MAX_AGE_DAYS, 30),
+    downloadMaxSizeBytes: parsePositiveIntOrDefault(process.env.DOWNLOAD_MAX_SIZE_BYTES, 5 * 1024 * 1024 * 1024),
   };
 }
 
