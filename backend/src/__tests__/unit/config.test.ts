@@ -67,4 +67,34 @@ describe('config', () => {
       });
     }
   });
+
+  it('should parse DOWNLOAD_MAX_SIZE_BYTES as a positive integer', () => {
+    process.env.DOWNLOAD_MAX_SIZE_BYTES = '1073741824'; // 1GB
+
+    jest.isolateModules(() => {
+      const { config } = require('../../config');
+      expect(config.downloadMaxSizeBytes).toBe(1073741824);
+    });
+  });
+
+  it('should use default DOWNLOAD_MAX_SIZE_BYTES when invalid or destructive', () => {
+    for (const value of ['invalid', '1abc', '0', '-1']) {
+      jest.resetModules();
+      process.env = { ...originalEnv, DOWNLOAD_MAX_SIZE_BYTES: value };
+
+      jest.isolateModules(() => {
+        const { config } = require('../../config');
+        expect(config.downloadMaxSizeBytes).toBe(5 * 1024 * 1024 * 1024);
+      });
+    }
+  });
+
+  it('should use default DOWNLOAD_MAX_SIZE_BYTES when not set', () => {
+    delete process.env.DOWNLOAD_MAX_SIZE_BYTES;
+
+    jest.isolateModules(() => {
+      const { config } = require('../../config');
+      expect(config.downloadMaxSizeBytes).toBe(5 * 1024 * 1024 * 1024);
+    });
+  });
 });

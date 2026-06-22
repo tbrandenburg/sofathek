@@ -1,5 +1,12 @@
 import { YouTubeDownloadService } from '../../../services/youTubeDownloadService';
 
+// Pin config values to avoid test flakiness from environment variables
+jest.mock('../../../config', () => ({
+  config: {
+    downloadMaxSizeBytes: 5 * 1024 * 1024 * 1024 // 5GB
+  }
+}));
+
 // Simple mock for fs/promises
 const mockReaddir = jest.fn();
 const mockRename = jest.fn();
@@ -330,6 +337,76 @@ describe('YouTubeDownloadService', () => {
       expect(result.status).toBe('success');
       expect(mockThumbnailService.generateThumbnail).toHaveBeenCalled();
       expect(result.thumbnailPath).toBeUndefined();
+    });
+  });
+
+  describe('download size limit', () => {
+    const baseMetadata = {
+      id: 'abc123',
+      title: 'Test Video',
+      webpageUrl: 'https://www.youtube.com/watch?v=abc123'
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockValidate.mockResolvedValue(true);
+      mockEnsureDirectories.mockResolvedValue(undefined);
+    });
+
+    it('should reject download when filesizeApprox exceeds config limit', async () => {
+      // 6GB > default 5GB limit
+      mockExtract.mockResolvedValue({ ...baseMetadata, filesizeApprox: 6 * 1024 * 1024 * 1024 });
+
+      const result = await service.downloadVideo({
+        url: 'https://www.youtube.com/watch?v=abc123',
+        title: 'Test Video',
+        requestedAt: new Date(),
+        requestId: 'req-size-over'
+      });
+
+      expect(result.status).toBe('error');
+      expect(result.error).toMatch(/exceeds maximum allowed size/);
+      expect(mockDownload).not.toHaveBeenCalled();
+    });
+
+    it('should allow download when filesizeApprox is under config limit', async () => {
+      // 1GB < default 5GB limit
+      mockExtract.mockResolvedValue({ ...baseMetadata, filesizeApprox: 1 * 1024 * 1024 * 1024 });
+      mockDownload.mockResolvedValue('/test/temp/Test_Video-abc123.mp4');
+      mockMoveToLibrary.mockResolvedValue('/test/videos/Test_Video-abc123.mp4');
+      mockWriteFile.mockResolvedValue(undefined);
+      mockRename.mockResolvedValue(undefined);
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const result = await service.downloadVideo({
+        url: 'https://www.youtube.com/watch?v=abc123',
+        title: 'Test Video',
+        requestedAt: new Date(),
+        requestId: 'req-size-under'
+      });
+
+      expect(result.status).toBe('success');
+      expect(mockDownload).toHaveBeenCalled();
+    });
+
+    it('should allow download when filesizeApprox is undefined (missing metadata)', async () => {
+      // No size info (live stream, private video, etc.) — check must be skipped
+      mockExtract.mockResolvedValue({ ...baseMetadata, filesizeApprox: undefined });
+      mockDownload.mockResolvedValue('/test/temp/Test_Video-abc123.mp4');
+      mockMoveToLibrary.mockResolvedValue('/test/videos/Test_Video-abc123.mp4');
+      mockWriteFile.mockResolvedValue(undefined);
+      mockRename.mockResolvedValue(undefined);
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const result = await service.downloadVideo({
+        url: 'https://www.youtube.com/watch?v=abc123',
+        title: 'Test Video',
+        requestedAt: new Date(),
+        requestId: 'req-size-missing'
+      });
+
+      expect(result.status).toBe('success');
+      expect(mockDownload).toHaveBeenCalled();
     });
   });
 });

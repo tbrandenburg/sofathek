@@ -110,7 +110,7 @@ API_KEY=your-api-key-here
 
 # YouTube-DL Settings
 YOUTUBE_DL_FORMAT=bestvideo[height<=720]+bestaudio/best[height<=720]
-MAX_DOWNLOAD_SIZE=2147483648  # 2GB in bytes
+DOWNLOAD_MAX_SIZE_BYTES=5368709120  # 5GB in bytes (default)
 
 # Logging
 LOG_LEVEL=info
@@ -266,8 +266,8 @@ API_KEY=CHANGE-THIS-TO-A-SECURE-API-KEY
 # Video quality/format preferences
 YOUTUBE_DL_FORMAT=bestvideo[height<=720]+bestaudio/best[height<=720]
 
-# Maximum file size (2GB default)
-MAX_DOWNLOAD_SIZE=2147483648
+# Maximum total download size in bytes (5GB default)
+DOWNLOAD_MAX_SIZE_BYTES=5368709120
 
 # Download timeout in seconds
 DOWNLOAD_TIMEOUT=3600

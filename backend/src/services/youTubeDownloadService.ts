@@ -10,6 +10,8 @@ import { YouTubeUrlValidator } from './youTubeUrlValidator';
 import { YouTubeMetadataExtractor } from './youTubeMetadataExtractor';
 import { YouTubeFileDownloader, DownloadProgressCallback } from './youTubeFileDownloader';
 import { VideoFileManager } from './videoFileManager';
+import { AppError } from '../middleware/errorHandler';
+import { config } from '../config';
 
 /**
  * Core YouTube download orchestrator using composed services
@@ -60,6 +62,15 @@ export class YouTubeDownloadService {
         title: metadata.title,
         duration: metadata.duration
       });
+
+      if (metadata.filesizeApprox != null && metadata.filesizeApprox > config.downloadMaxSizeBytes) {
+        const sizeMB = Math.round(metadata.filesizeApprox / (1024 * 1024));
+        const limitMB = Math.round(config.downloadMaxSizeBytes / (1024 * 1024));
+        throw new AppError(
+          `Download size (${sizeMB}MB) exceeds maximum allowed size of ${limitMB}MB`,
+          400
+        );
+      }
 
       const tempVideoPath = await this.fileDownloader.download(request.url, metadata, subprocessKey, progressCallback);
       logger.info('Video downloaded to temp location', {
