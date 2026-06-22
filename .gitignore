@@ -156,6 +156,8 @@ dev/state/
 
 # Generated harness scripts from uvx flowsh-cli
 .harness/
+!.harness/
+!.harness/**
 
 # Build artifacts
 build/
