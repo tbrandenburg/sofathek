@@ -35,12 +35,18 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
     throw new AppError('Invalid video URL format', 400);
   }
 
+  // Preflight: fetch metadata and enforce content policy before queuing,
+  // so blocked videos never enter the queue. Metadata is reused by the
+  // queue worker to avoid fetching it twice.
+  const metadata = await youTubeDownloadService.fetchMetadataAndCheckPolicy(url);
+
   // Create download request
   const downloadRequest: DownloadRequest = {
     url,
     title,
     requestedAt: new Date(),
-    requestId: uuidv4()
+    requestId: uuidv4(),
+    metadata
   };
 
   // Add to queue

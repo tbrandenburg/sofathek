@@ -211,6 +211,24 @@ cp backend/.env.example backend/.env
 | `RATE_LIMIT_MAX_REQUESTS` | `5` | Maximum requests per window (rate limiting) |
 | `RATE_LIMIT_WINDOW_MS` | `3600000` (1 hour) | Rate limiting window in milliseconds |
 | `DOWNLOAD_MAX_SIZE_BYTES` | `5368709120` (5GB) | Maximum total download size in bytes; requests exceeding this limit are rejected before any file transfer starts |
+| `SOFATHEK_CONFIG_DIR` | `process.cwd()` | Directory containing `.sofathek/settings.json` (content policy); useful for Docker/production deployments |
+
+### Content Policy
+
+Create a `.sofathek/settings.json` file (relative to `SOFATHEK_CONFIG_DIR` or the working directory) to reject videos based on YouTube metadata before download starts:
+
+```json
+{
+  "contentPolicy": {
+    "blockedTags": ["gaming", "gameplay", "minecraft"],
+    "blockedCategories": ["Gaming"],
+    "blockedTerms": ["fortnite", "minecraft", "let's play"],
+    "message": "This video was blocked because it appears to be gaming-related."
+  }
+}
+```
+
+All matching is case-insensitive. `blockedTags`/`blockedCategories` require an exact match; `blockedTerms` match as a substring against the video's title, description, uploader, tags, and categories. A missing settings file is treated as an empty (non-blocking) policy. Invalid JSON or an invalid schema causes the backend to fail to start with a clear error. Blocked videos are rejected with HTTP `422` and error code `VIDEO_BLOCKED_BY_POLICY`, both when requested via the API and when processed by the download queue worker, so the policy cannot be bypassed.
 
 ## Requirements
 
