@@ -64,10 +64,10 @@ test.describe('Video Download - Integration Tests (Live Backend)', () => {
         data: { url: 'https://example.com/video.mp4' }
       });
 
-      // The route performs a synchronous metadata preflight check (to enforce content
-      // policy before queuing), so a non-existent URL is rejected immediately with 500
-      // rather than being queued and failing asynchronously. Rate limiting (429) can
-      // also occur depending on test execution order.
+      // This URL doesn't exist, so it should start the download but the backend will detect failure
+      // The API should accept the request initially but the download should fail during processing.
+      // The content-policy preflight only blocks synchronously on policy violations; metadata
+      // extraction failures for unreachable/invalid URLs still surface asynchronously via the queue.
       if (response.status() === 429) {
         // Rate limited - this is expected in integration tests
         const data = await response.json();
@@ -76,9 +76,11 @@ test.describe('Video Download - Integration Tests (Live Backend)', () => {
         const errorMessage = data.message ?? data.error?.message;
         expect(errorMessage?.toLowerCase()).toContain('rate');
       } else {
-        expect(response.status()).toBe(500);
+        // The request should be accepted (200/202) but the download will fail during processing
+        expect(response.ok()).toBe(true);
         const data = await response.json();
-        expect(data.status).toBe('error');
+        expect(data.status).toBe('success');
+        expect(data.data).toHaveProperty('queueItem.id');
       }
     });
 
