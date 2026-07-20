@@ -125,11 +125,15 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install yt-dlp
-          # Create symlink for youtube-dl-exec package to find yt-dlp binary
-          mkdir -p backend/node_modules/youtube-dl-exec/bin
           which yt-dlp
-          ln -sf "$(which yt-dlp)" backend/node_modules/youtube-dl-exec/bin/yt-dlp
-          echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
+          # npm workspaces may hoist youtube-dl-exec to root node_modules instead of
+          # backend/node_modules, so symlink into every location that exists (falling
+          # back to the backend one if none exist yet).
+          mkdir -p backend/node_modules/youtube-dl-exec/bin
+          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec/bin" 2>/dev/null); do
+            ln -sf "$(which yt-dlp)" "$dir/yt-dlp"
+            echo "yt-dlp symlinked to $(readlink -f "$dir/yt-dlp")"
+          done
         timeout-minutes: 5
         
       - name: Install Chromium via apt (faster than Playwright CDN)
@@ -473,11 +477,15 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install yt-dlp
-          # Create symlink for youtube-dl-exec package to find yt-dlp binary
-          mkdir -p backend/node_modules/youtube-dl-exec/bin
           which yt-dlp
-          ln -sf "$(which yt-dlp)" backend/node_modules/youtube-dl-exec/bin/yt-dlp
-          echo "yt-dlp symlinked to $(readlink -f backend/node_modules/youtube-dl-exec/bin/yt-dlp)"
+          # npm workspaces may hoist youtube-dl-exec to root node_modules instead of
+          # backend/node_modules, so symlink into every location that exists (falling
+          # back to the backend one if none exist yet).
+          mkdir -p backend/node_modules/youtube-dl-exec/bin
+          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec/bin" 2>/dev/null); do
+            ln -sf "$(which yt-dlp)" "$dir/yt-dlp"
+            echo "yt-dlp symlinked to $(readlink -f "$dir/yt-dlp")"
+          done
         timeout-minutes: 5
         
       - name: Build for production
