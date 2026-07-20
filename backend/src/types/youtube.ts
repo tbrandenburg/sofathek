@@ -10,6 +10,12 @@ export interface DownloadRequest {
   requestedAt: Date;
   /** Unique request identifier */
   requestId: string;
+  /**
+   * Metadata already fetched during route-level preflight (e.g. content
+   * policy check). When present, downloadVideo() reuses it instead of
+   * calling the metadata extractor a second time.
+   */
+  metadata?: YouTubeMetadata;
 }
 
 /**
@@ -114,6 +120,8 @@ export interface DownloadResult {
   thumbnailPath?: string;
   /** Error message (if failed) */
   error?: string;
+  /** Stable error code (if failed), e.g. VIDEO_BLOCKED_BY_POLICY */
+  errorCode?: string;
   /** Download completion timestamp */
   completedAt: Date;
   /** Download start timestamp */
@@ -138,6 +146,8 @@ export interface QueueItem {
   result?: DownloadResult;
   /** Error information (when failed) */
   error?: string;
+  /** Stable error code (when failed), e.g. VIDEO_BLOCKED_BY_POLICY */
+  errorCode?: string;
   /** Queue addition timestamp */
   queuedAt: Date;
   /** Processing start timestamp */

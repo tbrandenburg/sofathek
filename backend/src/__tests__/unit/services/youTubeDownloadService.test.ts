@@ -65,12 +65,19 @@ const mockThumbnailService = {
   generateThumbnail: jest.fn()
 } as any;
 
+// Mock for ContentPolicyService
+const mockPolicyEvaluate = jest.fn();
+const mockContentPolicyService = {
+  evaluate: mockPolicyEvaluate
+} as any;
+
 describe('YouTubeDownloadService', () => {
   let service: YouTubeDownloadService;
 
   beforeEach(() => {
-    service = new YouTubeDownloadService('/test/videos', '/test/temp', mockThumbnailService);
+    service = new YouTubeDownloadService('/test/videos', '/test/temp', mockThumbnailService, mockContentPolicyService);
     jest.clearAllMocks();
+    mockPolicyEvaluate.mockReturnValue(null);
   });
 
   describe('validateYouTubeUrl', () => {
@@ -407,6 +414,86 @@ describe('YouTubeDownloadService', () => {
 
       expect(result.status).toBe('success');
       expect(mockDownload).toHaveBeenCalled();
+    });
+  });
+
+  describe('content policy enforcement', () => {
+    const baseMetadata = {
+      id: 'abc123',
+      title: 'Test Video',
+      webpageUrl: 'https://www.youtube.com/watch?v=abc123',
+      tags: ['gaming', 'fun'],
+      categories: ['Gaming']
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockValidate.mockResolvedValue(true);
+      mockEnsureDirectories.mockResolvedValue(undefined);
+      mockPolicyEvaluate.mockReset();
+    });
+
+    it('rejects with 422 VIDEO_BLOCKED_BY_POLICY when policy evaluate() returns a violation', async () => {
+      mockExtract.mockResolvedValue(baseMetadata);
+      mockPolicyEvaluate.mockReturnValue({
+        reason: 'blockedTag',
+        matched: 'gaming',
+        message: 'This video was blocked because it appears to be gaming-related.'
+      });
+
+      const result = await service.downloadVideo({
+        url: 'https://www.youtube.com/watch?v=abc123',
+        title: 'Test Video',
+        requestedAt: new Date(),
+        requestId: 'req-policy-block'
+      });
+
+      expect(result.status).toBe('error');
+      expect(result.error).toContain('blocked');
+      expect(result.errorCode).toBe('VIDEO_BLOCKED_BY_POLICY');
+      expect(mockDownload).not.toHaveBeenCalled();
+      expect(mockMoveToLibrary).not.toHaveBeenCalled();
+    });
+
+    it('allows download when content policy does not block', async () => {
+      mockExtract.mockResolvedValue(baseMetadata);
+      mockPolicyEvaluate.mockReturnValue(null);
+      mockDownload.mockResolvedValue('/test/temp/Test_Video-abc123.mp4');
+      mockMoveToLibrary.mockResolvedValue('/test/videos/Test_Video-abc123.mp4');
+      mockWriteFile.mockResolvedValue(undefined);
+      mockRename.mockResolvedValue(undefined);
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const result = await service.downloadVideo({
+        url: 'https://www.youtube.com/watch?v=abc123',
+        title: 'Test Video',
+        requestedAt: new Date(),
+        requestId: 'req-policy-allow'
+      });
+
+      expect(result.status).toBe('success');
+      expect(mockDownload).toHaveBeenCalled();
+    });
+
+    it('reuses request.metadata instead of calling metadataExtractor.extract() again when present', async () => {
+      mockPolicyEvaluate.mockReturnValue(null);
+      mockDownload.mockResolvedValue('/test/temp/Test_Video-abc123.mp4');
+      mockMoveToLibrary.mockResolvedValue('/test/videos/Test_Video-abc123.mp4');
+      mockWriteFile.mockResolvedValue(undefined);
+      mockRename.mockResolvedValue(undefined);
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const result = await service.downloadVideo({
+        url: 'https://www.youtube.com/watch?v=abc123',
+        title: 'Test Video',
+        requestedAt: new Date(),
+        requestId: 'req-reuse-metadata',
+        metadata: baseMetadata
+      });
+
+      expect(result.status).toBe('success');
+      expect(mockExtract).not.toHaveBeenCalled();
+      expect(mockPolicyEvaluate).toHaveBeenCalledWith(baseMetadata);
     });
   });
 });

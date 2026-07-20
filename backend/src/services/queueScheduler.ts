@@ -129,11 +129,15 @@ export async function processQueueItem(
     } else {
       item.status = 'failed';
       item.error = result.error || 'Download failed';
+      if (result.errorCode) {
+        item.errorCode = result.errorCode;
+      }
       item.completedAt = new Date();
 
       logger.error('Queue item failed', {
         queueItemId: item.id,
-        error: item.error
+        error: item.error,
+        errorCode: item.errorCode
       });
     }
 

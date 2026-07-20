@@ -12,6 +12,7 @@ import { YouTubeFileDownloader, DownloadProgressCallback } from './youTubeFileDo
 import { VideoFileManager } from './videoFileManager';
 import { AppError } from '../middleware/errorHandler';
 import { config } from '../config';
+import { ContentPolicyService } from './contentPolicyService';
 
 /**
  * Core YouTube download orchestrator using composed services
@@ -22,17 +23,34 @@ export class YouTubeDownloadService {
   private readonly fileDownloader: YouTubeFileDownloader;
   private readonly fileManager: VideoFileManager;
   private readonly thumbnailService: ThumbnailService;
+  private readonly contentPolicyService: ContentPolicyService;
 
   constructor(
     videosDirectory: string, 
     tempDirectory: string,
-    thumbnailService: ThumbnailService
+    thumbnailService: ThumbnailService,
+    contentPolicyService: ContentPolicyService
   ) {
     this.urlValidator = new YouTubeUrlValidator();
     this.metadataExtractor = new YouTubeMetadataExtractor();
     this.fileDownloader = new YouTubeFileDownloader(tempDirectory);
     this.fileManager = new VideoFileManager(videosDirectory, tempDirectory);
     this.thumbnailService = thumbnailService;
+    this.contentPolicyService = contentPolicyService;
+  }
+
+  /**
+   * Fetch metadata and evaluate the content policy without downloading.
+   * Used by the route layer for preflight rejection; the returned metadata
+   * is attached to the DownloadRequest so downloadVideo() can reuse it.
+   */
+  async fetchMetadataAndCheckPolicy(url: string): Promise<YouTubeMetadata> {
+    const metadata = await this.metadataExtractor.extract(url);
+    const violation = this.contentPolicyService.evaluate(metadata);
+    if (violation) {
+      throw new AppError(violation.message, 422, true, 'VIDEO_BLOCKED_BY_POLICY');
+    }
+    return metadata;
   }
 
   async downloadVideo(request: DownloadRequest, cancelKey?: string, progressCallback?: DownloadProgressCallback): Promise<DownloadResult> {
@@ -55,13 +73,18 @@ export class YouTubeDownloadService {
 
       await this.fileManager.ensureDirectoriesExist();
 
-      const metadata = await this.metadataExtractor.extract(request.url);
+      const metadata = request.metadata ?? await this.metadataExtractor.extract(request.url);
       logger.info('Retrieved video metadata', {
         downloadId,
         videoId: metadata.id,
         title: metadata.title,
         duration: metadata.duration
       });
+
+      const policyViolation = this.contentPolicyService.evaluate(metadata);
+      if (policyViolation) {
+        throw new AppError(policyViolation.message, 422, true, 'VIDEO_BLOCKED_BY_POLICY');
+      }
 
       if (metadata.filesizeApprox != null && metadata.filesizeApprox > config.downloadMaxSizeBytes) {
         const sizeMB = Math.round(metadata.filesizeApprox / (1024 * 1024));
@@ -149,10 +172,12 @@ export class YouTubeDownloadService {
 
     } catch (error) {
       const errorMessage = getErrorMessage(error);
+      const errorCode = error instanceof AppError ? error.code : undefined;
       logger.error('YouTube download failed', {
         downloadId,
         url: request.url,
         error: errorMessage,
+        errorCode,
         duration: Date.now() - startedAt.getTime()
       });
 
@@ -160,6 +185,7 @@ export class YouTubeDownloadService {
         id: downloadId,
         status: 'error',
         error: errorMessage,
+        ...(errorCode && { errorCode }),
         completedAt: new Date(),
         startedAt
       };

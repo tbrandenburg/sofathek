@@ -65,7 +65,9 @@ test.describe('Video Download - Integration Tests (Live Backend)', () => {
       });
 
       // This URL doesn't exist, so it should start the download but the backend will detect failure
-      // The API should accept the request initially but the download should fail during processing
+      // The API should accept the request initially but the download should fail during processing.
+      // The content-policy preflight only blocks synchronously on policy violations; metadata
+      // extraction failures for unreachable/invalid URLs still surface asynchronously via the queue.
       if (response.status() === 429) {
         // Rate limited - this is expected in integration tests
         const data = await response.json();

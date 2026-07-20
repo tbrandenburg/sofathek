@@ -14,7 +14,8 @@ jest.mock('../../../services/index', () => ({
     clearQueue: jest.fn()
   },
   youTubeDownloadService: {
-    validateYouTubeUrl: jest.fn()
+    validateYouTubeUrl: jest.fn(),
+    fetchMetadataAndCheckPolicy: jest.fn()
   }
 }));
 
@@ -54,6 +55,10 @@ describe('YouTube Routes', () => {
       };
 
       mockYouTubeDownloadService.validateYouTubeUrl.mockResolvedValue(true);
+      mockYouTubeDownloadService.fetchMetadataAndCheckPolicy.mockResolvedValue({
+        id: 'test123',
+        title: 'Test Video'
+      } as any);
       mockDownloadQueueService.addToQueue.mockResolvedValue(mockQueueItem);
 
       const response = await request(app)
@@ -88,6 +93,28 @@ describe('YouTube Routes', () => {
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('message');
       expect(response.body.message).toContain('Invalid video URL format');
+    });
+
+    it('should return 422 with VIDEO_BLOCKED_BY_POLICY when the content policy rejects the video', async () => {
+      mockYouTubeDownloadService.validateYouTubeUrl.mockResolvedValue(true);
+      mockYouTubeDownloadService.fetchMetadataAndCheckPolicy.mockImplementation(() => {
+        const { AppError } = require('../../../middleware/errorHandler');
+        return Promise.reject(new AppError(
+          'This video was blocked because it appears to be gaming-related.',
+          422,
+          true,
+          'VIDEO_BLOCKED_BY_POLICY'
+        ));
+      });
+
+      const response = await request(app)
+        .post('/api/youtube/download')
+        .send({ url: 'https://www.youtube.com/watch?v=gaming123' });
+
+      expect(response.status).toBe(422);
+      expect(response.body.code).toBe('VIDEO_BLOCKED_BY_POLICY');
+      expect(response.body.message).toContain('gaming-related');
+      expect(mockDownloadQueueService.addToQueue).not.toHaveBeenCalled();
     });
   });
 

@@ -9,12 +9,20 @@ import { VideoFileManager } from './videoFileManager';
 import { DownloadQueueService } from './downloadQueueService';
 import { ThumbnailService } from './thumbnailService';
 import { VideoCleanupService } from './cleanupService';
+import { ContentPolicyService } from './contentPolicyService';
+import { contentPolicy } from './contentPolicyConfig';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
 // Initialize services with configured directories
 export const thumbnailService = new ThumbnailService(config.tempDir);
-export const youTubeDownloadService = new YouTubeDownloadService(config.videosDir, config.tempDir, thumbnailService);
+export const contentPolicyService = new ContentPolicyService(contentPolicy);
+export const youTubeDownloadService = new YouTubeDownloadService(
+  config.videosDir,
+  config.tempDir,
+  thumbnailService,
+  contentPolicyService
+);
 export const videoCleanupService = new VideoCleanupService(config.videosDir, config.videoMaxAgeDays);
 export const downloadQueueService = new DownloadQueueService(config.tempDir, youTubeDownloadService, videoCleanupService);
 
@@ -32,5 +40,6 @@ export {
   VideoFileManager,
   DownloadQueueService, 
   ThumbnailService,
-  VideoCleanupService
+  VideoCleanupService,
+  ContentPolicyService
 };
