@@ -193,3 +193,6 @@ test_output.zip
 dev/
 dev/**
 tmp-cw-run-*/
+
+# Local content policy settings (project-local, backend-only)
+.sofathek/
