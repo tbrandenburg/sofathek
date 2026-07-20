@@ -127,12 +127,14 @@ jobs:
           pip install yt-dlp
           which yt-dlp
           # npm workspaces may hoist youtube-dl-exec to root node_modules instead of
-          # backend/node_modules, so symlink into every location that exists (falling
-          # back to the backend one if none exist yet).
-          mkdir -p backend/node_modules/youtube-dl-exec/bin
-          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec/bin" 2>/dev/null); do
-            ln -sf "$(which yt-dlp)" "$dir/yt-dlp"
-            echo "yt-dlp symlinked to $(readlink -f "$dir/yt-dlp")"
+          # backend/node_modules, and its postinstall script (which normally downloads
+          # its own yt-dlp binary) may not run under `npm ci`'s script restrictions, so
+          # the package's bin/ dir may not exist yet. Find the package dir itself
+          # (not just bin/) and create+symlink into every location found.
+          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec" 2>/dev/null); do
+            mkdir -p "$dir/bin"
+            ln -sf "$(which yt-dlp)" "$dir/bin/yt-dlp"
+            echo "yt-dlp symlinked to $(readlink -f "$dir/bin/yt-dlp")"
           done
         timeout-minutes: 5
         
@@ -479,12 +481,14 @@ jobs:
           pip install yt-dlp
           which yt-dlp
           # npm workspaces may hoist youtube-dl-exec to root node_modules instead of
-          # backend/node_modules, so symlink into every location that exists (falling
-          # back to the backend one if none exist yet).
-          mkdir -p backend/node_modules/youtube-dl-exec/bin
-          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec/bin" 2>/dev/null); do
-            ln -sf "$(which yt-dlp)" "$dir/yt-dlp"
-            echo "yt-dlp symlinked to $(readlink -f "$dir/yt-dlp")"
+          # backend/node_modules, and its postinstall script (which normally downloads
+          # its own yt-dlp binary) may not run under `npm ci`'s script restrictions, so
+          # the package's bin/ dir may not exist yet. Find the package dir itself
+          # (not just bin/) and create+symlink into every location found.
+          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec" 2>/dev/null); do
+            mkdir -p "$dir/bin"
+            ln -sf "$(which yt-dlp)" "$dir/bin/yt-dlp"
+            echo "yt-dlp symlinked to $(readlink -f "$dir/bin/yt-dlp")"
           done
         timeout-minutes: 5
         
