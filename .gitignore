@@ -196,3 +196,6 @@ tmp-cw-run-*/
 
 # Local content policy settings (project-local, backend-only)
 .sofathek/
+
+# Local opencode config
+.opencode/opencode.jsonc
