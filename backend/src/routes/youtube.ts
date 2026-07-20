@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
+import { getErrorMessage } from '../utils/error';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { downloadQueueService, youTubeDownloadService } from '../services/index';
 import { DownloadRequest } from '../types/youtube';
@@ -37,8 +38,22 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
 
   // Preflight: fetch metadata and enforce content policy before queuing,
   // so blocked videos never enter the queue. Metadata is reused by the
-  // queue worker to avoid fetching it twice.
-  const metadata = await youTubeDownloadService.fetchMetadataAndCheckPolicy(url);
+  // queue worker to avoid fetching it twice. If metadata extraction fails
+  // for reasons unrelated to the content policy (e.g. an unreachable or
+  // invalid URL), do not fail the request here - let it be queued and
+  // reported as a failed download, matching prior behavior.
+  let metadata: NonNullable<DownloadRequest['metadata']> | undefined;
+  try {
+    metadata = await youTubeDownloadService.fetchMetadataAndCheckPolicy(url);
+  } catch (error) {
+    if (error instanceof AppError && error.code === 'VIDEO_BLOCKED_BY_POLICY') {
+      throw error;
+    }
+    logger.warn('Metadata preflight failed, queuing without preflight metadata', {
+      url,
+      error: getErrorMessage(error)
+    });
+  }
 
   // Create download request
   const downloadRequest: DownloadRequest = {
@@ -46,7 +61,7 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
     title,
     requestedAt: new Date(),
     requestId: uuidv4(),
-    metadata
+    ...(metadata !== undefined && { metadata })
   };
 
   // Add to queue
