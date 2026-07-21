@@ -1,14 +1,16 @@
 {
   "issue-357": {
-    "status": "in_progress",
+    "status": "done",
     "evidence": [
       "gh issue list --state open --limit 1 --json number,title,url: latest open issue is #357, Security: 2 high-severity vulnerabilities found in dependencies (brace-expansion, js-yaml)",
       "gh pr list --state open --limit 20 --json number,title,url: [] (no open linked PR found)",
       "npm audit fix --force: updated vulnerable dependencies including esbuild to 0.28.1",
       "npm audit --audit-level=low: found 0 vulnerabilities",
       "npm run validate:verbose: lint, type-check, and build validation passed",
-      "npm test: backend 28 passed suites and 361 passed tests; frontend 14 passed files and 182 passed tests"
+      "npm test: backend 28 passed suites and 361 passed tests; frontend 14 passed files and 182 passed tests",
+      "gh pr checks 358: all 6 checks passed, including CI Pipeline Complete",
+      "gh pr view 358: mergeable MERGEABLE and mergeStateStatus CLEAN"
     ],
-    "last_verified": "2026-07-21T22:06:46Z"
+    "last_verified": "2026-07-21T22:14:43Z"
   }
 }
