@@ -1,38 +1,14 @@
 {
-  "TASK_1_RCA": {
-    "status": "done",
+  "issue-357": {
+    "status": "in_progress",
     "evidence": [
-      "gh issue view 348 --json number,title,body,state,url -> 'Add configurable total download size limit (default 5GB)'",
-      "grep backend/src/services/youTubeDownloadService.ts and backend/src/config.ts -> metadata.filesizeApprox exists, downloadMaxSizeBytes exists, size gate uses AppError before file download"
+      "gh issue list --state open --limit 1 --json number,title,url: latest open issue is #357, Security: 2 high-severity vulnerabilities found in dependencies (brace-expansion, js-yaml)",
+      "gh pr list --state open --limit 20 --json number,title,url: [] (no open linked PR found)",
+      "npm audit fix --force: updated vulnerable dependencies including esbuild to 0.28.1",
+      "npm audit --audit-level=low: found 0 vulnerabilities",
+      "npm run validate:verbose: lint, type-check, and build validation passed",
+      "npm test: backend 28 passed suites and 361 passed tests; frontend 14 passed files and 182 passed tests"
     ],
-    "last_verified": "2026-06-22T16:56:53Z"
-  },
-  "TASK_2_PLAN": {
-    "status": "done",
-    "evidence": [],
-    "last_verified": "2026-06-22T16:56:53Z"
-  },
-  "TASK_3_IMPLEMENT": {
-    "status": "done",
-    "evidence": [
-      "npm test --workspace=backend -- --runInBand src/__tests__/unit/config.test.ts src/__tests__/unit/services/youTubeDownloadService.test.ts -> PASS 2/2 suites, 28/28 tests",
-      "gh pr checks 351 --watch=false -> CI Pipeline Complete pending while all component checks were already passing"
-    ],
-    "last_verified": "2026-06-22T16:56:53Z"
-  },
-  "TASK_4_COMMIT_PUSH": {
-    "status": "done",
-    "evidence": [
-      "git commit -m \"chore: record issue 348 verification\" -> 2b041a1 created",
-      "git push -> fix/issue-348-download-size-limit updated on origin"
-    ],
-    "last_verified": "2026-06-22T16:59:49Z"
-  },
-  "TASK_5_CI_ITERATE": {
-    "status": "done",
-    "evidence": [
-      "gh pr checks 351 --watch -> '✅ CI Pipeline Complete pass'; Static Analysis pass; Build & Functional pass; Unit Tests pass; E2E Tests pass; Integration pass"
-    ],
-    "last_verified": "2026-06-22T16:56:53Z"
+    "last_verified": "2026-07-21T22:06:46Z"
   }
 }
