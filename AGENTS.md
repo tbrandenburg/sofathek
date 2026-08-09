@@ -105,3 +105,7 @@ make help        # Show all available commands
 - Use `make install` for initial setup or after dependency changes
 - Backend runs on port 3010, frontend on port 5183 (safe ports)
 - All commands are designed to be safe and non-destructive
+
+## Lessons Learned
+
+- 2026-08-09: Spawning a second backend instance on a different port for live signal/E2E testing still shares the same `backend/data/temp/` (queue file + downloads) as any already-running instance, because data paths are not derived from the port. This caused a live process to reconcile/delete real production queue items and temp files. Rule: never spawn a second backend process for manual/E2E testing without also overriding its data directories (e.g. `SOFATHEK_TEMP_DIR`/equivalent config) to an isolated path, or run it in a container/tmp sandbox instead.
