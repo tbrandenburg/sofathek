@@ -28,6 +28,7 @@ startServer(PORT)
     
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on('SIGHUP', () => gracefulShutdown('SIGHUP'));
   })
   .catch((error) => {
     logger.error('Failed to start server', { error: error.message });
