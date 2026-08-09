@@ -7,13 +7,15 @@ const mockWriteFile = jest.fn();
 const mockMkdir = jest.fn();
 const mockRename = jest.fn();
 const mockUnlink = jest.fn();
+const mockReaddir = jest.fn();
 
 jest.mock('fs/promises', () => ({
   readFile: (...args: any[]) => mockReadFile(...args),
   writeFile: (...args: any[]) => mockWriteFile(...args),
   mkdir: (...args: any[]) => mockMkdir(...args),
   rename: (...args: any[]) => mockRename(...args),
-  unlink: (...args: any[]) => mockUnlink(...args)
+  unlink: (...args: any[]) => mockUnlink(...args),
+  readdir: (...args: any[]) => mockReaddir(...args)
 }));
 
 jest.mock('fs', () => ({
@@ -41,6 +43,7 @@ describe('DownloadQueueService', () => {
     mockMkdir.mockResolvedValue(undefined);
     mockRename.mockResolvedValue(undefined);
     mockUnlink.mockResolvedValue(undefined);
+    mockReaddir.mockResolvedValue([]);
     mockCancelDownload.mockResolvedValue(undefined);
     
     // Mock YouTube service to return success result
@@ -78,6 +81,100 @@ describe('DownloadQueueService', () => {
 
       const status = await service.getQueueStatus();
       expect(status.totalItems).toBe(1);
+    });
+
+    it('should mark orphaned processing items as failed and clean up temp files', async () => {
+      const mockQueueData = [
+        {
+          id: 'orphaned-id',
+          request: {
+            url: 'https://youtu.be/test',
+            requestId: 'req-1',
+            requestedAt: new Date().toISOString(),
+            metadata: { id: 'abc123', title: 'My Video' }
+          },
+          status: 'processing',
+          progress: 42,
+          currentStep: 'Downloading video (42%)',
+          queuedAt: new Date().toISOString(),
+          startedAt: new Date().toISOString()
+        }
+      ];
+      mockReadFile.mockResolvedValue(JSON.stringify(mockQueueData));
+      mockReaddir.mockResolvedValue([
+        'My_Video-abc123.mp4',
+        'My_Video-abc123.webp',
+        'unrelated-file.mp4'
+      ]);
+
+      await service.initialize();
+
+      const status = service.getQueueStatus();
+      const item = status.items.find(i => i.id === 'orphaned-id');
+      expect(item).toBeDefined();
+      expect(item?.status).toBe('failed');
+      expect(item?.error).toBe('Download interrupted by server restart');
+      expect(item?.completedAt).toBeInstanceOf(Date);
+
+      expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('My_Video-abc123.mp4'));
+      expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('My_Video-abc123.webp'));
+      expect(mockUnlink).not.toHaveBeenCalledWith(expect.stringContaining('unrelated-file.mp4'));
+
+      // Reconciled queue must be persisted
+      expect(mockWriteFile).toHaveBeenCalled();
+    });
+
+    it('should mark orphaned processing item as failed without metadata, skipping file cleanup', async () => {
+      const mockQueueData = [
+        {
+          id: 'orphaned-no-metadata',
+          request: {
+            url: 'https://youtu.be/test',
+            requestId: 'req-1',
+            requestedAt: new Date().toISOString()
+          },
+          status: 'processing',
+          progress: 10,
+          currentStep: 'Starting download',
+          queuedAt: new Date().toISOString()
+        }
+      ];
+      mockReadFile.mockResolvedValue(JSON.stringify(mockQueueData));
+
+      await service.initialize();
+
+      const status = service.getQueueStatus();
+      const item = status.items.find(i => i.id === 'orphaned-no-metadata');
+      expect(item?.status).toBe('failed');
+      expect(item?.error).toBe('Download interrupted by server restart');
+      expect(mockReaddir).not.toHaveBeenCalled();
+      expect(mockUnlink).not.toHaveBeenCalled();
+    });
+
+    it('should not fail initialization if temp file cleanup throws', async () => {
+      const mockQueueData = [
+        {
+          id: 'orphaned-cleanup-error',
+          request: {
+            url: 'https://youtu.be/test',
+            requestId: 'req-1',
+            requestedAt: new Date().toISOString(),
+            metadata: { id: 'xyz789', title: 'Broken Video' }
+          },
+          status: 'processing',
+          progress: 20,
+          currentStep: 'Downloading video (20%)',
+          queuedAt: new Date().toISOString()
+        }
+      ];
+      mockReadFile.mockResolvedValue(JSON.stringify(mockQueueData));
+      mockReaddir.mockRejectedValue(new Error('disk error'));
+
+      await expect(service.initialize()).resolves.not.toThrow();
+
+      const status = service.getQueueStatus();
+      const item = status.items.find(i => i.id === 'orphaned-cleanup-error');
+      expect(item?.status).toBe('failed');
     });
   });
 
