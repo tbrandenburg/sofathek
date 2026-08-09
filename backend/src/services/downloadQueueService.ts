@@ -48,12 +48,99 @@ export class DownloadQueueService {
       logger.info('Download queue service initialized', {
         queueSize: this.queue.length
       });
+      await this.reconcileOrphanedProcessingItems();
     } catch (error) {
       logger.warn('Failed to load existing queue, starting fresh', {
         error: getErrorMessage(error)
       });
       this.queue = [];
     }
+  }
+
+  /**
+   * Mark any items left in 'processing' state from a previous process
+   * lifetime as 'failed' (they cannot legitimately still be running after a
+   * fresh process start), best-effort clean up their partial temp files,
+   * and persist the corrected queue.
+   */
+  private async reconcileOrphanedProcessingItems(): Promise<void> {
+    const orphanedItems = this.queue.filter(item => item.status === 'processing');
+
+    if (orphanedItems.length === 0) {
+      return;
+    }
+
+    logger.warn('Found orphaned processing queue items after restart', {
+      count: orphanedItems.length,
+      queueItemIds: orphanedItems.map(item => item.id)
+    });
+
+    for (const item of orphanedItems) {
+      item.status = 'failed';
+      item.error = 'Download interrupted by server restart';
+      item.completedAt = new Date();
+
+      await this.cleanupOrphanedTempFiles(item);
+    }
+
+    await this.saveQueue();
+  }
+
+  /**
+   * Best-effort cleanup of partial temp files for an orphaned queue item.
+   * Temp files are named `${safeTitle}-${metadata.id}.%(ext)s`, so we can
+   * only find them when preflight metadata (title + id) was persisted.
+   */
+  private async cleanupOrphanedTempFiles(item: QueueItem): Promise<void> {
+    const metadata = item.request.metadata;
+
+    if (!metadata?.title || !metadata?.id) {
+      logger.warn('Skipping orphaned temp file cleanup, no metadata available', {
+        queueItemId: item.id
+      });
+      return;
+    }
+
+    try {
+      const prefix = `${this.createSafeFilename(metadata.title)}-${metadata.id}`;
+      const tempDirectory = path.dirname(this.queueFilePath);
+      const tempFiles = await fs.readdir(tempDirectory);
+      const orphanedFiles = tempFiles.filter(file => file.startsWith(prefix));
+
+      for (const file of orphanedFiles) {
+        const filePath = path.join(tempDirectory, file);
+        try {
+          await fs.unlink(filePath);
+          logger.info('Cleaned up orphaned temp file after restart', {
+            queueItemId: item.id,
+            filePath
+          });
+        } catch (error) {
+          logger.warn('Failed to clean up orphaned temp file after restart', {
+            queueItemId: item.id,
+            filePath,
+            error: getErrorMessage(error)
+          });
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to scan temp directory for orphaned files', {
+        queueItemId: item.id,
+        error: getErrorMessage(error)
+      });
+    }
+  }
+
+  /**
+   * Replicates the safe-filename logic used by YouTubeFileDownloader when
+   * generating temp file prefixes, so orphaned temp files can be located.
+   */
+  private createSafeFilename(title: string): string {
+    return title
+      .replace(/[<>:"/\\|?*]/g, '')
+      .replace(/\s+/g, '_')
+      .substring(0, 200)
+      .trim();
   }
 
   /**
