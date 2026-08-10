@@ -1,4 +1,16 @@
 import { jest, afterEach, afterAll } from '@jest/globals';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
+// Default VIDEOS_DIR/TEMP_DIR to an isolated temp directory for the whole test
+// run unless a test explicitly overrides/deletes them. This prevents any test
+// that imports `config.ts` (directly or transitively) from ever creating real
+// directories under the developer's/CI's actual home directory
+// (~/.local/share/sofathek/data), since that is now the production default.
+const testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sofathek-test-data-'));
+process.env.VIDEOS_DIR = process.env.VIDEOS_DIR || path.join(testDataDir, 'videos');
+process.env.TEMP_DIR = process.env.TEMP_DIR || path.join(testDataDir, 'temp');
 
 // Mock external dependencies globally
 jest.mock('fs/promises', () => ({

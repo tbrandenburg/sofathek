@@ -16,6 +16,21 @@ describe('Config', () => {
   });
 
   describe('defaults and environment handling', () => {
+    let fakeHome: string;
+    let homedirSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Isolate os.homedir() to a throwaway temp dir so these tests never
+      // create real directories under the developer's/CI's actual home dir.
+      fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'sofathek-config-home-'));
+      homedirSpy = jest.spyOn(os, 'homedir').mockReturnValue(fakeHome);
+    });
+
+    afterEach(() => {
+      homedirSpy.mockRestore();
+      fs.rmSync(fakeHome, { recursive: true, force: true });
+    });
+
     it('uses fallback directories when variables are missing in production', () => {
       process.env.NODE_ENV = 'production';
       delete process.env.VIDEOS_DIR;
@@ -27,7 +42,7 @@ describe('Config', () => {
         loadedConfig = require('../../config').config;
       });
 
-      const expectedDataDir = path.join(os.homedir(), '.local', 'share', 'sofathek', 'data');
+      const expectedDataDir = path.join(fakeHome, '.local', 'share', 'sofathek', 'data');
       expect(loadedConfig.nodeEnv).toBe('production');
       expect(loadedConfig.videosDir).toBe(path.join(expectedDataDir, 'videos'));
       expect(loadedConfig.tempDir).toBe(path.join(expectedDataDir, 'temp'));
@@ -44,7 +59,7 @@ describe('Config', () => {
         loadedConfig = require('../../config').config;
       });
 
-      const expectedDataDir = path.join(os.homedir(), '.local', 'share', 'sofathek', 'data');
+      const expectedDataDir = path.join(fakeHome, '.local', 'share', 'sofathek', 'data');
       expect(loadedConfig.nodeEnv).toBe('development');
       expect(loadedConfig.videosDir).toBe(path.join(expectedDataDir, 'videos'));
       expect(loadedConfig.tempDir).toBe(path.join(expectedDataDir, 'temp'));
