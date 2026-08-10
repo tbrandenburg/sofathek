@@ -1,31 +1,40 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
 describe('config', () => {
   const originalEnv = process.env;
+  let tmpRoot: string;
 
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sofathek-unit-config-test-'));
   });
 
   afterEach(() => {
     process.env = originalEnv;
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   });
 
   it('should use VIDEOS_DIR when set', () => {
-    process.env.VIDEOS_DIR = '/custom/videos';
+    const videosDir = path.join(tmpRoot, 'custom-videos');
+    process.env.VIDEOS_DIR = videosDir;
 
     jest.isolateModules(() => {
       const { config } = require('../../config');
-      expect(config.videosDir).toBe('/custom/videos');
+      expect(config.videosDir).toBe(videosDir);
     });
   });
 
   it('should fallback to VIDEOS_PATH when VIDEOS_DIR is not set', () => {
     delete process.env.VIDEOS_DIR;
-    process.env.VIDEOS_PATH = '/fallback/videos';
+    const videosDir = path.join(tmpRoot, 'fallback-videos');
+    process.env.VIDEOS_PATH = videosDir;
 
     jest.isolateModules(() => {
       const { config } = require('../../config');
-      expect(config.videosDir).toBe('/fallback/videos');
+      expect(config.videosDir).toBe(videosDir);
     });
   });
 

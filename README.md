@@ -157,11 +157,9 @@ sofathek/
 
 ### Development
 
-The application stores videos in `backend/data/videos` by default. Create the directory:
+The application stores videos in `~/.local/share/sofathek/data/videos` by default; this directory is auto-created on startup, so no manual setup is required.
 
-```bash
-mkdir -p backend/data/videos
-```
+If that path is a symlink pointing to unmounted external/USB storage, startup fails with a clear error (e.g. `VIDEOS_DIR storage path '...' is a broken symlink — is the external/USB drive mounted?`).
 
 To customize the video directory, set the `VIDEOS_DIR` environment variable:
 
@@ -200,9 +198,9 @@ cp backend/.env.example backend/.env
 | `SOFATHEK_BACKEND_PORT` | `3010` | Backend server port |
 | `NODE_ENV` | `development` | Runtime environment |
 | `LOG_LEVEL` | `info` | Winston logger level |
-| `VIDEOS_DIR` | `backend/data/videos` (via `cwd/data/videos`) | Path to video storage directory |
+| `VIDEOS_DIR` | `~/.local/share/sofathek/data/videos` | Path to video storage directory (auto-created; throws on startup if a broken symlink) |
 | `VIDEOS_PATH` | (fallback only) | Backward-compatible alias used only when `VIDEOS_DIR` is unset |
-| `TEMP_DIR` | `backend/data/temp` (via `cwd/data/temp`) | Path to temporary/transcoding files |
+| `TEMP_DIR` | `~/.local/share/sofathek/data/temp` | Path to temporary/transcoding files (auto-created; throws on startup if a broken symlink) |
 | `ALLOWED_ORIGINS` | `http://localhost:5183` | Comma-separated CORS allowlist for production |
 | `THUMBNAIL_MAX_SIZE` | `10485760` (10MB) | Maximum thumbnail size in bytes; larger files return HTTP 413; inaccessible thumbnail files return HTTP 403 |
 | `THUMBNAIL_CACHE_DURATION` | `86400` | Thumbnail cache max-age in seconds |

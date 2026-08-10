@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 export interface Config {
@@ -43,6 +45,30 @@ function validateDir(dir: string, name: string): void {
   if (!dir || typeof dir !== 'string') {
     throw new Error(`Invalid ${name}: ${dir}`);
   }
+
+  let lstat: fs.Stats;
+  try {
+    lstat = fs.lstatSync(dir);
+  } catch {
+    // Path does not exist at all (and is not a symlink) - normal first-run case.
+    fs.mkdirSync(dir, { recursive: true });
+    return;
+  }
+
+  if (lstat.isSymbolicLink()) {
+    try {
+      fs.statSync(dir);
+    } catch {
+      throw new Error(
+        `${name} storage path '${dir}' is a broken symlink — is the external/USB drive mounted?`
+      );
+    }
+  }
+
+  const stat = fs.statSync(dir);
+  if (!stat.isDirectory()) {
+    throw new Error(`${name} storage path '${dir}' exists but is not a directory`);
+  }
 }
 
 function parseAllowedOrigins(value: string | undefined): string[] {
@@ -58,8 +84,10 @@ function parseAllowedOrigins(value: string | undefined): string[] {
 }
 
 function getConfig(): Config {
-  const videosDir = process.env.VIDEOS_DIR || process.env.VIDEOS_PATH || path.join(process.cwd(), 'data', 'videos');
-  const tempDir = process.env.TEMP_DIR || path.join(process.cwd(), 'data', 'temp');
+  const defaultDataDir = path.join(os.homedir(), '.local', 'share', 'sofathek', 'data');
+  const videosDir =
+    process.env.VIDEOS_DIR || process.env.VIDEOS_PATH || path.join(defaultDataDir, 'videos');
+  const tempDir = process.env.TEMP_DIR || path.join(defaultDataDir, 'temp');
 
   return {
     port: parseIntOrDefault(process.env.SOFATHEK_BACKEND_PORT, 3010),
