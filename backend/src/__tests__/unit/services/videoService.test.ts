@@ -18,7 +18,11 @@ jest.mock('fs', () => ({
     mkdir: jest.fn(),
     stat: jest.fn(),
     readFile: jest.fn()
-  }
+  },
+  // Sync APIs used by config.ts's startup directory validation
+  lstatSync: jest.fn(() => ({ isSymbolicLink: () => false })),
+  statSync: jest.fn(() => ({ isDirectory: () => true })),
+  mkdirSync: jest.fn()
 }));
 
 import { VideoService } from '../../../services/videoService';
@@ -469,50 +473,41 @@ describe('VideoService', () => {
   });
 
   describe('Path Resolution', () => {
-    const originalCwd = process.cwd;
     const originalEnv = process.env;
+    const os = require('os');
+    const defaultVideosDir = path.join(os.homedir(), '.local', 'share', 'sofathek', 'data', 'videos');
 
     beforeEach(() => {
-      process.cwd = () => '/mock/cwd';
       process.env = { ...originalEnv };
       delete process.env.VIDEOS_DIR;
     });
 
     afterEach(() => {
-      process.cwd = originalCwd;
       process.env = originalEnv;
     });
 
     it('should use default path when VIDEOS_DIR is not set', () => {
-      const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
-      );
+      const service = new VideoService(process.env.VIDEOS_DIR || defaultVideosDir);
       const filePath = service.getVideoFilePath('test.mp4');
-      expect(filePath).toBe(path.join('/mock/cwd', 'data', 'videos', 'test.mp4'));
+      expect(filePath).toBe(path.join(defaultVideosDir, 'test.mp4'));
     });
 
     it('should use environment variable override when VIDEOS_DIR is set', () => {
       process.env.VIDEOS_DIR = '/custom/videos';
-      const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
-      );
+      const service = new VideoService(process.env.VIDEOS_DIR || defaultVideosDir);
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).toBe(path.join('/custom/videos', 'test.mp4'));
     });
 
     it('should produce absolute paths', () => {
-      const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
-      );
+      const service = new VideoService(process.env.VIDEOS_DIR || defaultVideosDir);
       const filePath = service.getVideoFilePath('test.mp4');
       expect(path.isAbsolute(filePath)).toBe(true);
     });
 
     it('should not contain dangerous path traversals in default path', () => {
       delete process.env.VIDEOS_DIR;
-      const service = new VideoService(
-        process.env.VIDEOS_DIR || path.join(process.cwd(), 'data', 'videos')
-      );
+      const service = new VideoService(process.env.VIDEOS_DIR || defaultVideosDir);
       const filePath = service.getVideoFilePath('test.mp4');
       expect(filePath).not.toContain('../');
     });
