@@ -209,5 +209,25 @@ describe('processQueueItem', () => {
       capturedCallback?.('audio', 100); // 75 + 100*0.1 = 85
       expect(item.currentStep).toBe('Downloading audio (85%)');
     });
+
+    it('should not crash or reject when a background progress save fails', async () => {
+      const item = makeQueueItem();
+      let capturedCallback: ((phase: 'video' | 'audio', percent: number) => void) | undefined;
+
+      mockDownloadVideo.mockImplementation(async (_req: unknown, _key: unknown, cb: (phase: 'video' | 'audio', percent: number) => void) => {
+        capturedCallback = cb;
+        return { status: 'success', videoPath: '/tmp/test.mp4' };
+      });
+
+      await processQueueItem(item, mockYoutubeService, mockSaveQueue);
+
+      mockSaveQueue.mockRejectedValueOnce(new Error('ENOENT: rename'));
+      capturedCallback?.('video', 10);
+
+      // Let the fire-and-forget save settle; if unhandled, jest/Node would report an unhandled rejection.
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(item.status).toBe('completed');
+    });
   });
 });
