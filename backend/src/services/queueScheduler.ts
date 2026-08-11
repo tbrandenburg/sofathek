@@ -98,7 +98,12 @@ export async function processQueueItem(
           ? `Downloading video (${item.progress}%)`
           : `Downloading audio (${item.progress}%)`;
         lastSavedProgress = mapped;
-        saveQueue();
+        saveQueue().catch(error => {
+          logger.error('Failed to persist queue progress', {
+            queueItemId: item.id,
+            error: getErrorMessage(error)
+          });
+        });
       }
     };
 

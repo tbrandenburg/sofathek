@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import { getErrorMessage } from '../utils/error';
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 import { AppError } from '../middleware/errorHandler';
 import { QueueItem } from '../types/youtube';
 import { logger } from '../utils/logger';
@@ -54,14 +55,25 @@ export async function loadQueue(queueFilePath: string): Promise<QueueItem[]> {
   }
 }
 
-export async function saveQueue(queueFilePath: string, queue: QueueItem[]): Promise<void> {
+// Module-level async mutex chain; always kept resolved so the lock can never stay held.
+let queueSaveChain: Promise<void> = Promise.resolve();
+
+async function persistQueue(queueFilePath: string, queue: QueueItem[]): Promise<void> {
   try {
     const queueDir = path.dirname(queueFilePath);
     await fs.mkdir(queueDir, { recursive: true });
 
-    const tempFilePath = `${queueFilePath}.tmp`;
-    await fs.writeFile(tempFilePath, JSON.stringify(queue, null, 2), 'utf-8');
-    await fs.rename(tempFilePath, queueFilePath);
+    // Unique temp file per write: concurrent writers (even from a second backend
+    // process sharing data/temp) never share a path, so a rename can't hit ENOENT.
+    const tempFilePath = `${queueFilePath}.${randomUUID()}.tmp`;
+    try {
+      await fs.writeFile(tempFilePath, JSON.stringify(queue, null, 2), 'utf-8');
+      await fs.rename(tempFilePath, queueFilePath);
+    } catch (error) {
+      // Best-effort cleanup of the orphaned temp file; never mask the original error.
+      await fs.unlink(tempFilePath).catch(() => {});
+      throw error;
+    }
 
     logger.debug('Queue saved to storage', {
       queueSize: queue.length,
@@ -74,4 +86,10 @@ export async function saveQueue(queueFilePath: string, queue: QueueItem[]): Prom
     });
     throw new AppError('Failed to save download queue', 500);
   }
+}
+
+export function saveQueue(queueFilePath: string, queue: QueueItem[]): Promise<void> {
+  const result = queueSaveChain.then(() => persistQueue(queueFilePath, queue));
+  queueSaveChain = result.catch(() => {});
+  return result;
 }
