@@ -88,10 +88,13 @@
     "last_verified": "2026-08-14T08:22:22Z"
   },
   "validate-and-push-fix": {
-    "status": "in_progress",
+    "status": "done",
     "evidence": [
-      "git status --short --branch -> only dev/state/task-ledger.json modified on fix/issue-377-remove-stale-pnpm-lockfile"
+      "git commit -m \"chore: record issue 377 CI verification\" -> 9db6f14 created",
+      "git push -> fix/issue-377-remove-stale-pnpm-lockfile updated on origin",
+      "gh pr checks 378 -> all 6 checks passed after push",
+      "gh pr view 378 --json mergeStateStatus,mergeable -> mergeStateStatus CLEAN, mergeable MERGEABLE"
     ],
-    "last_verified": "2026-08-14T08:22:22Z"
+    "last_verified": "2026-08-14T08:30:30Z"
   }
 }
