@@ -64,5 +64,34 @@
       "gh pr checks 375 --watch: Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
     ],
     "last_verified": "2026-08-14T09:23:30+02:00"
+  },
+  "issue-377-pr-378": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 20: latest open issue is #377, Synchronize or retire the frontend pnpm lockfile",
+      "gh pr view 378: linked PR fixes #377; mergeable MERGEABLE; mergeStateStatus CLEAN",
+      "gh pr checks 378: Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
+    ],
+    "last_verified": "2026-08-14T08:17:22Z"
+  },
+  "resolve-pr-378-local-validation": {
+    "status": "done",
+    "evidence": [
+      "npm run type-check -> backend and frontend tsc --noEmit passed",
+      "npm run lint -> backend and frontend ESLint passed",
+      "npm run build -> backend tsc and frontend vite build passed",
+      "npm rebuild ffmpeg-static --workspace=backend -> rebuilt dependencies successfully; restored missing local ffmpeg binary",
+      "npm test -> backend 29/30 suites passed with 373 tests passed and 4 skipped; frontend 14/14 files passed with 182 tests passed",
+      "gh pr view 378 --json mergeStateStatus,mergeable -> mergeStateStatus CLEAN, mergeable MERGEABLE",
+      "gh pr checks 378 -> all 6 CI checks passed"
+    ],
+    "last_verified": "2026-08-14T08:22:22Z"
+  },
+  "validate-and-push-fix": {
+    "status": "in_progress",
+    "evidence": [
+      "git status --short --branch -> only dev/state/task-ledger.json modified on fix/issue-377-remove-stale-pnpm-lockfile"
+    ],
+    "last_verified": "2026-08-14T08:22:22Z"
   }
 }
