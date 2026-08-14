@@ -96,5 +96,18 @@
       "gh pr view 378 --json mergeStateStatus,mergeable -> mergeStateStatus CLEAN, mergeable MERGEABLE"
     ],
     "last_verified": "2026-08-14T08:30:30Z"
+  },
+  "issue-376-pr-379": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 100 --json number,title,createdAt,url: latest open issue is #376, Constrain nanoid override to the Node 18-compatible 3.x line",
+      "gh pr view 379 --json number,title,url,mergeStateStatus,mergeable: linked PR #379 is MERGEABLE with mergeStateStatus CLEAN",
+      "gh pr checks 379 --watch=false: CI Pipeline Complete, Static Analysis, Build & Functional, Unit Tests, E2E Tests, and Integration all pass",
+      "npm ls nanoid --all: only nanoid@3.3.18 resolves; npm view nanoid@6.0.1 engines: Node ^22 || ^24 || >=26",
+      "npm audit --audit-level=high in root and frontend: found 0 vulnerabilities",
+      "make lint; make type-check; make build: all passed",
+      "npm test: backend 29 passed suites with 373 passed tests and frontend 14 passed files with 182 passed tests"
+    ],
+    "last_verified": "2026-08-14T10:15:21Z"
   }
 }
