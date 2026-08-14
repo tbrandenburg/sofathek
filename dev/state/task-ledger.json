@@ -48,5 +48,20 @@
       "gh pr view 358: mergeable MERGEABLE and mergeStateStatus CLEAN"
     ],
     "last_verified": "2026-07-21T22:14:43Z"
+  },
+  "issue-374-nanoid-cve": {
+    "status": "in_progress",
+    "evidence": [
+      "gh issue list --state open --limit 20 --json number,title,url: latest open issue is #374, nanoid CVE-2026-67213",
+      "gh api 'repos/tbrandenburg/sofathek/pulls?state=open&per_page=100': no open linked PR exists",
+      "npm audit --audit-level=high: root workspace found 0 vulnerabilities",
+      "npm audit --audit-level=high in frontend: found 0 vulnerabilities",
+      "pnpm install --frozen-lockfile --ignore-scripts: blocked by pre-existing mismatches for @playwright/test, @vitest/coverage-v8, esbuild, playwright, vite, and vitest",
+      "npm run validate:fast: lint and type-check passed",
+      "npm run validate: full lint, type-check, and build validation passed",
+      "npm test --workspace=frontend: 14 test files and 182 tests passed",
+      "npm test --workspace=backend: 1 thumbnail binary test passed; 2 health assertions blocked by host disk usage at 99%"
+    ],
+    "last_verified": "2026-08-14T09:07:30+02:00"
   }
 }
