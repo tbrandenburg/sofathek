@@ -3,8 +3,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..');
-
 function isExecutable(filePath) {
   try {
     const stat = fs.statSync(filePath);
@@ -38,9 +36,31 @@ function ensureSymlink(linkFile, symlinkTarget) {
   }
 }
 
-// yt-dlp from youtube-dl-exec
-const ytDlp = path.join(ROOT, 'node_modules/youtube-dl-exec/bin/yt-dlp');
-ensureSymlink(ytDlp, '/usr/local/bin/yt-dlp');
+/**
+ * Resolve the actual on-disk directory of an installed npm package,
+ * regardless of whether npm workspaces hoisted it to the repo root or
+ * kept it local to this workspace's node_modules. Hardcoding a path
+ * relative to this script (e.g. `<ROOT>/node_modules/<pkg>`) breaks
+ * silently whenever hoisting changes where the package actually lands,
+ * leaving a dead symlink stub that Node never resolves to.
+ */
+function resolvePackageDir(packageName) {
+  try {
+    const pkgJsonPath = require.resolve(`${packageName}/package.json`);
+    return path.dirname(pkgJsonPath);
+  } catch (err) {
+    console.warn(`[postinstall] WARNING: Could not resolve package '${packageName}': ${err.message}`);
+    return null;
+  }
+}
+
+// yt-dlp from youtube-dl-exec — resolve wherever npm actually installed it
+// instead of assuming it lives under this workspace's own node_modules.
+const youtubeDlExecDir = resolvePackageDir('youtube-dl-exec');
+if (youtubeDlExecDir) {
+  const ytDlp = path.join(youtubeDlExecDir, 'bin', 'yt-dlp');
+  ensureSymlink(ytDlp, '/usr/local/bin/yt-dlp');
+}
 
 // ffmpeg from ffmpeg-static (optional — package may not resolve a path)
 try {
