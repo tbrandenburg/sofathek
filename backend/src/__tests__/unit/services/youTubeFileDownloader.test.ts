@@ -169,6 +169,36 @@ describe('YouTubeFileDownloader', () => {
         .rejects.toThrow('Downloaded video file not found');
     });
 
+    it('should return the video path when the standalone MP3 extraction pass fails (e.g. 403 on audio-only format)', async () => {
+      const metadata = { id: 'test123', title: 'Test Video' };
+
+      const videoSubprocess = () => Object.assign(Promise.resolve(), {
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        kill: jest.fn(),
+      });
+      const failingAudioSubprocess = () => Object.assign(
+        Promise.reject(new Error('unable to download video data: HTTP Error 403: Forbidden')),
+        {
+          stdout: { on: jest.fn() },
+          stderr: { on: jest.fn() },
+          kill: jest.fn(),
+        }
+      );
+
+      mockExec
+        .mockImplementationOnce(videoSubprocess)
+        .mockImplementationOnce(failingAudioSubprocess);
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      const result = await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
+
+      // The video was already downloaded successfully; a failed standalone
+      // MP3 pass must not discard it or throw.
+      expect(result).toBe('/test/temp/Test_Video-test123.mp4');
+      expect(mockExec).toHaveBeenCalledTimes(2);
+    });
+
     it('should create safe filenames', async () => {
       const metadata = {
         id: 'test123',

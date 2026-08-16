@@ -75,40 +75,56 @@ export class YouTubeFileDownloader {
 
       await videoSubprocess;
 
-      // Pass 2: extract audio as MP3 (best audio only, no video stream)
+      // Pass 2: extract audio as MP3 (best audio only, no video stream).
+      // Best-effort: YouTube can reject audio-only format requests (e.g. 403
+      // on adaptive audio streams) even when the merged video+audio download
+      // in pass 1 succeeded fine. Losing the standalone MP3 must not discard
+      // an otherwise-successful video download — same resilience pattern as
+      // thumbnail generation below in youTubeDownloadService.ts.
       if (!tracker.aborted) {
         logger.info('Extracting audio track', { url, videoId: metadata.id });
-        const audioSubprocess = youtubedl.exec(url, {
-          output: outputTemplate,
-          format: 'bestaudio',
-          extractAudio: true,
-          audioFormat: 'mp3',
-          noPlaylist: true,
-          restrictFilenames: true,
-          noWarnings: true,
-          ignoreErrors: true,
-          jsRuntimes: 'node'
-        });
+        let audioStderrOutput = '';
+        try {
+          const audioSubprocess = youtubedl.exec(url, {
+            output: outputTemplate,
+            format: 'bestaudio',
+            extractAudio: true,
+            audioFormat: 'mp3',
+            noPlaylist: true,
+            restrictFilenames: true,
+            noWarnings: true,
+            ignoreErrors: true,
+            jsRuntimes: 'node'
+          });
 
-        if (downloadId) {
-          tracker.subprocess = audioSubprocess;
-        }
-
-        audioSubprocess.stderr?.on('data', (data) => {
-          stderrOutput += data.toString();
-        });
-
-        audioSubprocess.stdout?.on('data', (data) => {
-          const output = data.toString();
-          if (output.includes('[download]')) {
-            const percentMatch = output.match(/\[download\]\s+([\d.]+)%/);
-            if (percentMatch && progressCallback) {
-              progressCallback('audio', parseFloat(percentMatch[1]));
-            }
+          if (downloadId) {
+            tracker.subprocess = audioSubprocess;
           }
-        });
 
-        await audioSubprocess;
+          audioSubprocess.stderr?.on('data', (data) => {
+            audioStderrOutput += data.toString();
+          });
+
+          audioSubprocess.stdout?.on('data', (data) => {
+            const output = data.toString();
+            if (output.includes('[download]')) {
+              const percentMatch = output.match(/\[download\]\s+([\d.]+)%/);
+              if (percentMatch && progressCallback) {
+                progressCallback('audio', parseFloat(percentMatch[1]));
+              }
+            }
+          });
+
+          await audioSubprocess;
+        } catch (error) {
+          const stderrMessage = audioStderrOutput.trim() || ((error as any).stderr as string | undefined)?.trim() || '';
+          logger.warn('Standalone MP3 extraction failed, continuing with video-only result', {
+            url,
+            videoId: metadata.id,
+            error: getErrorMessage(error),
+            stderr: stderrMessage
+          });
+        }
       }
 
       if (downloadId) {
