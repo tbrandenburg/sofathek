@@ -1,113 +1,26 @@
 {
-  "TASK_1_RCA": {
+  "issue-380-rca": {
     "status": "done",
     "evidence": [
-      "gh issue view 348 --json number,title,body,state,url -> 'Add configurable total download size limit (default 5GB)'",
-      "grep backend/src/services/youTubeDownloadService.ts and backend/src/config.ts -> metadata.filesizeApprox exists, downloadMaxSizeBytes exists, size gate uses AppError before file download"
+      "gh issue list --state open --limit 10 --json number,title,createdAt,url,body -> latest open issue is #380",
+      "gh pr list --state open --limit 20 -> [] (no linked PR exists)",
+      "gh api repos/tbrandenburg/sofathek/issues/380 -> report identifies 17 vulnerable system-level Python packages",
+      "ghar-security-check.md:19 -> installs pip-audit globally and scans the runner environment instead of project dependencies"
     ],
-    "last_verified": "2026-06-22T16:56:53Z"
+    "last_verified": "2026-08-19T07:05:53Z"
   },
-  "TASK_2_PLAN": {
-    "status": "done",
-    "evidence": [],
-    "last_verified": "2026-06-22T16:56:53Z"
-  },
-  "TASK_3_IMPLEMENT": {
+  "issue-380-plan": {
     "status": "done",
     "evidence": [
-      "npm test --workspace=backend -- --runInBand src/__tests__/unit/config.test.ts src/__tests__/unit/services/youTubeDownloadService.test.ts -> PASS 2/2 suites, 28/28 tests",
-      "gh pr checks 351 --watch=false -> CI Pipeline Complete pending while all component checks were already passing"
+      "5xWhy: global pip-audit scan -> runner packages reported -> no Python manifest exists -> Docker-only yt-dlp was treated as a Python project -> scanner scope must follow repository manifests"
     ],
-    "last_verified": "2026-06-22T16:56:53Z"
+    "last_verified": "2026-08-19T07:05:53Z"
   },
-  "TASK_4_COMMIT_PUSH": {
-    "status": "done",
+  "issue-380-implement": {
+    "status": "in_progress",
     "evidence": [
-      "git commit -m \"chore: record issue 348 verification\" -> 2b041a1 created",
-      "git push -> fix/issue-348-download-size-limit updated on origin"
+      "Updated .opencode/commands/ghar-security-check.md to skip Python scans without manifests and isolate pip-audit when manifests exist"
     ],
-    "last_verified": "2026-06-22T16:59:49Z"
-  },
-  "TASK_5_CI_ITERATE": {
-    "status": "done",
-    "evidence": [
-      "gh pr checks 351 --watch -> '✅ CI Pipeline Complete pass'; Static Analysis pass; Build & Functional pass; Unit Tests pass; E2E Tests pass; Integration pass"
-    ],
-    "last_verified": "2026-06-22T16:56:53Z"
-  },
-  "issue-357": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 1 --json number,title,url: latest open issue is #357, Security: 2 high-severity vulnerabilities found in dependencies (brace-expansion, js-yaml)",
-      "gh pr list --state open --limit 20 --json number,title,url: [] (no open linked PR found)",
-      "npm audit fix --force: updated vulnerable dependencies including esbuild to 0.28.1",
-      "npm audit --audit-level=low: found 0 vulnerabilities",
-      "npm run validate:verbose: lint, type-check, and build validation passed",
-      "npm test: backend 28 passed suites and 361 passed tests; frontend 14 passed files and 182 passed tests",
-      "gh pr checks 358: all 6 checks passed, including CI Pipeline Complete",
-      "gh pr view 358: mergeable MERGEABLE and mergeStateStatus CLEAN"
-    ],
-    "last_verified": "2026-07-21T22:14:43Z"
-  },
-  "issue-374-nanoid-cve": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,url: latest open issue is #374, nanoid CVE-2026-67213",
-      "gh api 'repos/tbrandenburg/sofathek/pulls?state=open&per_page=100': no open linked PR exists",
-      "npm audit --audit-level=high: root workspace found 0 vulnerabilities",
-      "npm audit --audit-level=high in frontend: found 0 vulnerabilities",
-      "pnpm install --frozen-lockfile --ignore-scripts: blocked by pre-existing mismatches for @playwright/test, @vitest/coverage-v8, esbuild, playwright, vite, and vitest",
-      "npm run validate:fast: lint and type-check passed",
-      "npm run validate: full lint, type-check, and build validation passed",
-      "npm test --workspace=frontend: 14 test files and 182 tests passed",
-      "npm test --workspace=backend: 1 thumbnail binary test passed; 2 health assertions blocked by host disk usage at 99%",
-      "gh pr checks 375 --watch: Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
-    ],
-    "last_verified": "2026-08-14T09:23:30+02:00"
-  },
-  "issue-377-pr-378": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 20: latest open issue is #377, Synchronize or retire the frontend pnpm lockfile",
-      "gh pr view 378: linked PR fixes #377; mergeable MERGEABLE; mergeStateStatus CLEAN",
-      "gh pr checks 378: Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
-    ],
-    "last_verified": "2026-08-14T08:17:22Z"
-  },
-  "resolve-pr-378-local-validation": {
-    "status": "done",
-    "evidence": [
-      "npm run type-check -> backend and frontend tsc --noEmit passed",
-      "npm run lint -> backend and frontend ESLint passed",
-      "npm run build -> backend tsc and frontend vite build passed",
-      "npm rebuild ffmpeg-static --workspace=backend -> rebuilt dependencies successfully; restored missing local ffmpeg binary",
-      "npm test -> backend 29/30 suites passed with 373 tests passed and 4 skipped; frontend 14/14 files passed with 182 tests passed",
-      "gh pr view 378 --json mergeStateStatus,mergeable -> mergeStateStatus CLEAN, mergeable MERGEABLE",
-      "gh pr checks 378 -> all 6 CI checks passed"
-    ],
-    "last_verified": "2026-08-14T08:22:22Z"
-  },
-  "validate-and-push-fix": {
-    "status": "done",
-    "evidence": [
-      "git commit -m \"chore: record issue 377 CI verification\" -> 9db6f14 created",
-      "git push -> fix/issue-377-remove-stale-pnpm-lockfile updated on origin",
-      "gh pr checks 378 -> all 6 checks passed after push",
-      "gh pr view 378 --json mergeStateStatus,mergeable -> mergeStateStatus CLEAN, mergeable MERGEABLE"
-    ],
-    "last_verified": "2026-08-14T08:30:30Z"
-  },
-  "issue-376-pr-379": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 100 --json number,title,createdAt,url: latest open issue is #376, Constrain nanoid override to the Node 18-compatible 3.x line",
-      "gh pr view 379 --json number,title,url,mergeStateStatus,mergeable: linked PR #379 is MERGEABLE with mergeStateStatus CLEAN",
-      "gh pr checks 379 --watch=false: CI Pipeline Complete, Static Analysis, Build & Functional, Unit Tests, E2E Tests, and Integration all pass",
-      "npm ls nanoid --all: only nanoid@3.3.18 resolves; npm view nanoid@6.0.1 engines: Node ^22 || ^24 || >=26",
-      "npm audit --audit-level=high in root and frontend: found 0 vulnerabilities",
-      "make lint; make type-check; make build: all passed",
-      "npm test: backend 29 passed suites with 373 passed tests and frontend 14 passed files with 182 passed tests"
-    ],
-    "last_verified": "2026-08-14T10:15:21Z"
+    "last_verified": "2026-08-19T07:05:53Z"
   }
 }
