@@ -138,12 +138,6 @@ jobs:
           done
         timeout-minutes: 5
         
-      - name: Install Chromium via apt (faster than Playwright CDN)
-        run: |
-          sudo apt-get update && sudo apt-get install -y chromium-browser chromium-chromedriver
-          CHROME_PATH=$(which chromium-browser || which chromium || echo "/usr/bin/chromium-browser")
-          echo "CHROMIUM_PATH=$CHROME_PATH" >> $GITHUB_ENV
-
       - name: Install Playwright chromium-headless-shell (manual)
         run: |
           HEADLESS_DIR="$HOME/.cache/ms-playwright/chromium_headless_shell-1217"
@@ -157,6 +151,8 @@ jobs:
           HEADLESS_BIN=$(find "$HEADLESS_DIR" -name 'chrome-headless-shell*' -type f | head -1)
           echo "Headless shell installed at: $HEADLESS_BIN"
           $HEADLESS_BIN --version
+          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$HEADLESS_BIN" >> "$GITHUB_ENV"
+          echo "CHROMIUM_PATH=$HEADLESS_BIN" >> "$GITHUB_ENV"
         timeout-minutes: 10
 
       - name: Install Playwright ffmpeg
@@ -201,8 +197,6 @@ jobs:
         timeout-minutes: 15
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
-          CHROMIUM_PATH: /usr/bin/chromium-browser
           VIDEOS_DIR: /tmp/sofathek-videos
           TEMP_DIR: /tmp/sofathek-temp
           NODE_ENV: development
