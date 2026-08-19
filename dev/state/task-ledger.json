@@ -17,12 +17,20 @@
     "last_verified": "2026-08-19T07:05:53Z"
   },
   "issue-380-implement": {
-    "status": "in_progress",
+    "status": "done",
     "evidence": [
-      "Updated .opencode/commands/ghar-security-check.md to skip Python scans without manifests and isolate pip-audit when manifests exist"
-      ,"git push preflight -> lint, type-check, and build validation passed"
-      ,"gh pr checks 381 -> Static Analysis, Build & Functional, and Unit Tests passed; E2E stalled in existing Chromium apt-install step and was cancelled for a fresh run"
+      "Updated .opencode/commands/ghar-security-check.md to skip Python scans without manifests and isolate pip-audit when manifests exist",
+      "Removed the existing E2E apt Chromium install and exported the downloaded Playwright headless shell path",
+      "git push preflight -> lint, type-check, and build validation passed",
+      "gh run watch 32228916575 -> Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
     ],
-    "last_verified": "2026-08-19T07:27:42Z"
+    "last_verified": "2026-08-19T07:45:05Z"
+  },
+  "issue-380-ci": {
+    "status": "done",
+    "evidence": [
+      "gh pr view 381 --json mergeable,mergeStateStatus -> MERGEABLE and CLEAN"
+    ],
+    "last_verified": "2026-08-19T07:45:05Z"
   }
 }
