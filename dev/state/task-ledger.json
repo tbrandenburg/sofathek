@@ -45,5 +45,18 @@
       "gh run watch 32457257160 --exit-status -> CI Pipeline Success; Static Analysis, Unit Tests, Build & Functional, E2E Tests, and Integration passed"
     ],
     "last_verified": "2026-08-21T09:11:00+02:00"
+  },
+  "issue-382-pr-merge-resolution": {
+    "status": "blocked",
+    "evidence": [
+      "gh issue list --state open --limit 20 --json number,title,createdAt,url -> newest open issue is #382",
+      "gh pr list --state open --limit 30 --json number,title,createdAt,url,... -> no open pull requests",
+      "gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> no linked pull request events",
+      "gh api repos/tbrandenburg/sofathek/issues/382/comments --jq ... -> no comments containing a pull request link",
+      "gh api graphql ... issueOrPullRequest(number:382) ... -> closedByPullRequestsReferences=[] and trackedInIssues=[]",
+      "gh api repos/tbrandenburg/sofathek/pulls?state=all&sort=created&direction=desc&per_page=20 -> newest PR is merged #381; no open PR exists",
+      "git branch --all --verbose --no-abbrev -> no local or remote branch associated with issue #382"
+    ],
+    "last_verified": "2026-08-21T17:04:24+02:00"
   }
 }
