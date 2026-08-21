@@ -32,5 +32,17 @@
       "gh pr view 381 --json mergeable,mergeStateStatus -> MERGEABLE and CLEAN"
     ],
     "last_verified": "2026-08-19T07:45:05Z"
+  },
+  "issue-382-linked-pr": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 1 --json number,title,url -> #382 Security: 18 critical/high vulnerabilities found in dependencies",
+      "gh pr list --state open --limit 20 --json ... -> []",
+      "gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> no linked pull request events",
+      "gh api repos/tbrandenburg/sofathek/issues/382/comments --paginate -> no comments",
+      "gh api graphql ... issue(number:382) ... closedByPullRequestsReferences/trackedInIssues -> both empty",
+      "gh pr status -> no pull request associated with main"
+    ],
+    "last_verified": "2026-08-21T09:04:31+02:00"
   }
 }
