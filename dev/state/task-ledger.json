@@ -49,14 +49,12 @@
   "issue-382-pr-merge-resolution": {
     "status": "blocked",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,createdAt,url -> newest open issue is #382",
-      "gh pr list --state open --limit 30 --json number,title,createdAt,url,... -> no open pull requests",
-      "gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> no linked pull request events",
-      "gh api repos/tbrandenburg/sofathek/issues/382/comments --jq ... -> no comments containing a pull request link",
-      "gh api graphql ... issueOrPullRequest(number:382) ... -> closedByPullRequestsReferences=[] and trackedInIssues=[]",
-      "gh api repos/tbrandenburg/sofathek/pulls?state=all&sort=created&direction=desc&per_page=20 -> newest PR is merged #381; no open PR exists",
-      "git branch --all --verbose --no-abbrev -> no local or remote branch associated with issue #382"
+      "2026-08-22T01:08:51+02:00: gh issue list --state open --limit 1 --json number,title,url,createdAt -> newest open issue is #382",
+      "2026-08-22T01:08:51+02:00: gh pr list --state open --limit 20 --json number,title,url,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup -> [] (no open PR)",
+      "2026-08-22T01:08:51+02:00: gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> no cross-reference, connected, closed, or referenced events",
+      "5xWhy: no merge issue can be resolved because no linked PR exists; no linked PR exists because issue #382 has no GitHub cross-reference; no cross-reference exists because no PR was opened for #382; no PR was opened because the issue is an audit report without an associated implementation branch; therefore the task is blocked pending a PR link",
+      "2026-08-22T01:08:51+02:00: gh pr view 381 --json ... -> PR #381 is MERGED; all six CI/CD Pipeline checks concluded SUCCESS"
     ],
-    "last_verified": "2026-08-21T17:04:24+02:00"
+    "last_verified": "2026-08-22T01:08:51+02:00"
   }
 }
