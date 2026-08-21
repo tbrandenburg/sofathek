@@ -41,8 +41,9 @@
       "gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> no linked pull request events",
       "gh api repos/tbrandenburg/sofathek/issues/382/comments --paginate -> no comments",
       "gh api graphql ... issue(number:382) ... closedByPullRequestsReferences/trackedInIssues -> both empty",
-      "gh pr status -> no pull request associated with main"
+      "gh pr status -> no pull request associated with main",
+      "gh run watch 32457257160 --exit-status -> CI Pipeline Success; Static Analysis, Unit Tests, Build & Functional, E2E Tests, and Integration passed"
     ],
-    "last_verified": "2026-08-21T09:04:31+02:00"
+    "last_verified": "2026-08-21T09:11:00+02:00"
   }
 }
