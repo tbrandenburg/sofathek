@@ -1,62 +1,13 @@
 {
-  "issue-380-rca": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 10 --json number,title,createdAt,url,body -> latest open issue is #380",
-      "gh pr list --state open --limit 20 -> [] (no linked PR exists)",
-      "gh api repos/tbrandenburg/sofathek/issues/380 -> report identifies 17 vulnerable system-level Python packages",
-      "ghar-security-check.md:19 -> installs pip-audit globally and scans the runner environment instead of project dependencies"
-    ],
-    "last_verified": "2026-08-19T07:05:53Z"
-  },
-  "issue-380-plan": {
-    "status": "done",
-    "evidence": [
-      "5xWhy: global pip-audit scan -> runner packages reported -> no Python manifest exists -> Docker-only yt-dlp was treated as a Python project -> scanner scope must follow repository manifests"
-    ],
-    "last_verified": "2026-08-19T07:05:53Z"
-  },
-  "issue-380-implement": {
-    "status": "done",
-    "evidence": [
-      "Updated .opencode/commands/ghar-security-check.md to skip Python scans without manifests and isolate pip-audit when manifests exist",
-      "Removed the existing E2E apt Chromium install and exported the downloaded Playwright headless shell path",
-      "git push preflight -> lint, type-check, and build validation passed",
-      "gh run watch 32228916575 -> Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
-    ],
-    "last_verified": "2026-08-19T07:45:05Z"
-  },
-  "issue-380-ci": {
-    "status": "done",
-    "evidence": [
-      "gh pr view 381 --json mergeable,mergeStateStatus -> MERGEABLE and CLEAN"
-    ],
-    "last_verified": "2026-08-19T07:45:05Z"
-  },
-  "issue-382-linked-pr": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 1 --json number,title,url -> #382 Security: 18 critical/high vulnerabilities found in dependencies",
-      "gh pr list --state open --limit 20 --json ... -> []",
-      "gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> no linked pull request events",
-      "gh api repos/tbrandenburg/sofathek/issues/382/comments --paginate -> no comments",
-      "gh api graphql ... issue(number:382) ... closedByPullRequestsReferences/trackedInIssues -> both empty",
-      "gh pr status -> no pull request associated with main",
-      "gh run watch 32457257160 --exit-status -> CI Pipeline Success; Static Analysis, Unit Tests, Build & Functional, E2E Tests, and Integration passed"
-    ],
-    "last_verified": "2026-08-21T09:11:00+02:00"
-  },
   "issue-382-pr-merge-resolution": {
     "status": "blocked",
     "evidence": [
-      "2026-08-22T01:08:51+02:00: gh issue list --state open --limit 1 --json number,title,url,createdAt -> newest open issue is #382",
-      "2026-08-22T01:08:51+02:00: gh pr list --state open --limit 20 --json number,title,url,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup -> [] (no open PR)",
-      "2026-08-22T01:08:51+02:00: gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> no cross-reference, connected, closed, or referenced events",
-      "5xWhy: no merge issue can be resolved because no linked PR exists; no linked PR exists because issue #382 has no GitHub cross-reference; no cross-reference exists because no PR was opened for #382; no PR was opened because the issue is an audit report without an associated implementation branch; therefore the task is blocked pending a PR link",
-      "2026-08-22T01:08:51+02:00: gh pr view 381 --json ... -> PR #381 is MERGED; all six CI/CD Pipeline checks concluded SUCCESS",
-      "2026-08-22T01:15:16+02:00: git commit ed10d0e hooks -> 29/30 backend suites passed (1 skipped), 182/182 frontend tests passed, lint/type-check/build passed",
-      "2026-08-22T01:15:16+02:00: gh run watch 32535942390 --exit-status -> CI Pipeline Success; Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete passed"
+      "gh issue list --state open --limit 20 --json number,title,url -> newest open issue is #382: Security: 18 critical/high vulnerabilities found in dependencies",
+      "gh pr list --state open --limit 50 --json number,title,url -> [] (no open pull requests)",
+      "gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> 0 cross-referenced, connected, referenced, or closed events",
+      "5xWhy: no merge issue can be fixed because no linked PR exists; no linked PR exists because issue #382 has no GitHub cross-reference; no cross-reference exists because no PR was opened for #382; no PR was opened because #382 is an audit report without an implementation branch; therefore the task is blocked pending a PR link",
+      "gh pr view 381 --json state,mergedAt,statusCheckRollup -> PR #381 is MERGED at 2026-08-19T08:01:11Z and all six CI/CD Pipeline checks concluded SUCCESS"
     ],
-    "last_verified": "2026-08-22T01:15:16+02:00"
+    "last_verified": "2026-08-22T02:04:00+02:00"
   }
 }
