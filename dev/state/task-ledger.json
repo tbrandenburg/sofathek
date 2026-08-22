@@ -10,8 +10,8 @@
       "gh pr view 381 --json state,mergedAt,statusCheckRollup -> PR #381 is MERGED at 2026-08-19T08:01:11Z and all six CI/CD Pipeline checks concluded SUCCESS",
       "npm run validate:fast -> trailing whitespace, lint, and type checking passed (22s)",
       "git diff --check && jq empty dev/state/task-ledger.json -> passed",
-      "gh run list --limit 20 -> latest CI/CD Pipeline runs completed success on main"
+      "gh run watch 32558784811 --exit-status -> Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
     ],
-    "last_verified": "2026-08-22T09:03:51+02:00"
+    "last_verified": "2026-08-22T09:11:40+02:00"
   }
 }
