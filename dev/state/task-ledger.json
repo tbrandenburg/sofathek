@@ -15,8 +15,13 @@
       "npm audit --prefix backend --audit-level=low -> 12 vulnerabilities (1 low, 4 moderate, 6 high, 1 critical)",
       "npm audit --prefix frontend --audit-level=low -> 15 vulnerabilities (1 low, 3 moderate, 9 high, 2 critical)",
       "gh run list --branch main --limit 1 --json databaseId,status,conclusion -> CI/CD Pipeline run 32559032496 completed success",
-      "gh run watch 32592737888 --exit-status -> Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed"
+      "gh run watch 32592737888 --exit-status -> Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Complete all passed",
+      "gh api repos/tbrandenburg/sofathek/issues/382/timeline?per_page=100 -> 0 cross-reference, connected, or referenced events",
+      "gh pr list --state open --limit 20 --json number,title,url -> [] (no open pull requests)",
+      "gh api repos/tbrandenburg/sofathek/issues?state=open&sort=created&direction=desc&per_page=20 -> #382 has pull_request: null",
+      "gh run list --branch main --limit 1 --json databaseId,status,conclusion -> run 32593013592 completed success",
+      "git merge-base --is-ancestor fix/issue-382-security-audit main -> passed; no merge diff remains"
     ],
-    "last_verified": "2026-08-22T21:10:19+02:00"
+    "last_verified": "2026-08-23T01:04:04+02:00"
   }
 }
