@@ -56,7 +56,7 @@
   },
   "overrides": {
     "handlebars": ">=4.7.9",
-    "path-to-regexp": ">=0.1.13 <1.0.0"
+    "path-to-regexp": "0.1.13"
   },
   "keywords": [
     "backend",
