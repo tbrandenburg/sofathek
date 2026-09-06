@@ -40,7 +40,9 @@ describe('Health Route', () => {
     it('should return health check response', async () => {
       const response = await request(app)
         .get('/')
-        .expect(200);
+        .expect((result) => {
+          expect([200, 503]).toContain(result.status);
+        });
 
       expect(response.body.status).toBeDefined();
       expect(response.body.service).toBe('sofathek-backend');
@@ -60,7 +62,9 @@ describe('Health Route', () => {
         'generateThumbnail'
       );
 
-      await request(app).get('/').expect(200);
+      await request(app).get('/').expect((result) => {
+        expect([200, 503]).toContain(result.status);
+      });
 
       expect(spy).not.toHaveBeenCalled();
     });

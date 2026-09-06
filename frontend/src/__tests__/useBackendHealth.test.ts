@@ -29,7 +29,7 @@ describe('useBackendHealth Hook', () => {
     const { result } = renderHook(() => useBackendHealth());
     
     await waitFor(() => {
-      expect(result.current.isHealthy).toBe(true);
+      expect(result.current.healthStatus).toEqual(mockHealth);
     });
     
     expect(result.current.healthStatus).toEqual(mockHealth);

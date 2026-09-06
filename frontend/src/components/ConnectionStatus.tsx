@@ -7,7 +7,7 @@ interface ConnectionStatusProps {
 }
 
 export function ConnectionStatus({ className = '' }: ConnectionStatusProps) {
-  const { isHealthy, isChecking, lastChecked, retryCount, manualCheck } = useBackendHealth();
+  const { isHealthy, isChecking, healthStatus, lastChecked, retryCount, manualCheck } = useBackendHealth();
 
   if (isHealthy) {
     return null;
@@ -22,9 +22,14 @@ export function ConnectionStatus({ className = '' }: ConnectionStatusProps) {
     <Alert variant="destructive" className={`connection-status ${className}`} data-testid="connection-status">
       <AlertDescription className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <span className="font-medium">Backend Unavailable</span>
+          <span className="font-medium">
+            {healthStatus?.status === 'critical' ? 'Backend Needs Attention' : 'Backend Unavailable'}
+          </span>
           <span className="text-sm text-muted-foreground">
-            Unable to connect to server. Last checked: {formatLastChecked(lastChecked)}
+            {healthStatus?.status === 'critical'
+              ? 'Server is reachable, but reported a critical condition.'
+              : 'Unable to connect to server.'}{' '}
+            Last checked: {formatLastChecked(lastChecked)}
             {retryCount > 1 && ` (${retryCount} retries)`}
           </span>
         </div>

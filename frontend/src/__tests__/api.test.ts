@@ -310,5 +310,26 @@ describe('API Service', () => {
 
       expect(result).toEqual(mockHealth);
     });
+
+    test('should return critical health status when backend responds with HTTP 503', async () => {
+      const mockHealth = {
+        status: 'critical',
+        timestamp: new Date().toISOString(),
+        service: 'sofathek-backend',
+        version: '1.0.0',
+        environment: 'test',
+        uptime: 100,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => mockHealth
+      });
+
+      const result = await checkBackendHealth();
+
+      expect(result).toEqual(mockHealth);
+    });
   });
 });
