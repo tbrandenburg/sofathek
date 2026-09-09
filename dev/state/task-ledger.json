@@ -15,5 +15,18 @@
       "gh pr view 385 --json mergeable,mergeStateStatus: MERGEABLE, CLEAN"
     ],
     "last_verified": "2026-09-09T12:24:26+02:00"
+  },
+  "ISSUE-386": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 10 --json number,title,url: newest open issue is #386, linked to PR #387",
+      "gh pr view 387 --json mergeable,mergeStateStatus: PR reports MERGEABLE, CLEAN",
+      "npm audit --audit-level=high && npm audit --prefix backend --audit-level=high && npm audit --prefix frontend --audit-level=high: three audits reported found 0 vulnerabilities",
+      "./scripts/validate.sh: trailing whitespace, lint, type-check, and build validation passed (60s)",
+      "make test: backend 29 passed suites / 374 passed tests; frontend 14 files / 183 tests passed",
+      "gh pr checks 387 --watch --interval 10: workflow run 34345106340 completed with six passing CI checks, including E2E and integration",
+      "make validate: failed because the Makefile has no validate target; equivalent ./scripts/validate.sh passed"
+    ],
+    "last_verified": "2026-09-09T13:32:14+02:00"
   }
 }
