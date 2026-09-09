@@ -1,15 +1,19 @@
 {
-  "issue-382-pr-383-merge-resolution": {
+  "ISSUE-384": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,url,createdAt -> #382 is the latest open issue: Security: 18 critical/high vulnerabilities found in dependencies",
-      "gh api repos/tbrandenburg/sofathek/issues/382/timeline --paginate -> cross-reference to open PR #383",
-      "gh pr list --state open --limit 20 --json number,title,url,headRefName,baseRefName,mergeStateStatus,mergeable,statusCheckRollup -> PR #383 is MERGEABLE and CLEAN; six CI checks are SUCCESS",
-      "5xWhy: no merge fix is currently required because PR #383 is clean; the PR is clean because its branch is mergeable against main; it is mergeable because dependency lockfiles and overrides are committed; those changes address the stale vulnerable workspace lockfiles; the issue is resolved by the linked dependency-security PR",
-      "jq empty dev/state/task-ledger.json && git diff --check -> passed",
-      "gh pr view 383 --json state,mergeable,mergeStateStatus -> OPEN, MERGEABLE, CLEAN",
-      "gh run watch 32622467254 --exit-status -> CI/CD Pipeline completed success"
+      "gh issue list --state open --limit 20 --json number,title,url,createdAt: found issue #384 as the sole open issue",
+      "gh pr list --state open --limit 20: no linked open PR was exposed; created the fix PR for issue #384",
+      "5xWhy: issue #384 exists because audits found vulnerable packages; audits found them because lockfiles resolved stale transitive versions; lockfiles were stale because root and standalone workspace locks drifted; drift persisted because dependency manifests allowed patched versions but locks pinned older versions; remediation requires synchronized manifest overrides and regenerated lockfiles",
+      "npm audit --json && npm audit --prefix backend --json && npm audit --prefix frontend --json: root=0, backend=0, frontend=0 vulnerabilities",
+      "make type-check: passed for backend and frontend",
+      "make lint: passed",
+      "make test: backend 29 passed suites / 374 passed tests; frontend 14 passed files / 183 passed tests",
+      "make build: backend and frontend builds passed",
+      "git diff --check: passed",
+      "gh pr checks 385 --watch --interval 10: six CI checks passed, including E2E and integration",
+      "gh pr view 385 --json mergeable,mergeStateStatus: MERGEABLE, CLEAN"
     ],
-    "last_verified": "2026-08-23T06:21:28Z"
+    "last_verified": "2026-09-09T12:24:26+02:00"
   }
 }
