@@ -27,6 +27,6 @@
       "gh pr checks 387 --watch --interval 10: workflow run 34345106340 completed with six passing CI checks, including E2E and integration",
       "make validate: failed because the Makefile has no validate target; equivalent ./scripts/validate.sh passed"
     ],
-    "last_verified": "2026-09-09T13:25:52+02:00"
+    "last_verified": "2026-09-09T13:32:14+02:00"
   }
 }
