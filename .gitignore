@@ -195,3 +195,6 @@ tmp-cw-run-*/
 
 # Local opencode config
 .opencode/opencode.jsonc
+
+# Local codebase-as-prompt audit report
+CODEBASE-AS-PROMPT-AUDIT.md
