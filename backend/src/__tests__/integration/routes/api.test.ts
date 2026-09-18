@@ -173,6 +173,22 @@ describe('API Routes', () => {
       expect(errorMessage).toBe('Range not satisfiable');
     });
 
+    it('should serve a full video file with the correct Content-Type', async () => {
+      mockFs.statSync.mockReturnValue({ size: 1024, isFile: () => true } as any);
+      mockFs.createReadStream.mockImplementation((_filePath: fs.PathLike, options?: any) => {
+        const start = typeof options?.start === 'number' ? options.start : 0;
+        const end = typeof options?.end === 'number' ? options.end : 1023;
+        const length = Math.max(0, end - start + 1);
+        return Readable.from([Buffer.alloc(length)]) as any;
+      });
+
+      const response = await request(app)
+        .get('/api/stream/test.mp4')
+        .expect(200);
+
+      expect(response.headers['content-type']).toBe('video/mp4');
+    });
+
     it('should reject path traversal attempts', async () => {
       const response = await request(app)
         .get('/api/stream/..%2F..%2F..%2Fetc%2Fpasswd')  // URL encoded ../../../etc/passwd
@@ -423,6 +439,15 @@ describe('API Routes', () => {
       // RFC 5987: UTF-8 encoded filename* preserves the original name
       expect(response.headers['content-disposition']).toContain("filename*=UTF-8''");
       expect(response.headers['content-disposition']).toContain(encodeURIComponent(filename));
+    });
+
+    it('should serve an MKV file with the correct video MIME type', async () => {
+      const response = await request(app)
+        .get('/api/download/movie.mkv')
+        .expect(200);
+
+      expect(response.headers['content-type']).toBe('video/x-matroska');
+      expect(response.headers['content-disposition']).toContain('attachment');
     });
 
     it('should serve an MP3 file with audio/mpeg content type', async () => {

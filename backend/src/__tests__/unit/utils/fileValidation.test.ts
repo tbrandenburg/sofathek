@@ -1,4 +1,4 @@
-import { validateFilename, validateVideoFilename, validateImageFilename, validatePathInDirectory } from '../../../utils/fileValidation';
+import { validateFilename, validateVideoFilename, validateImageFilename, validatePathInDirectory, getMimeType, MIME_TYPES, VIDEO_EXTENSIONS, IMAGE_EXTENSIONS } from '../../../utils/fileValidation';
 import { AppError } from '../../../middleware/errorHandler';
 import path from 'path';
 import os from 'os';
@@ -103,6 +103,43 @@ describe('fileValidation utilities', () => {
       const relativePath = 'subdir/file.txt';
       const workingDir = process.cwd();
       expect(() => validatePathInDirectory(relativePath, workingDir)).not.toThrow();
+    });
+  });
+
+  describe('getMimeType', () => {
+    it('should return video MIME types for video extensions', () => {
+      expect(getMimeType('.mp4', 'video/mp4')).toBe('video/mp4');
+      expect(getMimeType('.mkv', 'video/mp4')).toBe('video/x-matroska');
+      expect(getMimeType('.webm', 'video/mp4')).toBe('video/webm');
+    });
+
+    it('should return image MIME types for image extensions', () => {
+      expect(getMimeType('.jpg', 'image/jpeg')).toBe('image/jpeg');
+      expect(getMimeType('.jpeg', 'image/jpeg')).toBe('image/jpeg');
+      expect(getMimeType('.png', 'image/jpeg')).toBe('image/png');
+      expect(getMimeType('.webp', 'image/jpeg')).toBe('image/webp');
+    });
+
+    it('should return audio and transcript MIME types', () => {
+      expect(getMimeType('.mp3', 'video/mp4')).toBe('audio/mpeg');
+      expect(getMimeType('.m4a', 'video/mp4')).toBe('audio/mp4');
+      expect(getMimeType('.srt', 'video/mp4')).toBe('application/x-subrip');
+    });
+
+    it('should be case-insensitive for extensions', () => {
+      expect(getMimeType('.MP4', 'video/mp4')).toBe('video/mp4');
+      expect(getMimeType('.JPG', 'image/jpeg')).toBe('image/jpeg');
+    });
+
+    it('should return the fallback for unknown extensions', () => {
+      expect(getMimeType('.exe', 'video/mp4')).toBe('video/mp4');
+      expect(getMimeType('.txt', 'image/jpeg')).toBe('image/jpeg');
+    });
+
+    it('should provide a MIME entry for every supported extension', () => {
+      [...VIDEO_EXTENSIONS, ...IMAGE_EXTENSIONS, '.mp3', '.m4a', '.srt'].forEach(ext => {
+        expect(MIME_TYPES[ext.toLowerCase()]).toBeDefined();
+      });
     });
   });
 });
