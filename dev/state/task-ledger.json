@@ -1,32 +1,13 @@
 {
-  "ISSUE-384": {
+  "ISSUE-392": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,url,createdAt: found issue #384 as the sole open issue",
-      "gh pr list --state open --limit 20: no linked open PR was exposed; created the fix PR for issue #384",
-      "5xWhy: issue #384 exists because audits found vulnerable packages; audits found them because lockfiles resolved stale transitive versions; lockfiles were stale because root and standalone workspace locks drifted; drift persisted because dependency manifests allowed patched versions but locks pinned older versions; remediation requires synchronized manifest overrides and regenerated lockfiles",
-      "npm audit --json && npm audit --prefix backend --json && npm audit --prefix frontend --json: root=0, backend=0, frontend=0 vulnerabilities",
-      "make type-check: passed for backend and frontend",
-      "make lint: passed",
-      "make test: backend 29 passed suites / 374 passed tests; frontend 14 passed files / 183 passed tests",
-      "make build: backend and frontend builds passed",
-      "git diff --check: passed",
-      "gh pr checks 385 --watch --interval 10: six CI checks passed, including E2E and integration",
-      "gh pr view 385 --json mergeable,mergeStateStatus: MERGEABLE, CLEAN"
+      "gh issue list --state open --limit 1 --search 'sort:created-desc': newest open issue is #392, https://github.com/tbrandenburg/sofathek/issues/392",
+      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate: issue timeline contains no pull_request event",
+      "gh pr list --state all --limit 20 --search '392': no pull request references issue #392",
+      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=30: latest repository PR is closed #387; no PR is linked to #392",
+      "Decision: no linked PR means there is no PR merge issue or CI failure to resolve; resolve-ci-errors workflow is not applicable"
     ],
-    "last_verified": "2026-09-09T12:24:26+02:00"
-  },
-  "ISSUE-386": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 10 --json number,title,url: newest open issue is #386, linked to PR #387",
-      "gh pr view 387 --json mergeable,mergeStateStatus: PR reports MERGEABLE, CLEAN",
-      "npm audit --audit-level=high && npm audit --prefix backend --audit-level=high && npm audit --prefix frontend --audit-level=high: three audits reported found 0 vulnerabilities",
-      "./scripts/validate.sh: trailing whitespace, lint, type-check, and build validation passed (60s)",
-      "make test: backend 29 passed suites / 374 passed tests; frontend 14 files / 183 tests passed",
-      "gh pr checks 387 --watch --interval 10: workflow run 34345106340 completed with six passing CI checks, including E2E and integration",
-      "make validate: failed because the Makefile has no validate target; equivalent ./scripts/validate.sh passed"
-    ],
-    "last_verified": "2026-09-09T13:32:14+02:00"
+    "last_verified": "2026-09-18T02:03:39+02:00"
   }
 }
