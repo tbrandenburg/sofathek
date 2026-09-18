@@ -2,9 +2,33 @@
 import path from 'path';
 import { AppError } from '../middleware/errorHandler';
 
-const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
-const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+export const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
+export const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
 const DOWNLOADABLE_EXTENSIONS = [...VIDEO_EXTENSIONS, '.mp3', '.m4a', '.srt'];
+
+export const MIME_TYPES: Record<string, string> = {
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.ogg': 'video/ogg',
+  '.avi': 'video/x-msvideo',
+  '.mov': 'video/quicktime',
+  '.wmv': 'video/x-ms-wmv',
+  '.flv': 'video/x-flv',
+  '.mkv': 'video/x-matroska',
+  '.m4v': 'video/mp4',
+  '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
+  '.srt': 'application/x-subrip',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp'
+};
+
+export function getMimeType(extension: string, fallback: string): string {
+  const normalized = extension.toLowerCase();
+  return MIME_TYPES[normalized] || fallback;
+}
 
 export function validateFilename(filename: string, allowedExtensions: string[]): void {
   if (!filename) {

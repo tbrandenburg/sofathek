@@ -6,7 +6,7 @@ import { VideoService } from '../services/videoService';
 import { thumbnailService } from '../services';
 import { catchAsync, AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
-import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename } from '../utils/fileValidation';
+import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename, getMimeType } from '../utils/fileValidation';
 import youtubeRouter from './youtube';
 
 const router = Router();
@@ -151,7 +151,7 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
       'Content-Range': `bytes ${start}-${end}/${fileSize}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': chunkSize,
-      'Content-Type': getVideoMimeType(path.extname(filename))
+      'Content-Type': getMimeType(path.extname(filename), 'video/mp4')
     });
     
     logger.info(`Serving partial content: ${start}-${end}/${fileSize}`);
@@ -162,7 +162,7 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
     res.writeHead(200, {
       'Content-Length': fileSize,
       'Accept-Ranges': 'bytes',
-      'Content-Type': getVideoMimeType(path.extname(filename))
+      'Content-Type': getMimeType(path.extname(filename), 'video/mp4')
     });
     
     logger.info(`Serving full file: ${fileSize} bytes`);
@@ -193,10 +193,7 @@ router.get('/download/:filename', catchAsync(async (req: Request, res: Response)
   }
 
   const extension = path.extname(filename).toLowerCase();
-  const contentType = extension === '.mp3' ? 'audio/mpeg'
-    : extension === '.m4a' ? 'audio/mp4'
-      : extension === '.srt' ? 'application/x-subrip'
-        : getVideoMimeType(extension);
+  const contentType = getMimeType(extension, 'video/mp4');
 
   res.setHeader('Content-Type', contentType);
   // RFC 5987: use filename* with UTF-8 percent-encoding for non-ASCII filenames
@@ -280,7 +277,7 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
       'Content-Range': `bytes ${start}-${end}/${fileSize}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': chunkSize,
-      'Content-Type': getThumbnailMimeType(ext),
+      'Content-Type': getMimeType(ext, 'image/jpeg'),
       'Cache-Control': `public, max-age=${THUMBNAIL_CACHE_DURATION}`,
       'X-Content-Type-Options': 'nosniff'
     });
@@ -290,7 +287,7 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     res.writeHead(200, {
       'Content-Length': fileSize,
       'Accept-Ranges': 'bytes',
-      'Content-Type': getThumbnailMimeType(ext),
+      'Content-Type': getMimeType(ext, 'image/jpeg'),
       'Cache-Control': `public, max-age=${THUMBNAIL_CACHE_DURATION}`,
       'X-Content-Type-Options': 'nosniff'
     });
@@ -298,38 +295,6 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     fs.createReadStream(thumbnailPath).pipe(res);
   }
 }));
-
-/**
- * Helper function to get MIME type for thumbnail files
- */
-function getThumbnailMimeType(extension: string): string {
-  const mimeTypes: Record<string, string> = {
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.webp': 'image/webp'
-  };
-  return mimeTypes[extension] || 'image/jpeg';
-}
-
-/**
- * Helper function to get MIME type for video files
- */
-function getVideoMimeType(extension: string): string {
-  const mimeTypes: Record<string, string> = {
-    '.mp4': 'video/mp4',
-    '.webm': 'video/webm',
-    '.ogg': 'video/ogg',
-    '.avi': 'video/x-msvideo',
-    '.mov': 'video/quicktime',
-    '.wmv': 'video/x-ms-wmv',
-    '.flv': 'video/x-flv',
-    '.mkv': 'video/x-matroska',
-    '.m4v': 'video/mp4'
-  };
-  
-  return mimeTypes[extension.toLowerCase()] || 'video/mp4';
-}
 
 // Mount YouTube routes
 router.use('/youtube', youtubeRouter);

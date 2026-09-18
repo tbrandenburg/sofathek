@@ -141,6 +141,17 @@ describe('GET /api/thumbnails/:filename', () => {
 
       expect(response.headers['content-type']).toBe('image/webp');
     });
+
+    it('should return correct MIME type for png', async () => {
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.statSync.mockReturnValue({ size: 10000, isFile: () => true } as any);
+
+      const response = await request(app)
+        .get('/api/thumbnails/image.png')
+        .expect(200);
+
+      expect(response.headers['content-type']).toBe('image/png');
+    });
   });
 
   describe('Error Cases', () => {
