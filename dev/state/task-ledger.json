@@ -1,14 +1,13 @@
 {
   "ISSUE-392": {
-    "status": "done",
+    "status": "blocked",
     "evidence": [
-      "gh issue list --state open --limit 1 --search 'sort:created-desc': newest open issue is #392, https://github.com/tbrandenburg/sofathek/issues/392",
-      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate: issue timeline contains no pull_request event",
-      "gh pr list --state all --limit 20 --search '392': no pull request references issue #392",
-      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=30: latest repository PR is closed #387; no PR is linked to #392",
-      "Decision: no linked PR means there is no PR merge issue or CI failure to resolve; resolve-ci-errors workflow is not applicable",
-      "gh run watch 35289749203 --interval 15 --exit-status: CI/CD Pipeline passed all gates for commit d52fb21, including static analysis, unit tests, build, E2E, integration, and final pipeline success"
+      "gh issue list --state open --limit 10: newest open issue is #392, https://github.com/tbrandenburg/sofathek/issues/392",
+      "gh api repos/tbrandenburg/sofathek/issues/392/comments --paginate: investigation comment states '#392 ... no linked PR exists'",
+      "gh pr list --state open --limit 100 --json number,title,url: no open pull requests",
+      "gh pr list --state all --limit 100 --json number,title,url: newest repository PR is closed #387; no PR references #392",
+      "Decision: no linked PR means there is no PR merge issue to resolve; resolve-ci-errors implementation is not applicable"
     ],
-    "last_verified": "2026-09-18T02:10:34+02:00"
+    "last_verified": "2026-09-18T06:05:11+02:00"
   }
 }
