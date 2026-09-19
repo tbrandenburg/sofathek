@@ -15,5 +15,15 @@
       "make lint && make test && make build: lint passed; backend 29 suites/383 tests passed; frontend 14 files/183 tests passed; backend and frontend builds passed"
     ],
     "last_verified": "2026-09-19T14:16:20+02:00"
+  },
+  "issue-392-linked-pr": {
+    "status": "blocked",
+    "evidence": [
+      "gh issue list --state open --limit 20 --json number,title,createdAt,url -> newest open issue is #392",
+      "gh issue view 392 --comments --json number,title,state,body,comments,url -> investigation states: Issue state: OPEN — no linked PR exists",
+      "gh pr list --state open --limit 10 --json number,title,url,mergeStateStatus,headRefName,baseRefName -> []",
+      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=100 -> no pull request references #392 or #391"
+    ],
+    "last_verified": "2026-09-19T17:04:54+02:00"
   }
 }
