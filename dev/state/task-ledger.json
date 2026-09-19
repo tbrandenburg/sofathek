@@ -2,12 +2,12 @@
   "latest-open-issue-linked-pr": {
     "status": "blocked",
     "evidence": [
-      "gh issue list --state open --limit 100 --json number,title,url,createdAt | jq -r 'sort_by(.createdAt) | reverse[]' -> newest open issue is #392, https://github.com/tbrandenburg/sofathek/issues/392",
-      "gh issue view 392 --comments --json comments -> investigation comment says: Issue state: OPEN — no linked PR exists",
-      "gh pr list --state open --limit 100 --json number,title,url -> [] (zero open pull requests)",
-      "gh pr view 393 --json number,state,title,body,statusCheckRollup -> MERGED; title fixes #389, not #392; all 6 CI checks SUCCESS",
-      "5xWhy: no merge issue can be resolved because #392 has no linked PR; because no open PR exists; because the only nearby PR (#393) is merged; because #393 fixes #389; therefore no scoped PR or merge failure exists"
+      "gh issue list --repo tbrandenburg/sofathek --state open --limit 1 --json number,title,createdAt,url -> newest open issue is #392, https://github.com/tbrandenburg/sofathek/issues/392",
+      "gh issue view 392 --comments --json comments -> issue comment states: Issue state: OPEN — no linked PR exists",
+      "gh pr list --repo tbrandenburg/sofathek --state open --limit 20 --json number,title,url -> [] (zero open pull requests)",
+      "gh pr list --repo tbrandenburg/sofathek --state all --search 392 --json number,title,url,state -> [] (no PR references issue #392)",
+      "5xWhy: no merge issue can be resolved because #392 has no linked PR; because no open PR exists; because repository-wide PR search finds no #392 reference; therefore there is no scoped PR or merge failure to fix"
     ],
-    "last_verified": "2026-09-19T09:04:08+02:00"
+    "last_verified": "2026-09-19T12:06:17+02:00"
   }
 }
