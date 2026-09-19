@@ -1,13 +1,19 @@
 {
-  "latest-open-issue-linked-pr": {
-    "status": "blocked",
+  "issue-390": {
+    "status": "done",
     "evidence": [
-      "gh issue list --repo tbrandenburg/sofathek --state open --limit 1 --json number,title,createdAt,url -> newest open issue is #392, https://github.com/tbrandenburg/sofathek/issues/392",
-      "gh issue view 392 --comments --json comments -> issue comment states: Issue state: OPEN — no linked PR exists",
-      "gh pr list --repo tbrandenburg/sofathek --state open --limit 20 --json number,title,url -> [] (zero open pull requests)",
-      "gh pr list --repo tbrandenburg/sofathek --state all --search 392 --json number,title,url,state -> [] (no PR references issue #392)",
-      "5xWhy: no merge issue can be resolved because #392 has no linked PR; because no open PR exists; because repository-wide PR search finds no #392 reference; therefore there is no scoped PR or merge failure to fix"
+      "gh issue list --state open --limit 20 --json number,title,url,createdAt,body,updatedAt: issue #390 is the newest open issue with a linked PR",
+      "gh pr list --state all --limit 50 --json number,title,url,state,createdAt,mergeStateStatus,headRefName,baseRefName: PR #394 links issue #390"
     ],
-    "last_verified": "2026-09-19T12:06:17+02:00"
+    "last_verified": "2026-09-19T14:16:20+02:00"
+  },
+  "pr-394-merge": {
+    "status": "done",
+    "evidence": [
+      "gh api repos/tbrandenburg/sofathek/pulls/394 --jq '{number,state,mergeable,mergeable_state,base:.base.sha,head:.head.sha,updated_at,auto_merge}': mergeable=true and mergeable_state=clean",
+      "gh pr checks 394: 6/6 checks passed, including CI Pipeline Complete",
+      "make lint && make test && make build: lint passed; backend 29 suites/383 tests passed; frontend 14 files/183 tests passed; backend and frontend builds passed"
+    ],
+    "last_verified": "2026-09-19T14:16:20+02:00"
   }
 }
