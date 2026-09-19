@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { YouTubeDownload } from '../components/YouTubeDownload';
+import { YouTubeDownload } from '../components/YouTubeDownload/YouTubeDownload';
 import { useYouTubeDownload } from '../hooks/useYouTube';
 
 // Mock the YouTube hooks

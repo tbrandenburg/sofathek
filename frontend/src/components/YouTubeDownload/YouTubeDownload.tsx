@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Alert, AlertDescription } from './ui/alert';
-import { useYouTubeDownload } from '../hooks/useYouTube';
-import { validateVideoUrl } from '../services/youtube';
-import { getUserFriendlyErrorMessage } from '../lib/error';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useYouTubeDownload } from '@/hooks/useYouTube';
+import { validateVideoUrl } from '@/services/youtube';
+import { getUserFriendlyErrorMessage } from '@/lib/error';
 
 interface YouTubeDownloadProps {
   className?: string;
