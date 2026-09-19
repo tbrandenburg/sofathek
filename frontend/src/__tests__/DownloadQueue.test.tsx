@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { DownloadQueue } from '../components/DownloadQueue';
+import { DownloadQueue } from '../components/DownloadQueue/DownloadQueue';
 import { useDownloadQueue, useCancelDownload, useClearDownloadQueue } from '../hooks/useYouTube';
 import { QueueStatus } from '../types/youtube';
 

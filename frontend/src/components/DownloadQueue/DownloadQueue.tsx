@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { getUserFriendlyErrorMessage } from '../lib/error';
-import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Alert, AlertDescription } from './ui/alert';
-import { useDownloadQueue, useCancelDownload, useClearDownloadQueue } from '../hooks/useYouTube';
+import { getUserFriendlyErrorMessage } from '@/lib/error';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useDownloadQueue, useCancelDownload, useClearDownloadQueue } from '@/hooks/useYouTube';
 import { useQueryClient } from '@tanstack/react-query';
-import { QueueItem } from '../types/youtube';
+import { QueueItem } from '@/types/youtube';
 
 interface DownloadQueueProps {
   className?: string;
