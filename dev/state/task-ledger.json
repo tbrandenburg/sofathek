@@ -24,8 +24,11 @@
       "gh pr list --state open --limit 10 --json number,title,url,mergeStateStatus,headRefName,baseRefName -> []",
       "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=100 -> no pull request references #392 or #391",
       "gh api repos/tbrandenburg/sofathek/issues?state=open&per_page=100 --jq '.[] | select(.pull_request == null) | [.number,.created_at,.title,.html_url] | @tsv' -> 392 is the newest open issue and has no linked PR",
-      "gh pr checks 394 -> 6/6 checks passed; gh api repos/tbrandenburg/sofathek/pulls/394 -> state=closed, merged=true, merged_at=2026-09-19T12:34:06Z"
+      "gh pr checks 394 -> 6/6 checks passed; gh api repos/tbrandenburg/sofathek/pulls/394 -> state=closed, merged=true, merged_at=2026-09-19T12:34:06Z",
+      "gh pr list --state all --limit 100 --search \"Fixes #392\" -> []",
+      "gh pr list --state all --limit 100 --search \"issue-392\" -> []",
+      "gh issue view 392 body/comments -> refactor is conditional on a third backend feature axis; no such trigger exists in the current open issue list"
     ],
-    "last_verified": "2026-09-19T19:03:42+02:00"
+    "last_verified": "2026-09-19T22:08:59+02:00"
   }
 }
