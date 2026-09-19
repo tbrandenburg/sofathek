@@ -1,12 +1,13 @@
 {
-  "issue-392-linked-pr": {
-    "status": "done",
+  "latest-open-issue-linked-pr": {
+    "status": "blocked",
     "evidence": [
-      "gh issue list --state open --limit 1 --json number,title,url -> #392 refactor(backend): [optional] group video-library feature into a vertical slice like YouTube",
-      "gh api repos/tbrandenburg/sofathek/issues/392/comments -> investigation comment states: Issue state: OPEN — no linked PR exists",
-      "gh pr list --state open --limit 50 -> []",
-      "gh pr view 393 --json state,mergedAt,statusCheckRollup -> state MERGED; mergedAt 2026-09-18T15:24:58Z; all 6 CI checks SUCCESS"
+      "gh issue list --state open --limit 100 --json number,title,url,createdAt | jq -r 'sort_by(.createdAt) | reverse[]' -> newest open issue is #392, https://github.com/tbrandenburg/sofathek/issues/392",
+      "gh issue view 392 --comments --json comments -> investigation comment says: Issue state: OPEN — no linked PR exists",
+      "gh pr list --state open --limit 100 --json number,title,url -> [] (zero open pull requests)",
+      "gh pr view 393 --json number,state,title,body,statusCheckRollup -> MERGED; title fixes #389, not #392; all 6 CI checks SUCCESS",
+      "5xWhy: no merge issue can be resolved because #392 has no linked PR; because no open PR exists; because the only nearby PR (#393) is merged; because #393 fixes #389; therefore no scoped PR or merge failure exists"
     ],
-    "last_verified": "2026-09-18T20:09:17Z"
+    "last_verified": "2026-09-19T09:04:08+02:00"
   }
 }
