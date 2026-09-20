@@ -2,11 +2,12 @@
   "discover-latest-issue-and-pr": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,url -> newest open issue is #392: refactor(backend): [optional] group video-library feature into a vertical slice like YouTube",
-      "gh api repos/tbrandenburg/sofathek/issues/392/comments -> investigation comment states Issue state: OPEN - no linked PR exists",
+      "gh issue list --state open --limit 10 --json number,title,createdAt,url -> newest open issue is #392: refactor(backend): [optional] group video-library feature into a vertical slice like YouTube",
+      "gh issue view 392 --comments --json number,title,state,comments,url -> investigation comment states Issue state: OPEN - no linked PR exists",
+      "gh pr list --state open --limit 20 --json number,title,url -> no open pull requests",
       "gh pr view 394 --json state,mergeStateStatus,statusCheckRollup -> PR #394 is MERGED; all six CI/CD Pipeline checks have conclusion SUCCESS"
     ],
-    "last_verified": "2026-09-20T13:06:05Z"
+    "last_verified": "2026-09-20T15:05:00Z"
   },
   "resolve-pr-merge-issues": {
     "status": "blocked",
@@ -15,13 +16,13 @@
       "gh pr view 394 --json state,mergeStateStatus,mergeable -> PR #394 is MERGED and has no actionable merge issue",
       "Issue #392 investigation comment instructs: do not implement until a third backend feature axis exists"
     ],
-    "last_verified": "2026-09-20T13:06:05Z"
+    "last_verified": "2026-09-20T15:05:00Z"
   },
   "verify-ci-and-merge-readiness": {
     "status": "done",
     "evidence": [
       "gh pr view 394 --json statusCheckRollup -> Level 1 Static Analysis, Level 2 Build & Functional, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, and CI Pipeline Complete all concluded SUCCESS"
     ],
-    "last_verified": "2026-09-20T13:06:05Z"
+    "last_verified": "2026-09-20T15:05:00Z"
   }
 }
