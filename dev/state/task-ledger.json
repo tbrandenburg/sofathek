@@ -28,11 +28,21 @@
   "DISCOVER_LATEST_OPEN_ISSUE_AND_PR_2026_09_20": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 1 --json number,title,url,createdAt -> #392, refactor(backend): [optional] group video-library feature into a vertical slice like YouTube, https://github.com/tbrandenburg/sofathek/issues/392",
+      "gh issue list --state open --limit 1 --json number,title,createdAt -> #392, refactor(backend): [optional] group video-library feature into a vertical slice like YouTube, https://github.com/tbrandenburg/sofathek/issues/392",
       "gh api repos/tbrandenburg/sofathek/issues/392 --jq '{number,title,state,body,events_url,pull_request}' -> pull_request: null",
       "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=100 -> no PR for #392 and no open PRs",
       "gh api repos/tbrandenburg/sofathek/issues/392/comments --paginate -> issue investigation states: OPEN — no linked PR exists"
     ],
     "last_verified": "2026-09-20T18:04:02+02:00"
+  },
+  "issue-392-linked-pr": {
+    "status": "blocked",
+    "evidence": [
+      "gh issue list --state open --limit 1 --search \"sort:created-desc\" --json number,title,url -> #392 https://github.com/tbrandenburg/sofathek/issues/392",
+      "gh issue view 392 --comments --json number,title,url,comments,body -> investigation comment states: Issue state: OPEN — no linked PR exists",
+      "gh pr list --state open --limit 30 --json number,title,url -> []",
+      "gh api repos/tbrandenburg/sofathek/issues/392/events --paginate -> no pull_request event"
+    ],
+    "last_verified": "2026-09-20T19:03:53Z"
   }
 }
