@@ -19,8 +19,8 @@
   "issue-392-linked-pr": {
     "status": "blocked",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,createdAt,url -> newest open issue is #392",
-      "gh issue view 392 --comments --json number,title,state,body,comments,url -> investigation states: Issue state: OPEN — no linked PR exists",
+      "gh issue list --state open --limit 1 --json number,title,url,createdAt,updatedAt -> newest open issue is #392",
+      "gh api repos/tbrandenburg/sofathek/issues/392/comments --paginate -> investigation states: Issue state: OPEN — no linked PR exists",
       "gh pr list --state open --limit 100 --json number,title,url,mergeStateStatus,mergeable -> []",
       "gh api 'search/issues?q=repo:tbrandenburg/sofathek+is:pr+is:all+392' -> no results",
       "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate -> no cross-referenced pull_request event",
@@ -31,6 +31,6 @@
       "gh pr list --state all --limit 100 --search \"issue-392\" -> []",
       "gh issue view 392 body/comments -> refactor is conditional on a third backend feature axis; no such trigger exists in the current open issue list"
     ],
-    "last_verified": "2026-09-19T23:05:29+02:00"
+    "last_verified": "2026-09-20T03:05:09+02:00"
   }
 }
