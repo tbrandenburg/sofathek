@@ -1,36 +1,20 @@
 {
-  "issue-390": {
+  "issue-392-latest-open": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,url,createdAt,body,updatedAt: issue #390 is the newest open issue with a linked PR",
-      "gh pr list --state all --limit 50 --json number,title,url,state,createdAt,mergeStateStatus,headRefName,baseRefName: PR #394 links issue #390"
+      "gh api 'repos/tbrandenburg/sofathek/issues?state=open&per_page=100&sort=created&direction=desc' --jq '.[] | select(.pull_request == null) | [.number,.created_at,.title,.html_url] | @tsv': #392 is the newest open issue",
+      "gh issue view 392 --comments --json number,title,state,body,comments,url: issue #392 explicitly states it is conditional and has no linked PR",
+      "gh api 'repos/tbrandenburg/sofathek/pulls?state=all&per_page=100' --jq ...: no pull request references issue #392"
     ],
-    "last_verified": "2026-09-19T14:16:20+02:00"
+    "last_verified": "2026-09-20T05:03:55+02:00"
   },
-  "pr-394-merge": {
+  "pr-394-merge-status": {
     "status": "done",
     "evidence": [
-      "gh api repos/tbrandenburg/sofathek/pulls/394 --jq '{number,state,mergeable,mergeable_state,base:.base.sha,head:.head.sha,updated_at,auto_merge}': mergeable=true and mergeable_state=clean",
+      "gh api repos/tbrandenburg/sofathek/pulls/394 --jq '{number,title,state,merged,merged_at,mergeable,mergeable_state}': PR #394 is closed and merged=true at 2026-09-19T12:34:06Z",
       "gh pr checks 394: 6/6 checks passed, including CI Pipeline Complete",
-      "make lint && make test && make build: lint passed; backend 29 suites/383 tests passed; frontend 14 files/183 tests passed; backend and frontend builds passed"
+      "git status --short --branch: main...origin/main with no working-tree changes before ledger update"
     ],
-    "last_verified": "2026-09-19T14:16:20+02:00"
-  },
-  "issue-392-linked-pr": {
-    "status": "blocked",
-    "evidence": [
-      "gh issue list --state open --limit 1 --json number,title,url,createdAt,updatedAt -> newest open issue is #392",
-      "gh api repos/tbrandenburg/sofathek/issues/392/comments --paginate -> investigation states: Issue state: OPEN — no linked PR exists",
-      "gh pr list --state open --limit 100 --json number,title,url,mergeStateStatus,mergeable -> []",
-      "gh api 'search/issues?q=repo:tbrandenburg/sofathek+is:pr+is:all+392' -> no results",
-      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate -> no cross-referenced pull_request event",
-      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=100 -> no pull request references #392 or #391",
-      "gh api repos/tbrandenburg/sofathek/issues?state=open&per_page=100 --jq '.[] | select(.pull_request == null) | [.number,.created_at,.title,.html_url] | @tsv' -> 392 is the newest open issue and has no linked PR",
-      "gh pr checks 394 -> 6/6 checks passed; gh api repos/tbrandenburg/sofathek/pulls/394 -> state=closed, merged=true, merged_at=2026-09-19T12:34:06Z",
-      "gh pr list --state all --limit 100 --search \"Fixes #392\" -> []",
-      "gh pr list --state all --limit 100 --search \"issue-392\" -> []",
-      "gh issue view 392 body/comments -> refactor is conditional on a third backend feature axis; no such trigger exists in the current open issue list"
-    ],
-    "last_verified": "2026-09-20T03:05:09+02:00"
+    "last_verified": "2026-09-20T05:03:55+02:00"
   }
 }
