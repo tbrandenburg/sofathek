@@ -24,5 +24,15 @@
       "gh pr view 394 --json statusCheckRollup -> Level 1 Static Analysis, Level 2 Build & Functional, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, and CI Pipeline Complete all concluded SUCCESS"
     ],
     "last_verified": "2026-09-20T15:11:48Z"
+  },
+  "DISCOVER_LATEST_OPEN_ISSUE_AND_PR_2026_09_20": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 1 --json number,title,url,createdAt -> #392, refactor(backend): [optional] group video-library feature into a vertical slice like YouTube, https://github.com/tbrandenburg/sofathek/issues/392",
+      "gh api repos/tbrandenburg/sofathek/issues/392 --jq '{number,title,state,body,events_url,pull_request}' -> pull_request: null",
+      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=100 -> no PR for #392 and no open PRs",
+      "gh api repos/tbrandenburg/sofathek/issues/392/comments --paginate -> issue investigation states: OPEN — no linked PR exists"
+    ],
+    "last_verified": "2026-09-20T18:04:02+02:00"
   }
 }
