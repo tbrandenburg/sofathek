@@ -16,5 +16,15 @@
       "git status --short --branch: main...origin/main with no working-tree changes before ledger update"
     ],
     "last_verified": "2026-09-20T05:03:55+02:00"
+  },
+  "current-issue-392-pr-verification": {
+    "status": "done",
+    "evidence": [
+      "gh api 'repos/tbrandenburg/sofathek/issues?state=open&per_page=100&sort=created&direction=desc': #392 is the newest open issue",
+      "gh issue view 392 --comments --json number,title,state,body,comments,url: issue #392 explicitly states it has no linked PR",
+      "gh api 'repos/tbrandenburg/sofathek/pulls?state=open&per_page=100': no open pull requests",
+      "gh pr checks 394: 6/6 checks passed; PR #394 is merged and is linked to closed issue #390"
+    ],
+    "last_verified": "2026-09-20T10:04:42+02:00"
   }
 }
