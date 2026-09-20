@@ -1,30 +1,27 @@
 {
-  "issue-392-latest-open": {
+  "discover-latest-issue-and-pr": {
     "status": "done",
     "evidence": [
-      "gh api 'repos/tbrandenburg/sofathek/issues?state=open&per_page=100&sort=created&direction=desc' --jq '.[] | select(.pull_request == null) | [.number,.created_at,.title,.html_url] | @tsv': #392 is the newest open issue",
-      "gh issue view 392 --comments --json number,title,state,body,comments,url: issue #392 explicitly states it is conditional and has no linked PR",
-      "gh api 'repos/tbrandenburg/sofathek/pulls?state=all&per_page=100' --jq ...: no pull request references issue #392"
+      "gh issue list --state open --limit 20 --json number,title,url -> newest open issue is #392: refactor(backend): [optional] group video-library feature into a vertical slice like YouTube",
+      "gh api repos/tbrandenburg/sofathek/issues/392/comments -> investigation comment states Issue state: OPEN - no linked PR exists",
+      "gh pr view 394 --json state,mergeStateStatus,statusCheckRollup -> PR #394 is MERGED; all six CI/CD Pipeline checks have conclusion SUCCESS"
     ],
-    "last_verified": "2026-09-20T05:03:55+02:00"
+    "last_verified": "2026-09-20T13:06:05Z"
   },
-  "pr-394-merge-status": {
-    "status": "done",
+  "resolve-pr-merge-issues": {
+    "status": "blocked",
     "evidence": [
-      "gh api repos/tbrandenburg/sofathek/pulls/394 --jq '{number,title,state,merged,merged_at,mergeable,mergeable_state}': PR #394 is closed and merged=true at 2026-09-19T12:34:06Z",
-      "gh pr checks 394: 6/6 checks passed, including CI Pipeline Complete",
-      "git status --short --branch: main...origin/main with no working-tree changes before ledger update"
+      "gh pr list --state open --limit 20 --json number,title,url -> no open pull requests",
+      "gh pr view 394 --json state,mergeStateStatus,mergeable -> PR #394 is MERGED and has no actionable merge issue",
+      "Issue #392 investigation comment instructs: do not implement until a third backend feature axis exists"
     ],
-    "last_verified": "2026-09-20T05:03:55+02:00"
+    "last_verified": "2026-09-20T13:06:05Z"
   },
-  "current-issue-392-pr-verification": {
+  "verify-ci-and-merge-readiness": {
     "status": "done",
     "evidence": [
-      "gh api 'repos/tbrandenburg/sofathek/issues?state=open&per_page=100&sort=created&direction=desc': #392 is the newest open issue",
-      "gh issue view 392 --comments --json number,title,state,body,comments,url: issue #392 explicitly states it has no linked PR",
-      "gh api 'repos/tbrandenburg/sofathek/pulls?state=open&per_page=100': no open pull requests",
-      "gh pr checks 394: 6/6 checks passed; PR #394 is merged and is linked to closed issue #390"
+      "gh pr view 394 --json statusCheckRollup -> Level 1 Static Analysis, Level 2 Build & Functional, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, and CI Pipeline Complete all concluded SUCCESS"
     ],
-    "last_verified": "2026-09-20T10:04:42+02:00"
+    "last_verified": "2026-09-20T13:06:05Z"
   }
 }
