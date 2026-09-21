@@ -2,27 +2,28 @@
   "latest-open-issue-and-linked-pr": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,createdAt,url => newest issue is #392, created 2026-09-17T20:37:31Z",
-      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate --jq '.[].event' => only commented and labeled events; no pull-request reference",
-      "gh pr list --state open --limit 1 --json number,url => []"
+      "gh issue list --state open --limit 20 --json number,title,createdAt,url => newest open issue is #392, created 2026-09-17T20:37:31Z",
+      "gh issue view 392 --comments --json number,state,comments => issue #392 explicitly states no linked PR exists",
+      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=100 => newest issue-linked PR is #394 for issue #390"
     ],
-    "last_verified": "2026-09-21T07:06:21Z"
+    "last_verified": "2026-09-21T10:05:36+02:00"
   },
   "resolve-linked-pr-merge-issues": {
     "status": "done",
     "evidence": [
-      "No linked pull request exists for issue #392; no PR merge issue or CI failure is actionable",
-      "gh run list --limit 1 --json status,conclusion,url,headBranch => completed/success on main: https://github.com/tbrandenburg/sofathek/actions/runs/35563663352"
+      "gh pr view 394 --json state,mergedAt,mergeable,mergeStateStatus => state MERGED at 2026-09-19T12:34:06Z; mergeable and mergeStateStatus UNKNOWN because the PR is closed",
+      "gh pr checks 394 => CI Pipeline Complete, Level 4 E2E Tests, Level 1 Static Analysis, Level 5 Integration, Level 2 Build & Functional, and Level 3 Unit Tests all pass",
+      "gh run list --branch fix/issue-390-align-component-folder-skeleton --limit 10 --json conclusion,url => completed/success run https://github.com/tbrandenburg/sofathek/actions/runs/35442606481"
     ],
-    "last_verified": "2026-09-21T07:06:21Z"
+    "last_verified": "2026-09-21T10:05:36+02:00"
   },
   "validate-and-report": {
     "status": "done",
     "evidence": [
       "git status --short --branch => ## main...origin/main",
-      "gh issue view 392 --comments => issue remains OPEN and its investigation states no linked PR",
-      "git status --short --branch => ## main...origin/main"
+      "gh api repos/tbrandenburg/sofathek/pulls/394 => merged=true, mergeable_state=unknown, merge_commit_sha=bebc2e491340ba3298c00ed7977e4ee424e9ef63",
+      "No source changes were required because the only identified PR merge concern is historical/closed and all recorded checks passed"
     ],
-    "last_verified": "2026-09-21T07:06:21Z"
+    "last_verified": "2026-09-21T10:05:36+02:00"
   }
 }
