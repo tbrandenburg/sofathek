@@ -2,32 +2,27 @@
   "identify-latest-open-issue": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,url,createdAt,updatedAt -> latest open issue is #392",
-      "gh api graphql issue(392) timelineItems -> no CROSS_REFERENCED_EVENT or CONNECTED_EVENT for a pull request",
-      "gh pr list --state open --limit 20 -> no open PRs"
+      "gh issue list --state open --limit 20 --json number,title,createdAt,url -> latest open issue is #392",
+      "gh api graphql issue timeline -> issue #392 has no cross-referenced or connected pull request"
     ],
-    "last_verified": "2026-09-21T17:04:40+02:00"
+    "last_verified": "2026-09-21T19:05:43+02:00"
   },
   "resolve-linked-pr-merge-issues": {
     "status": "done",
     "evidence": [
-      "gh pr list --state all --limit 30 -> newest issue-linked PR is #394 for closed issue #390; no PR references #392",
-      "gh pr view 394 --json state,mergedAt,mergeable,mergeStateStatus,statusCheckRollup -> MERGED at 2026-09-19T12:34:06Z; all six CI checks SUCCESS",
-      "No merge fix implemented: #392 has no linked PR and #394 is merged with passing checks"
+      "gh pr list --state open --limit 20 -> no open pull requests",
+      "gh pr list --state all --limit 30 -> #394 is the newest issue-linked pull request and fixes #390, not #392",
+      "gh pr view 394 --json state,mergedAt,statusCheckRollup -> MERGED at 2026-09-19T12:34:06Z with successful checks",
+      "No source fix was required: the latest open issue has no linked PR and the existing linked PR is merged"
     ],
-    "last_verified": "2026-09-21T17:04:40+02:00"
+    "last_verified": "2026-09-21T19:05:43+02:00"
   },
   "validate-and-report": {
     "status": "done",
     "evidence": [
-      "git status --short --branch -> clean main worktree before ledger refresh",
-      "No source changes were required because #392 has no linked PR and #394 is merged with passing checks",
-      "gh run list --limit 20 --json databaseId,status,conclusion,headBranch -> latest main runs completed successfully",
-      "Initial push CI run 35616978254 failed at npm ci because ffmpeg-static download returned GitHub Releases HTTP 504; no source defect was present",
-      "gh run rerun 35616978254 --failed -> retry completed successfully",
-      "gh run watch 35616978254 --exit-status -> Level 1 Static Analysis, Level 2 Build & Functional, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, and CI Pipeline Complete all passed",
-      "gh api repos/tbrandenburg/sofathek/commits/main/check-runs --jq '[.check_runs[] | select(.status != \"completed\" or .conclusion != \"success\")] | length' -> 0"
+      "git status --short --branch -> clean before ledger refresh",
+      "Only dev/state/task-ledger.json was changed; no application behavior was modified"
     ],
-    "last_verified": "2026-09-21T17:14:54+02:00"
+    "last_verified": "2026-09-21T19:05:43+02:00"
   }
 }
