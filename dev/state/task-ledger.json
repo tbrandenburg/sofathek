@@ -2,25 +2,27 @@
   "latest-open-issue-and-linked-pr": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 100 --json number,title,url,createdAt,body,author,labels | jq 'sort_by(.createdAt) | reverse | .[0:10]' => newest issue is #392, created 2026-09-17T20:37:31Z",
-      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate => no cross-referenced, connected, or referenced pull request",
-      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=100 => no pull request body references #392"
+      "gh issue list --state open --limit 20 --json number,title,createdAt,url => newest issue is #392, created 2026-09-17T20:37:31Z",
+      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate --jq '.[].event' => only commented and labeled events; no pull-request reference",
+      "gh pr list --state open --limit 1 --json number,url => []"
     ],
-    "last_verified": "2026-09-21T04:06:17Z"
+    "last_verified": "2026-09-21T07:06:21Z"
   },
   "resolve-linked-pr-merge-issues": {
     "status": "done",
     "evidence": [
-      "No linked pull request exists for issue #392; no PR merge issue or CI failure is actionable"
+      "No linked pull request exists for issue #392; no PR merge issue or CI failure is actionable",
+      "gh run list --limit 1 --json status,conclusion,url,headBranch => completed/success on main: https://github.com/tbrandenburg/sofathek/actions/runs/35563663352"
     ],
-    "last_verified": "2026-09-21T04:06:17Z"
+    "last_verified": "2026-09-21T07:06:21Z"
   },
   "validate-and-report": {
     "status": "done",
     "evidence": [
       "git status --short --branch => ## main...origin/main",
-      "gh issue view 392 --comments => issue remains OPEN and its investigation states no linked PR"
+      "gh issue view 392 --comments => issue remains OPEN and its investigation states no linked PR",
+      "git status --short --branch => ## main...origin/main"
     ],
-    "last_verified": "2026-09-21T04:06:17Z"
+    "last_verified": "2026-09-21T07:06:21Z"
   }
 }
