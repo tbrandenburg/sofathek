@@ -17,9 +17,10 @@
       "No source fix was required: the latest open issue has no linked PR and the existing linked PR is merged",
       "gh pr list --state open --limit 30 -> []",
       "gh pr list --state all --limit 100 filtered for #392 -> []",
-      "gh pr view 394 --json state,mergedAt,statusCheckRollup -> MERGED; all six CI checks concluded SUCCESS"
+      "gh pr view 394 --json state,mergedAt,statusCheckRollup -> MERGED; all six CI checks concluded SUCCESS",
+      "gh run watch 35655425371 --exit-status -> CI Pipeline Complete; all six jobs passed"
     ],
-    "last_verified": "2026-09-21T23:05:57+02:00"
+    "last_verified": "2026-09-21T23:13:15+02:00"
   },
   "validate-and-report": {
     "status": "done",
@@ -27,8 +28,9 @@
       "git status --short --branch -> clean before ledger refresh",
       "Only dev/state/task-ledger.json was changed; no application behavior was modified",
       "gh run watch 35630510322 --exit-status -> CI Pipeline Complete; Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Success passed",
-      "git status --short --branch -> main...origin/main before ledger refresh"
+      "git status --short --branch -> main...origin/main before ledger refresh",
+      "gh run watch 35655425371 --exit-status -> CI Pipeline Complete; CI Pipeline Success passed"
     ],
-    "last_verified": "2026-09-21T23:05:57+02:00"
+    "last_verified": "2026-09-21T23:13:15+02:00"
   }
 }
