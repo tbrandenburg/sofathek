@@ -44,5 +44,17 @@
       "gh api repos/tbrandenburg/sofathek/issues/392/events --paginate -> no pull_request event"
     ],
     "last_verified": "2026-09-20T19:03:53Z"
+  },
+  "resolve-latest-open-issue-pr-2026-09-21": {
+    "status": "blocked",
+    "evidence": [
+      "gh issue list --state open --limit 20 --json number,title,createdAt,updatedAt,url -> newest open issue is #392: refactor(backend): [optional] group video-library feature into a vertical slice like YouTube",
+      "gh issue view 392 --comments --json number,title,state,body,comments,url -> investigation comment states: Issue state: OPEN - no linked PR exists",
+      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate -> no cross-reference or pull_request event",
+      "gh pr list --state open --limit 20 --json number,title,url -> []",
+      "gh pr list --state all --limit 100 --json number,title,state,url -> latest related PR #394 fixes closed issue #390 and is MERGED; no open PR has merge issues",
+      "Issue #392 explicitly gates implementation on a third backend feature axis; current open issues #388, #391, and #392 do not provide that trigger"
+    ],
+    "last_verified": "2026-09-21T05:04:26+02:00"
   }
 }
