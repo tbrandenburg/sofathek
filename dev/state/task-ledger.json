@@ -23,8 +23,11 @@
       "git status --short --branch -> clean main worktree before ledger refresh",
       "No source changes were required because #392 has no linked PR and #394 is merged with passing checks",
       "gh run list --limit 20 --json databaseId,status,conclusion,headBranch -> latest main runs completed successfully",
+      "Initial push CI run 35616978254 failed at npm ci because ffmpeg-static download returned GitHub Releases HTTP 504; no source defect was present",
+      "gh run rerun 35616978254 --failed -> retry completed successfully",
+      "gh run watch 35616978254 --exit-status -> Level 1 Static Analysis, Level 2 Build & Functional, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, and CI Pipeline Complete all passed",
       "gh api repos/tbrandenburg/sofathek/commits/main/check-runs --jq '[.check_runs[] | select(.status != \"completed\" or .conclusion != \"success\")] | length' -> 0"
     ],
-    "last_verified": "2026-09-21T17:04:40+02:00"
+    "last_verified": "2026-09-21T17:14:54+02:00"
   }
 }
