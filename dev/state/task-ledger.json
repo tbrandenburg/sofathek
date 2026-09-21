@@ -3,9 +3,10 @@
     "status": "done",
     "evidence": [
       "gh issue list --state open --limit 20 --json number,title,createdAt,url -> latest open issue is #392",
-      "gh api graphql issue timeline -> issue #392 has no cross-referenced or connected pull request"
+      "gh api graphql issue timeline -> issue #392 has no cross-referenced or connected pull request",
+      "gh api graphql issue timeline -> issue #392 timeline contains only labels and comments; no pull request event"
     ],
-    "last_verified": "2026-09-21T19:12:58+02:00"
+    "last_verified": "2026-09-21T23:05:57+02:00"
   },
   "resolve-linked-pr-merge-issues": {
     "status": "done",
@@ -13,17 +14,21 @@
       "gh pr list --state open --limit 20 -> no open pull requests",
       "gh pr list --state all --limit 30 -> #394 is the newest issue-linked pull request and fixes #390, not #392",
       "gh pr view 394 --json state,mergedAt,statusCheckRollup -> MERGED at 2026-09-19T12:34:06Z with successful checks",
-      "No source fix was required: the latest open issue has no linked PR and the existing linked PR is merged"
+      "No source fix was required: the latest open issue has no linked PR and the existing linked PR is merged",
+      "gh pr list --state open --limit 30 -> []",
+      "gh pr list --state all --limit 100 filtered for #392 -> []",
+      "gh pr view 394 --json state,mergedAt,statusCheckRollup -> MERGED; all six CI checks concluded SUCCESS"
     ],
-    "last_verified": "2026-09-21T19:12:58+02:00"
+    "last_verified": "2026-09-21T23:05:57+02:00"
   },
   "validate-and-report": {
     "status": "done",
     "evidence": [
       "git status --short --branch -> clean before ledger refresh",
       "Only dev/state/task-ledger.json was changed; no application behavior was modified",
-      "gh run watch 35630510322 --exit-status -> CI Pipeline Complete; Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Success passed"
+      "gh run watch 35630510322 --exit-status -> CI Pipeline Complete; Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Success passed",
+      "git status --short --branch -> main...origin/main before ledger refresh"
     ],
-    "last_verified": "2026-09-21T19:12:58+02:00"
+    "last_verified": "2026-09-21T23:05:57+02:00"
   }
 }
