@@ -1,5 +1,5 @@
 // Video download types adapted for frontend use
-// Mirrors backend/src/types/youtube.ts but adapted for React components
+// Mirrors backend/src/features/youtube/types.ts but adapted for React components
 
 /**
  * Video download request for API calls (supports yt-dlp-compatible URLs)

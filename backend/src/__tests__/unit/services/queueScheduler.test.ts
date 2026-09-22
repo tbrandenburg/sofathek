@@ -1,5 +1,5 @@
 import { processQueueItem } from '../../../services/queueScheduler';
-import { QueueItem } from '../../../types/youtube';
+import { QueueItem } from '../../../features/youtube/types';
 
 // Mock fs/promises
 const mockUnlink = jest.fn();

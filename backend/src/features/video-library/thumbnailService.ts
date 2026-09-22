@@ -1,10 +1,10 @@
 import execa from 'execa';
-import { getErrorMessage } from '../utils/error';
+import { getErrorMessage } from '../../utils/error';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { constants as fsConstants } from 'fs';
-import { logger } from '../utils/logger';
-import { AppError } from '../middleware/errorHandler';
+import { logger } from '../../utils/logger';
+import { AppError } from '../../middleware/errorHandler';
 
 // Import static binary for reliable FFmpeg path
 import ffmpegBin from 'ffmpeg-static';

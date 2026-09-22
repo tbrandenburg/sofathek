@@ -1,9 +1,9 @@
 import * as path from 'path';
-import { getErrorMessage } from '../utils/error';
+import { getErrorMessage } from '../../utils/error';
 import * as fs from 'fs/promises';
-import { logger } from '../utils/logger';
-import { AppError } from '../middleware/errorHandler';
-import { YouTubeMetadata } from '../types/youtube';
+import { logger } from '../../utils/logger';
+import { AppError } from '../../middleware/errorHandler';
+import type { YouTubeMetadata } from '../youtube/types';
 
 export class VideoFileManager {
   private readonly videosDirectory: string;

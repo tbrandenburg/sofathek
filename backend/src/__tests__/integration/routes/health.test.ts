@@ -58,7 +58,7 @@ describe('Health Route', () => {
       // jest.resetModules() between beforeEach and here), so the spy lands on the
       // prototype used by the running healthRouter.
       const spy = jest.spyOn(
-        require('../../../services/thumbnailService').ThumbnailService.prototype,
+        require('../../../features/video-library/thumbnailService').ThumbnailService.prototype,
         'generateThumbnail'
       );
 

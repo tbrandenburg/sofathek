@@ -94,8 +94,8 @@ describe('Auto-thumbnail-regeneration integration', () => {
     jest.unmock('ffmpeggy');
 
     // Dynamically import *after* unmocking so modules bind to real fs
-    const { VideoService }     = await import('../../services/videoService');
-    const { ThumbnailService } = await import('../../services/thumbnailService');
+    const { VideoService }     = await import('../../features/video-library/videoService');
+    const { ThumbnailService } = await import('../../features/video-library/thumbnailService');
     const { globalErrorHandler } = await import('../../middleware/errorHandler');
 
     // Build a minimal Express app wired with real services

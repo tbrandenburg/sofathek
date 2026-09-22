@@ -1,11 +1,11 @@
 import youtubedl from 'youtube-dl-exec';
-import { getErrorMessage } from '../utils/error';
+import { getErrorMessage } from '../../utils/error';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../utils/logger';
-import { AppError } from '../middleware/errorHandler';
-import { YouTubeMetadata } from '../types/youtube';
-import { validateYtDlpResponse } from '../utils/validation';
-import { parseYtDlpError } from '../utils/ytDlpErrorParser';
+import { logger } from '../../utils/logger';
+import { AppError } from '../../middleware/errorHandler';
+import { YouTubeMetadata } from './types';
+import { validateYtDlpResponse } from '../../utils/validation';
+import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
 
 export class YouTubeMetadataExtractor {
   async extract(url: string): Promise<YouTubeMetadata> {

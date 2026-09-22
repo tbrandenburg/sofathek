@@ -1,8 +1,8 @@
 import { promises as fs, Stats } from 'fs';
-import { getErrorMessage } from '../utils/error';
+import { getErrorMessage } from '../../utils/error';
 import path from 'path';
-import { config } from '../config';
-import { logger } from '../utils/logger';
+import { config } from '../../config';
+import { logger } from '../../utils/logger';
 import { ThumbnailService } from './thumbnailService';
 import { 
   VideoFile, 
@@ -13,7 +13,7 @@ import {
   VideoInfoFile,
   SUPPORTED_VIDEO_EXTENSIONS,
   SupportedVideoExtension
-} from '../types/video';
+} from './types';
 
 /**
  * Video service for file system operations and metadata extraction

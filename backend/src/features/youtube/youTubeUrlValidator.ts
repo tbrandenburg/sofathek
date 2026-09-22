@@ -1,6 +1,6 @@
-import { containsShellMetacharacters, isPrivateNetworkHost } from '../types/youtube';
-import { getErrorMessage } from '../utils/error';
-import { logger } from '../utils/logger';
+import { containsShellMetacharacters, isPrivateNetworkHost } from './types';
+import { getErrorMessage } from '../../utils/error';
+import { logger } from '../../utils/logger';
 
 export class YouTubeUrlValidator {
   async validate(url: string): Promise<boolean> {

@@ -1,4 +1,4 @@
-import { ThumbnailService } from './services/thumbnailService';
+import { ThumbnailService } from '../src/features/video-library/thumbnailService';
 import * as path from 'path';
 
 const testThumbnailService = async () => {

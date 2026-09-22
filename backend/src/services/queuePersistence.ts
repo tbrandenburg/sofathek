@@ -3,7 +3,7 @@ import { getErrorMessage } from '../utils/error';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
 import { AppError } from '../middleware/errorHandler';
-import { QueueItem } from '../types/youtube';
+import { QueueItem } from '../features/youtube/types';
 import { logger } from '../utils/logger';
 
 interface PersistedQueueItem extends Omit<QueueItem, 'queuedAt' | 'startedAt' | 'completedAt' | 'request'> {

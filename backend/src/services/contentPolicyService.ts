@@ -1,5 +1,5 @@
 import { ContentPolicy, ContentPolicyViolation } from '../types/contentPolicy';
-import { YouTubeMetadata } from '../types/youtube';
+import { YouTubeMetadata } from '../features/youtube/types';
 
 export class ContentPolicyService {
   constructor(private readonly policy: ContentPolicy) {}

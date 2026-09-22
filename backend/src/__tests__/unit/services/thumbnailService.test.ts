@@ -1,4 +1,4 @@
-import { ThumbnailService } from '../../../services/thumbnailService';
+import { ThumbnailService } from '../../../features/video-library/thumbnailService';
 
 const mockReaddir = jest.fn();
 const mockStat = jest.fn();
@@ -129,7 +129,7 @@ describe('ThumbnailService', () => {
 
 // Real FFmpeg Integration Tests (no mocks)
 describe('ThumbnailService - Real FFmpeg (error paths)', () => {
-  const { ThumbnailService: RealThumbnailService } = jest.requireActual('../../../services/thumbnailService');
+  const { ThumbnailService: RealThumbnailService } = jest.requireActual('../../../features/video-library/thumbnailService');
   let realService: any;
   const tempDir = '/tmp/test-thumbnails';
 
@@ -162,7 +162,7 @@ describe('ThumbnailService - Real FFmpeg (error paths)', () => {
 describe('ThumbnailService Configuration', () => {
   it('should handle module import without throwing errors', () => {
     expect(() => {
-      const { ThumbnailService: T } = require('../../../services/thumbnailService');
+      const { ThumbnailService: T } = require('../../../features/video-library/thumbnailService');
       new T('/test');
     }).not.toThrow();
   });
@@ -206,7 +206,7 @@ describe('resolveFfmpegBinary - FFMPEG_PATH override', () => {
       return fn;
     });
 
-    const { ThumbnailService: IsolatedService } = require('../../../services/thumbnailService');
+    const { ThumbnailService: IsolatedService } = require('../../../features/video-library/thumbnailService');
     const service = new IsolatedService('/tmp');
     await service.generateThumbnail('/test/video.mp4');
 
@@ -234,7 +234,7 @@ describe('resolveFfmpegBinary - FFMPEG_PATH override', () => {
       return fn;
     });
 
-    const { ThumbnailService: IsolatedService } = require('../../../services/thumbnailService');
+    const { ThumbnailService: IsolatedService } = require('../../../features/video-library/thumbnailService');
     const service = new IsolatedService('/tmp');
     await service.generateThumbnail('/test/video.mp4');
 

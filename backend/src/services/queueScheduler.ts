@@ -1,8 +1,8 @@
 import * as fs from 'fs/promises';
-import { QueueItem } from '../types/youtube';
+import { QueueItem } from '../features/youtube/types';
 import { getErrorMessage } from '../utils/error';
 import { logger } from '../utils/logger';
-import { YouTubeDownloadService } from './youTubeDownloadService';
+import { YouTubeDownloadService } from '../features/youtube/youTubeDownloadService';
 
 type SaveQueueFn = () => Promise<void>;
 

@@ -139,7 +139,8 @@ sofathek/
 │   ├── dist/          # Production build output
 │   └── package.json   # Frontend dependencies
 ├── backend/           # Express TypeScript API server
-│   ├── src/           # API routes and services
+│   ├── src/           # API routes, services, and feature slices
+│   │   └── features/  # Feature-owned routes, services, and types
 │   ├── dist/          # Compiled JavaScript
 │   └── package.json   # Backend dependencies
 ├── data/              # Persistent data storage

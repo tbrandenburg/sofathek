@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../utils/logger';
-import { getErrorMessage } from '../utils/error';
-import { catchAsync, AppError } from '../middleware/errorHandler';
-import { downloadQueueService, youTubeDownloadService } from '../services/index';
-import { DownloadRequest } from '../types/youtube';
-import { createRateLimiter, rateLimitMiddleware } from '../middleware/rateLimiter';
-import { config } from '../config';
+import { logger } from '../../utils/logger';
+import { getErrorMessage } from '../../utils/error';
+import { catchAsync, AppError } from '../../middleware/errorHandler';
+import { downloadQueueService, youTubeDownloadService } from '../../services/index';
+import { DownloadRequest } from './types';
+import { createRateLimiter, rateLimitMiddleware } from '../../middleware/rateLimiter';
+import { config } from '../../config';
 
 const router = Router();
 

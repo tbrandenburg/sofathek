@@ -1,4 +1,4 @@
-import { YouTubeMetadataExtractor } from '../../../services/youTubeMetadataExtractor';
+import { YouTubeMetadataExtractor } from '../../../features/youtube/youTubeMetadataExtractor';
 
 // Mock youtube-dl-exec
 const mockExec = jest.fn();
