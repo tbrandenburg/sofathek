@@ -9,6 +9,21 @@ export interface RangeStreamOptions {
   extraHeaders?: Record<string, string>;
 }
 
+function pipeFileToResponse(filePath: string, res: Response, file: fs.ReadStream): void {
+  file.on('error', (error: Error) => {
+    logger.error('Failed to stream file', {
+      error: error.message,
+      path: filePath,
+    });
+
+    if (!res.destroyed) {
+      res.destroy();
+    }
+  });
+
+  file.pipe(res);
+}
+
 export function streamFileWithRangeSupport(
   req: Request,
   res: Response,
@@ -44,7 +59,7 @@ export function streamFileWithRangeSupport(
     });
 
     logger.info(`Serving partial content: ${start}-${end}/${fileSize}`);
-    file.pipe(res);
+    pipeFileToResponse(filePath, res, file);
     return;
   }
 
@@ -56,5 +71,5 @@ export function streamFileWithRangeSupport(
   });
 
   logger.info(`Serving full file: ${fileSize} bytes`);
-  fs.createReadStream(filePath).pipe(res);
+  pipeFileToResponse(filePath, res, fs.createReadStream(filePath));
 }
