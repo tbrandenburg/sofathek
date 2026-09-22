@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import * as nodeFileSystem from 'node:fs';
 import * as nodeFs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
@@ -34,9 +35,24 @@ describe('Range streaming integration (real files)', () => {
 
     const { apiRouter } = await import('../../../features/video-library/routes');
     const { globalErrorHandler } = await import('../../../middleware/errorHandler');
+    const { streamFileWithRangeSupport } = await import('../../../utils/rangeStream');
 
     app = express();
     app.use('/api', apiRouter);
+    app.get('/failure/:mode', (req, res) => {
+      const failurePath = path.join(videosDir, `failure-${req.params.mode}.mp4`);
+      nodeFileSystem.writeFileSync(failurePath, Buffer.alloc(32, 0x46));
+      const fileSize = nodeFileSystem.statSync(failurePath).size;
+      nodeFileSystem.unlinkSync(failurePath);
+
+      streamFileWithRangeSupport(req, res, failurePath, {
+        fileSize,
+        mimeType: 'video/mp4',
+      });
+    });
+    app.get('/health', (_req, res) => {
+      res.sendStatus(200);
+    });
     app.use(globalErrorHandler);
   });
 
@@ -112,4 +128,17 @@ describe('Range streaming integration (real files)', () => {
 
     expect(response.body.message).toBe('Range not satisfiable');
   });
+
+  it.each(['full', 'range'])(
+    'closes a response after a %s-file read failure and keeps the server available',
+    async (mode) => {
+      const requestPromise = request(app).get(`/failure/${mode}`);
+      if (mode === 'range') {
+        requestPromise.set('Range', 'bytes=0-7');
+      }
+
+      await expect(requestPromise).rejects.toThrow();
+      await request(app).get('/health').expect(200);
+    },
+  );
 });

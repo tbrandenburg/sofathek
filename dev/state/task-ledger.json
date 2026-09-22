@@ -1,27 +1,25 @@
 {
-  "identify-latest-open-issue": {
+  "ROOT_CAUSE_ANALYSIS": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 100 --json number,title,createdAt,url -> #392 is newest: refactor(backend): [optional] group video-library feature into a vertical slice like YouTube",
-      "gh api repos/tbrandenburg/sofathek/issues/392/timeline?per_page=100 -> [] for cross-referenced/connected events"
+      "gh issue list --state open --limit 10 --json number,title,createdAt,url,body -> latest open issue is #398: asynchronous read-stream errors in the shared range streaming helper",
+      "git diff origin/main...HEAD -- backend/src/utils/rangeStream.ts -> both fs.createReadStream(...).pipe(res) paths now use shared error handling"
     ],
-    "last_verified": "2026-09-22T06:05:09+02:00"
+    "last_verified": "2026-09-22T13:11:26+02:00"
   },
-  "resolve-linked-pr-merge-issues": {
+  "IMPLEMENT_FIX": {
     "status": "done",
     "evidence": [
-      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=10 -> newest PR is #394, which fixes #390 rather than #392",
-      "gh pr view 394 --json number,title,state,mergedAt,mergeStateStatus,mergeable,statusCheckRollup -> MERGED at 2026-09-19T12:34:06Z; all six CI checks concluded SUCCESS",
-      "No source fix, commit, or push was required: #392 has no linked PR and the newest related PR is already merged"
+      "git log --oneline -10 --decorate -> 0b121da Fix: handle range stream read errors (#398)",
+      "git diff origin/main...HEAD -- backend/src/__tests__/integration/routes/rangeStream.integration.test.ts -> full-file and ranged read-failure integration coverage plus health check"
     ],
-    "last_verified": "2026-09-22T06:05:09+02:00"
+    "last_verified": "2026-09-22T13:11:26+02:00"
   },
-  "validate-and-report": {
+  "CI_AND_MERGEABILITY": {
     "status": "done",
     "evidence": [
-      "git status --short --branch -> main...origin/main; no source changes",
-      "git commit 2c9708f and git push origin main -> ledger pushed successfully",
-      "gh run watch 35685701554 --exit-status -> CI Pipeline Complete; Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Success passed"
+      "gh pr checks 400 --watch=false -> CI Pipeline Complete, Level 1, Level 2, Level 3, Level 4, and Level 5 all pass",
+      "gh run view 35719683524 --json status,conclusion,jobs -> status completed, conclusion success"
     ],
     "last_verified": "2026-09-22T06:11:58+02:00"
   },
