@@ -33,5 +33,17 @@
       "gh run watch 35700474264 --exit-status -> Level 1 Static Analysis passed, Level 2 Build & Functional passed, Level 3 Unit Tests passed, Level 4 E2E Tests passed, Level 5 Integration passed, CI Pipeline Complete passed"
     ],
     "last_verified": "2026-09-22T09:41:35+02:00"
+  },
+  "issue-388-pr-399-ci-resolution": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 20 --search sort:created-desc -> issue #388 is the latest open issue",
+      "gh pr list --state all --search 388 -> linked open PR #399: Fix: Document route and component conventions (#388)",
+      "gh pr view 399 --json mergeable,mergeStateStatus -> mergeable=MERGEABLE, mergeStateStatus=CLEAN",
+      "gh pr checks 399 -> 6 checks passed, 0 failed",
+      "make lint -> exit 0; one pre-existing no-console warning",
+      "make test -> backend 396 passed, frontend 183 passed"
+    ],
+    "last_verified": "2026-09-22T14:12:24+02:00"
   }
 }
