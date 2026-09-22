@@ -33,15 +33,5 @@
       "gh run watch 35700474264 --exit-status -> Level 1 Static Analysis passed, Level 2 Build & Functional passed, Level 3 Unit Tests passed, Level 4 E2E Tests passed, Level 5 Integration passed, CI Pipeline Complete passed"
     ],
     "last_verified": "2026-09-22T09:41:35+02:00"
-  },
-  "ISSUE-398-PR-397": {
-    "status": "done",
-    "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,createdAt,updatedAt,url,body -> latest open issue is #398 and its body links PR #397",
-      "gh pr view 397 --json state,mergedAt,mergeCommit,mergeStateStatus,mergeable,statusCheckRollup -> MERGED at 2026-09-22T08:36:33Z as bb74c9875c6d0dabb24fc2e68b5dd87c1d7d9eaf; mergeStateStatus UNKNOWN is expected for a merged PR",
-      "gh pr checks 397 -> Level 1 Static Analysis, Level 2 Build & Functional, Level 3 Unit Tests, Level 4 E2E Tests, Level 5 Integration, and CI Pipeline Complete all pass",
-      "gh api repos/tbrandenburg/sofathek/issues/398/timeline?per_page=100 -> no linked pull-request event; issue body is the only PR reference"
-    ],
-    "last_verified": "2026-09-22T12:16:58+02:00"
   }
 }
