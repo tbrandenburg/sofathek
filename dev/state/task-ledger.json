@@ -21,6 +21,29 @@
       "gh pr checks 400 --watch=false -> CI Pipeline Complete, Level 1, Level 2, Level 3, Level 4, and Level 5 all pass",
       "gh run view 35719683524 --json status,conclusion,jobs -> status completed, conclusion success"
     ],
-    "last_verified": "2026-09-22T13:11:26+02:00"
+    "last_verified": "2026-09-22T06:11:58+02:00"
+  },
+  "PR-396-CI": {
+    "status": "done",
+    "evidence": [
+      "gh pr checks 396 --watch=false -> Level 1 pass, Level 2 pass, Level 3 pass, Level 4 pending",
+      "gh pr view 396 --json mergeStateStatus,mergeable -> mergeStateStatus UNSTABLE, mergeable MERGEABLE",
+      "gh run watch 35700474264 --exit-status -> Level 1 Static Analysis passed, Level 2 Build & Functional passed, Level 3 Unit Tests passed, Level 4 E2E Tests passed, Level 5 Integration passed, CI Pipeline Complete passed"
+    ],
+    "last_verified": "2026-09-22T09:41:35+02:00"
+  },
+  "issue-388-pr-399-ci-resolution": {
+    "status": "done",
+    "evidence": [
+      "gh issue list --state open --limit 20 --search sort:created-desc -> issue #388 is the latest open issue",
+      "gh pr list --state all --search 388 -> linked open PR #399: Fix: Document route and component conventions (#388)",
+      "gh pr view 399 --json mergeable,mergeStateStatus -> mergeable=MERGEABLE, mergeStateStatus=CLEAN",
+      "gh pr checks 399 -> 6 checks passed, 0 failed",
+      "make lint -> exit 0; one pre-existing no-console warning",
+      "make test -> backend 396 passed, frontend 183 passed",
+      "git merge origin/main -> resolved the sole conflict in dev/state/task-ledger.json while preserving both ledger histories",
+      "gh run watch 35726416533 --exit-status -> all 6 CI jobs passed, including CI Pipeline Complete"
+    ],
+    "last_verified": "2026-09-22T14:22:51+02:00"
   }
 }

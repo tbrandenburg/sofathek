@@ -106,6 +106,43 @@ make help        # Show all available commands
 - Backend runs on port 3010, frontend on port 5183 (safe ports)
 - All commands are designed to be safe and non-destructive
 
+## Adding a Feature
+
+New features follow a vertical-slice layout. The canonical reference implementation is the
+YouTube download feature under `backend/src/features/youtube/`.
+
+### Backend
+
+- **Routes**: create `backend/src/features/<feature>/routes.ts` exposing a `Router`
+  (default export). Mount it from `backend/src/app.ts` with
+  `app.use('/api/<feature>', featureRouter)` (mirror `app.ts:62`: `app.use('/api/youtube', youtubeRouter)`).
+- **Services**: create feature-specific services and helpers under
+  `backend/src/features/<feature>/`, using descriptive camelCase names and a `Service`
+  suffix for service classes. The YouTube feature uses names such as
+  (`youTubeDownloadService.ts`, `youTubeMetadataExtractor.ts`, `youTubeUrlValidator.ts`).
+  Wire shared service instances in `backend/src/services/index.ts`.
+- **Types**: create `backend/src/features/<feature>/types.ts` (e.g. `youtube/types.ts`).
+- **Tests**: unit tests at `backend/src/__tests__/unit/services/<Service>Service.test.ts`,
+  integration/route tests at `backend/src/__tests__/integration/routes/<feature>.test.ts`
+  (mirror the YouTube route tests).
+
+### Frontend
+
+- **Components**: significant UI components live in their own folder as
+  `frontend/src/components/<ComponentName>/<ComponentName>.tsx`, matching
+  `VideoCard/VideoCard.tsx`, `VideoGrid/VideoGrid.tsx`,
+  `VideoPlayer/VideoPlayer.tsx`, `Layout/Layout.tsx`.
+- **Do not** add new flat files like the legacy
+  `frontend/src/components/ConnectionStatus.tsx`; existing folder components such as
+  `DownloadQueue/DownloadQueue.tsx` and `YouTubeDownload/YouTubeDownload.tsx` are the
+  preferred layout.
+- Small shared UI primitives (shadcn/ui) stay flat in `frontend/src/components/ui/`.
+- **Hooks**: `frontend/src/hooks/use<Feature>.ts` (e.g. `useYouTube.ts`).
+- **Services**: `frontend/src/services/<feature>.ts` (e.g. `services/youtube.ts`).
+- **Types**: `frontend/src/types/<feature>.ts`.
+- **Tests**: flat in `frontend/src/__tests__/<Feature>.<test|spec>.tsx` (tests are NOT
+  co-located in the component folder; see `frontend/src/__tests__/VideoCard.test.tsx`).
+
 ## Lessons Learned
 
 - 2026-08-09: Spawning a second backend instance on a different port for live signal/E2E testing still shares the same `backend/data/temp/` (queue file + downloads) as any already-running instance, because data paths are not derived from the port. This caused a live process to reconcile/delete real production queue items and temp files. Rule: never spawn a second backend process for manual/E2E testing without also overriding its data directories (e.g. `SOFATHEK_TEMP_DIR`/equivalent config) to an isolated path, or run it in a container/tmp sandbox instead.
