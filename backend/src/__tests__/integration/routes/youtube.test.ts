@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import youtubeRouter from '../../../routes/youtube';
+import youtubeRouter from '../../../features/youtube/routes';
 import { downloadQueueService, youTubeDownloadService } from '../../../services/index';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 

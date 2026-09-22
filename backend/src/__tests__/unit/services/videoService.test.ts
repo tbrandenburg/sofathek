@@ -25,8 +25,8 @@ jest.mock('fs', () => ({
   mkdirSync: jest.fn()
 }));
 
-import { VideoService } from '../../../services/videoService';
-import { ThumbnailService } from '../../../services/thumbnailService';
+import { VideoService } from '../../../features/video-library/videoService';
+import { ThumbnailService } from '../../../features/video-library/thumbnailService';
 import { promises as fs } from 'fs';
 
 // Get references to the mocked functions

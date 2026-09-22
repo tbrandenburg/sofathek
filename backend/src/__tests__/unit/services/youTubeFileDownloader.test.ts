@@ -1,4 +1,4 @@
-import { YouTubeFileDownloader } from '../../../services/youTubeFileDownloader';
+import { YouTubeFileDownloader } from '../../../features/youtube/youTubeFileDownloader';
 
 // Mock fs/promises
 const mockReaddir = jest.fn();

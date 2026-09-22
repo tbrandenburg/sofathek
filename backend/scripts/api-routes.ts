@@ -1,7 +1,7 @@
 // Test script for API routes functionality
 import express from 'express';
-import { apiRouter } from './routes/api';
-import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler';
+import { apiRouter } from '../src/features/video-library/routes';
+import { globalErrorHandler, notFoundHandler } from '../src/middleware/errorHandler';
 
 const app = express();
 app.use(express.json());

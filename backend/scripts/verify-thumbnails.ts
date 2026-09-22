@@ -7,7 +7,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { config } from '../src/config';
-import { ThumbnailService } from '../src/services/thumbnailService';
+import { ThumbnailService } from '../src/features/video-library/thumbnailService';
 // import { logger } from '../src/utils/logger';
 
 async function main() {

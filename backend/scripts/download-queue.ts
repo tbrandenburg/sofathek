@@ -1,11 +1,14 @@
 // Queue management test for download operations
 import { DownloadQueueService } from '../src/services/downloadQueueService';
-import { YouTubeDownloadService } from '../src/services/youTubeDownloadService';
-import { ThumbnailService } from '../src/services/thumbnailService';
+import { YouTubeDownloadService } from '../src/features/youtube/youTubeDownloadService';
+import { ThumbnailService } from '../src/features/video-library/thumbnailService';
+import { VideoFileManager } from '../src/features/video-library/videoFileManager';
+import { ContentPolicyService } from '../src/services/contentPolicyService';
+import { contentPolicy } from '../src/services/contentPolicyConfig';
 import * as path from 'path';
 import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { DownloadRequest } from '../src/types/youtube';
+import { DownloadRequest } from '../src/features/youtube/types';
 
 // Import dynamic test URL generator
 function generateMockVideoId(): string {
@@ -35,7 +38,9 @@ async function testDownloadQueue() {
     await fs.promises.mkdir(thumbnailsDir, { recursive: true });
     
     const thumbnailService = new ThumbnailService(tempDir, thumbnailsDir);
-    const youtubeService = new YouTubeDownloadService(videosDir, tempDir, thumbnailService);
+    const fileManager = new VideoFileManager(videosDir, tempDir);
+    const policyService = new ContentPolicyService(contentPolicy);
+    const youtubeService = new YouTubeDownloadService(tempDir, fileManager, thumbnailService, policyService);
     const queueService = new DownloadQueueService(tempDir, youtubeService);
     
     // Initialize queue service

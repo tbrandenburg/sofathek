@@ -16,7 +16,7 @@ jest.mock('../../../config', () => ({
   }
 }));
 
-import { apiRouter } from '../../../routes/api';
+import { apiRouter } from '../../../features/video-library/routes';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
 // Mock fs and fs.promises

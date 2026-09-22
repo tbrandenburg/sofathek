@@ -1,13 +1,12 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { config } from '../config';
-import { VideoService } from '../services/videoService';
-import { thumbnailService } from '../services';
-import { catchAsync, AppError } from '../middleware/errorHandler';
-import { logger } from '../utils/logger';
-import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename, getMimeType } from '../utils/fileValidation';
-import youtubeRouter from './youtube';
+import { config } from '../../config';
+import { VideoService } from './videoService';
+import { thumbnailService } from '../../services';
+import { catchAsync, AppError } from '../../middleware/errorHandler';
+import { logger } from '../../utils/logger';
+import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename, getMimeType } from '../../utils/fileValidation';
 
 const router = Router();
 
@@ -295,8 +294,5 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     fs.createReadStream(thumbnailPath).pipe(res);
   }
 }));
-
-// Mount YouTube routes
-router.use('/youtube', youtubeRouter);
 
 export { router as apiRouter };

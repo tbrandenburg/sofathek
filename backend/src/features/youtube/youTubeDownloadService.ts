@@ -1,18 +1,18 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../utils/logger';
-import { getErrorMessage } from '../utils/error';
-import { DownloadRequest, DownloadResult, YouTubeMetadata } from '../types/youtube';
-import { VideoInfoFile } from '../types/video';
-import { ThumbnailService } from './thumbnailService';
+import { logger } from '../../utils/logger';
+import { getErrorMessage } from '../../utils/error';
+import { DownloadRequest, DownloadResult, YouTubeMetadata } from './types';
+import type { VideoInfoFile } from '../video-library/types';
 import { YouTubeUrlValidator } from './youTubeUrlValidator';
 import { YouTubeMetadataExtractor } from './youTubeMetadataExtractor';
 import { YouTubeFileDownloader, DownloadProgressCallback } from './youTubeFileDownloader';
-import { VideoFileManager } from './videoFileManager';
-import { AppError } from '../middleware/errorHandler';
-import { config } from '../config';
-import { ContentPolicyService } from './contentPolicyService';
+import { AppError } from '../../middleware/errorHandler';
+import { config } from '../../config';
+import { ContentPolicyService } from '../../services/contentPolicyService';
+import type { ThumbnailService } from '../video-library/thumbnailService';
+import type { VideoFileManager } from '../video-library/videoFileManager';
 
 /**
  * Core YouTube download orchestrator using composed services
@@ -26,15 +26,15 @@ export class YouTubeDownloadService {
   private readonly contentPolicyService: ContentPolicyService;
 
   constructor(
-    videosDirectory: string, 
     tempDirectory: string,
+    fileManager: VideoFileManager,
     thumbnailService: ThumbnailService,
     contentPolicyService: ContentPolicyService
   ) {
     this.urlValidator = new YouTubeUrlValidator();
     this.metadataExtractor = new YouTubeMetadataExtractor();
     this.fileDownloader = new YouTubeFileDownloader(tempDirectory);
-    this.fileManager = new VideoFileManager(videosDirectory, tempDirectory);
+    this.fileManager = fileManager;
     this.thumbnailService = thumbnailService;
     this.contentPolicyService = contentPolicyService;
   }

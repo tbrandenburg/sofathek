@@ -2,7 +2,8 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { config } from './config';
 import { logger } from './utils/logger';
-import { apiRouter } from './routes/api';
+import { apiRouter } from './features/video-library/routes';
+import youtubeRouter from './features/youtube/routes';
 import healthRouter from './routes/health';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -58,6 +59,7 @@ app.use('/health', healthRouter);
 
 // API routes
 app.use('/api', apiRouter);
+app.use('/api/youtube', youtubeRouter);
 
 // 404 handler for unmatched routes (must come before error handler)
 app.use(notFoundHandler);

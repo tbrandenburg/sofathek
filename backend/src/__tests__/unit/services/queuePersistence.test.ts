@@ -1,5 +1,5 @@
 import { saveQueue } from '../../../services/queuePersistence';
-import { QueueItem } from '../../../types/youtube';
+import { QueueItem } from '../../../features/youtube/types';
 
 const mockMkdir = jest.fn();
 const mockWriteFile = jest.fn();

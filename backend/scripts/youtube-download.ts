@@ -1,5 +1,8 @@
-import { YouTubeDownloadService } from '../src/services/youTubeDownloadService';
-import { ThumbnailService } from '../src/services/thumbnailService';
+import { YouTubeDownloadService } from '../src/features/youtube/youTubeDownloadService';
+import { ThumbnailService } from '../src/features/video-library/thumbnailService';
+import { VideoFileManager } from '../src/features/video-library/videoFileManager';
+import { ContentPolicyService } from '../src/services/contentPolicyService';
+import { contentPolicy } from '../src/services/contentPolicyConfig';
 import * as path from 'path';
 
 // Import dynamic test URL generator
@@ -27,7 +30,9 @@ const testYouTubeDownload = async () => {
     await fs.promises.mkdir(thumbnailsDir, { recursive: true });
     
     const thumbnailService = new ThumbnailService(tempDir, thumbnailsDir);
-    const youtubeService = new YouTubeDownloadService(videosDir, tempDir, thumbnailService);
+    const fileManager = new VideoFileManager(videosDir, tempDir);
+    const policyService = new ContentPolicyService(contentPolicy);
+    const youtubeService = new YouTubeDownloadService(tempDir, fileManager, thumbnailService, policyService);
     
     // Test URL validation with dynamic test URL
     const validUrl = generateMockYouTubeUrl(); // Dynamic test URL

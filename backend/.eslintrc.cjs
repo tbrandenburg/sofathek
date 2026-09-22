@@ -17,6 +17,24 @@ module.exports = {
     'no-console': 'warn',
     'no-unused-vars': 'off',
   },
+  overrides: [
+    {
+      files: ['src/features/youtube/**/*.ts'],
+      rules: {
+        'no-restricted-syntax': ['error',
+          "ImportDeclaration[importKind='value'][source.value=/^\\.\\.\\/video-library\\/(?!types$).+/]",
+        ],
+      },
+    },
+    {
+      files: ['src/features/video-library/**/*.ts'],
+      rules: {
+        'no-restricted-syntax': ['error',
+          "ImportDeclaration[importKind='value'][source.value=/^\\.\\.\\/youtube\\/(?!types$).+/]",
+        ],
+      },
+    },
+  ],
   ignorePatterns: [
     'dist/',
     'node_modules/',

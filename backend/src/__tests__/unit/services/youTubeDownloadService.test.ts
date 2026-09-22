@@ -1,4 +1,4 @@
-import { YouTubeDownloadService } from '../../../services/youTubeDownloadService';
+import { YouTubeDownloadService } from '../../../features/youtube/youTubeDownloadService';
 
 // Pin config values to avoid test flakiness from environment variables
 jest.mock('../../../config', () => ({
@@ -33,26 +33,26 @@ const mockValidate = jest.fn();
 const mockMoveToLibrary = jest.fn();
 const mockEnsureDirectories = jest.fn();
 
-jest.mock('../../../services/youTubeFileDownloader', () => ({
+jest.mock('../../../features/youtube/youTubeFileDownloader', () => ({
   YouTubeFileDownloader: jest.fn().mockImplementation(() => ({
     download: mockDownload,
     cancelDownload: jest.fn()
   }))
 }));
 
-jest.mock('../../../services/youTubeMetadataExtractor', () => ({
+jest.mock('../../../features/youtube/youTubeMetadataExtractor', () => ({
   YouTubeMetadataExtractor: jest.fn().mockImplementation(() => ({
     extract: mockExtract
   }))
 }));
 
-jest.mock('../../../services/youTubeUrlValidator', () => ({
+jest.mock('../../../features/youtube/youTubeUrlValidator', () => ({
   YouTubeUrlValidator: jest.fn().mockImplementation(() => ({
     validate: mockValidate
   }))
 }));
 
-jest.mock('../../../services/videoFileManager', () => ({
+jest.mock('../../../features/video-library/videoFileManager', () => ({
   VideoFileManager: jest.fn().mockImplementation(() => ({
     ensureDirectoriesExist: mockEnsureDirectories,
     moveToLibrary: mockMoveToLibrary,
@@ -70,12 +70,17 @@ const mockPolicyEvaluate = jest.fn();
 const mockContentPolicyService = {
   evaluate: mockPolicyEvaluate
 } as any;
+const mockVideoFileManager = {
+  ensureDirectoriesExist: mockEnsureDirectories,
+  moveToLibrary: mockMoveToLibrary,
+  cleanupFailedDownload: jest.fn()
+} as any;
 
 describe('YouTubeDownloadService', () => {
   let service: YouTubeDownloadService;
 
   beforeEach(() => {
-    service = new YouTubeDownloadService('/test/videos', '/test/temp', mockThumbnailService, mockContentPolicyService);
+    service = new YouTubeDownloadService('/test/temp', mockVideoFileManager, mockThumbnailService, mockContentPolicyService);
     jest.clearAllMocks();
     mockPolicyEvaluate.mockReturnValue(null);
   });

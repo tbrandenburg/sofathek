@@ -1,6 +1,6 @@
 import { ContentPolicyService } from '../../../services/contentPolicyService';
 import { ContentPolicySchema } from '../../../types/contentPolicy';
-import { YouTubeMetadata } from '../../../types/youtube';
+import { YouTubeMetadata } from '../../../features/youtube/types';
 
 function metadata(overrides: Partial<YouTubeMetadata> = {}): YouTubeMetadata {
   return { id: 'abc123', title: 'A normal video', ...overrides };

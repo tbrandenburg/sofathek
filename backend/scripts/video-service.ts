@@ -1,5 +1,5 @@
 // Test script for video service functionality
-import { VideoService } from './services/videoService';
+import { VideoService } from '../src/features/video-library/videoService';
 import path from 'path';
 
 async function testVideoService() {

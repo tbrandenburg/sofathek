@@ -57,7 +57,7 @@ afterAll(async () => {
   
   // Also try specific downloadRateLimiter cleanup for backward compatibility
   try {
-    const { downloadRateLimiter } = await import('../routes/youtube');
+    const { downloadRateLimiter } = await import('../features/youtube/routes');
     if (downloadRateLimiter && typeof downloadRateLimiter.destroy === 'function') {
       downloadRateLimiter.destroy();
     }

@@ -1,4 +1,4 @@
-import { YouTubeUrlValidator } from '../../../services/youTubeUrlValidator';
+import { YouTubeUrlValidator } from '../../../features/youtube/youTubeUrlValidator';
 
 describe('YouTubeUrlValidator', () => {
   let validator: YouTubeUrlValidator;

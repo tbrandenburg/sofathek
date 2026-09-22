@@ -110,7 +110,7 @@ export async function getVideoServiceHealth(): Promise<VideoServiceHealth> {
   };
 
   try {
-    const { VideoService } = await import('../../services/videoService');
+    const { VideoService } = await import('../../features/video-library/videoService');
     // Keep health probe intentionally read-only — auto-regeneration is a maintenance
     // task, not a liveness check. Health probes must return in milliseconds, not
     // trigger expensive FFmpeg thumbnail generation. See: api.ts for the scan path.

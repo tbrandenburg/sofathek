@@ -16,9 +16,9 @@ jest.mock('../../../config', () => ({
 }));
 
 import { cleanupAllRateLimiters } from '../../../middleware/rateLimiter';
-import { downloadRateLimiter } from '../../../routes/youtube';
+import { downloadRateLimiter } from '../../../features/youtube/routes';
 
-import { apiRouter } from '../../../routes/api';
+import { apiRouter } from '../../../features/video-library/routes';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
 // Mock fs and fs.promises

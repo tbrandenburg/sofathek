@@ -24,5 +24,14 @@
       "gh run watch 35685701554 --exit-status -> CI Pipeline Complete; Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Success passed"
     ],
     "last_verified": "2026-09-22T06:11:58+02:00"
+  },
+  "PR-396-CI": {
+    "status": "done",
+    "evidence": [
+      "gh pr checks 396 --watch=false -> Level 1 pass, Level 2 pass, Level 3 pass, Level 4 pending",
+      "gh pr view 396 --json mergeStateStatus,mergeable -> mergeStateStatus UNSTABLE, mergeable MERGEABLE",
+      "gh run watch 35700474264 --exit-status -> Level 1 Static Analysis passed, Level 2 Build & Functional passed, Level 3 Unit Tests passed, Level 4 E2E Tests passed, Level 5 Integration passed, CI Pipeline Complete passed"
+    ],
+    "last_verified": "2026-09-22T09:41:35+02:00"
   }
 }

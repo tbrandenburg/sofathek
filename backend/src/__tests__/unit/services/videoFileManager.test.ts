@@ -1,4 +1,4 @@
-import { VideoFileManager } from '../../../services/videoFileManager';
+import { VideoFileManager } from '../../../features/video-library/videoFileManager';
 
 // Mock fs/promises
 const mockMkdir = jest.fn();

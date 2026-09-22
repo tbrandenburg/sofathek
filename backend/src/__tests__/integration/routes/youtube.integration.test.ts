@@ -71,7 +71,7 @@ async function createIsolatedApp(): Promise<AppModules> {
   jest.unmock('youtube-dl-exec');
   jest.unmock('ffmpeggy');
 
-  const { default: youtubeRouter } = await import('../../../routes/youtube');
+  const { default: youtubeRouter } = await import('../../../features/youtube/routes');
   const { globalErrorHandler } = await import('../../../middleware/errorHandler');
 
   const app = express();

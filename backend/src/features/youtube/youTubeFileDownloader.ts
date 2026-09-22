@@ -1,11 +1,11 @@
 import youtubedl from 'youtube-dl-exec';
-import { getErrorMessage } from '../utils/error';
+import { getErrorMessage } from '../../utils/error';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { logger } from '../utils/logger';
-import { AppError } from '../middleware/errorHandler';
-import { YouTubeMetadata } from '../types/youtube';
-import { parseYtDlpError } from '../utils/ytDlpErrorParser';
+import { logger } from '../../utils/logger';
+import { AppError } from '../../middleware/errorHandler';
+import { YouTubeMetadata } from './types';
+import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
 
 export type DownloadProgressCallback = (phase: 'video' | 'audio', percent: number) => void;
 
