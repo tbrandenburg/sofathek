@@ -92,6 +92,24 @@ describe('Range streaming integration (real files)', () => {
       .set('Range', 'bytes=-')
       .expect(400);
 
-    expect(response.body).toBeDefined();
+    expect(response.body.message).toBe('Invalid range header format');
+  });
+
+  it.each(cases)('GET %s returns 400 for a non-byte or nonnumeric range', async (endpoint) => {
+    const response = await request(app)
+      .get(endpoint)
+      .set('Range', 'items=abc-def')
+      .expect(400);
+
+    expect(response.body.message).toBe('Invalid range header format');
+  });
+
+  it.each(cases)('GET %s returns 416 for a reversed range', async (endpoint) => {
+    const response = await request(app)
+      .get(endpoint)
+      .set('Range', 'bytes=127-0')
+      .expect(416);
+
+    expect(response.body.message).toBe('Range not satisfiable');
   });
 });

@@ -19,18 +19,16 @@ export function streamFileWithRangeSupport(
   const range = req.headers.range;
 
   if (range) {
-    const parts = range.replace(/bytes=/, '').split('-');
-    const startStr = parts[0];
-    const endStr = parts[1];
+    const match = /^bytes=(\d+)-(\d*)$/.exec(range);
 
-    if (!startStr) {
+    if (!match) {
       throw new AppError('Invalid range header format', 400);
     }
 
-    const start = parseInt(startStr, 10);
-    const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
+    const start = Number(match[1]);
+    const end = match[2] ? Number(match[2]) : fileSize - 1;
 
-    if (start >= fileSize || end >= fileSize) {
+    if (start >= fileSize || end >= fileSize || start > end) {
       throw new AppError('Range not satisfiable', 416);
     }
 
