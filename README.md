@@ -130,6 +130,12 @@ npm run build           # Test production build
 
 📖 **Full documentation**: [docs/PRE_PUSH_VALIDATION.md](docs/PRE_PUSH_VALIDATION.md)
 
+## Contributing
+
+Follow the file-layout conventions in [`AGENTS.md`](./AGENTS.md#adding-a-feature)
+(backend route/service/type skeletons and frontend component-folder layout) before adding
+new backend endpoints or frontend components.
+
 ## Project Structure
 
 ```
