@@ -2,33 +2,26 @@
   "identify-latest-open-issue": {
     "status": "done",
     "evidence": [
-      "gh issue list --state open --limit 20 --json number,title,createdAt,url -> latest open issue is #392",
-      "gh api repos/tbrandenburg/sofathek/issues/392/timeline --paginate -> issue #392 has no cross-referenced or connected pull request",
-      "gh issue view 392 --json comments -> issue #392 investigation states no linked PR and its conditional trigger is not met"
+      "gh issue list --state open --limit 100 --json number,title,createdAt,url -> #392 is newest: refactor(backend): [optional] group video-library feature into a vertical slice like YouTube",
+      "gh api repos/tbrandenburg/sofathek/issues/392/timeline?per_page=100 -> [] for cross-referenced/connected events"
     ],
-    "last_verified": "2026-09-21T23:05:57+02:00"
+    "last_verified": "2026-09-22T06:05:09+02:00"
   },
   "resolve-linked-pr-merge-issues": {
     "status": "done",
     "evidence": [
-      "gh pr list --state open --limit 50 -> []",
-      "gh pr list --state all --limit 100 -> #394 is the newest issue-linked pull request and fixes #390, not #392",
-      "gh pr view 394 --json state,mergedAt,statusCheckRollup -> MERGED at 2026-09-19T12:34:06Z; all six CI checks concluded SUCCESS",
-      "No source fix was required: the latest open issue has no linked PR and the newest related PR is merged"
+      "gh api repos/tbrandenburg/sofathek/pulls?state=all&per_page=10 -> newest PR is #394, which fixes #390 rather than #392",
+      "gh pr view 394 --json number,title,state,mergedAt,mergeStateStatus,mergeable,statusCheckRollup -> MERGED at 2026-09-19T12:34:06Z; all six CI checks concluded SUCCESS",
+      "No source fix, commit, or push was required: #392 has no linked PR and the newest related PR is already merged"
     ],
-    "last_verified": "2026-09-22T04:04:10+02:00"
+    "last_verified": "2026-09-22T06:05:09+02:00"
   },
   "validate-and-report": {
     "status": "done",
     "evidence": [
-      "git status --short --branch -> clean before ledger refresh",
-      "Only dev/state/task-ledger.json was changed; no application behavior was modified",
-      "gh run watch 35630510322 --exit-status -> CI Pipeline Complete; Static Analysis, Build & Functional, Unit Tests, E2E Tests, Integration, and CI Pipeline Success passed",
-      "git status --short --branch -> main...origin/main before ledger refresh",
-      "gh pr view 394 --json state,mergeStateStatus,mergeable,statusCheckRollup -> MERGED; mergeStateStatus UNKNOWN after merge and all six checks SUCCESS",
-      "git status --short --branch -> only the mandatory ignored dev/state/task-ledger.json ledger was refreshed",
-      "gh run watch 35678261908 --exit-status -> CI Pipeline Complete; Static Analysis, Build & Functional, Unit Tests, E2E Tests, and Integration all passed"
+      "git status --short --branch -> main...origin/main; no source changes",
+      "date -Iseconds -> 2026-09-22T06:05:09+02:00"
     ],
-    "last_verified": "2026-09-22T04:08:34+02:00"
+    "last_verified": "2026-09-22T06:05:09+02:00"
   }
 }
