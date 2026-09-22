@@ -7,6 +7,7 @@ import { thumbnailService } from '../../services';
 import { catchAsync, AppError } from '../../middleware/errorHandler';
 import { logger } from '../../utils/logger';
 import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename, getMimeType } from '../../utils/fileValidation';
+import { streamFileWithRangeSupport } from '../../utils/rangeStream';
 
 const router = Router();
 
@@ -121,52 +122,14 @@ router.get('/stream/:filename', catchAsync(async (req: Request, res: Response) =
   const stat = fs.statSync(videoPath);
   const fileSize = stat.size;
   
-  // Handle range requests for efficient video streaming
-  const range = req.headers.range;
-  
-  if (range) {
-    // Parse range header (format: "bytes=start-end")
-    const parts = range.replace(/bytes=/, "").split("-");
-    const startStr = parts[0];
-    const endStr = parts[1];
-    
-    if (!startStr) {
-      throw new AppError('Invalid range header format', 400);
-    }
-    
-    const start = parseInt(startStr, 10);
-    const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
-    
-    // Validate range
-    if (start >= fileSize || end >= fileSize) {
-      throw new AppError('Range not satisfiable', 416);
-    }
-    
-    const chunkSize = (end - start) + 1;
-    const file = fs.createReadStream(videoPath, { start, end });
-    
-    // Set headers for partial content response
-    res.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunkSize,
-      'Content-Type': getMimeType(path.extname(filename), 'video/mp4')
-    });
-    
-    logger.info(`Serving partial content: ${start}-${end}/${fileSize}`);
-    file.pipe(res);
-    
-  } else {
-    // No range request - serve entire file
-    res.writeHead(200, {
-      'Content-Length': fileSize,
-      'Accept-Ranges': 'bytes',
-      'Content-Type': getMimeType(path.extname(filename), 'video/mp4')
-    });
-    
-    logger.info(`Serving full file: ${fileSize} bytes`);
-    fs.createReadStream(videoPath).pipe(res);
-  }
+  streamFileWithRangeSupport(req, res, videoPath, {
+    fileSize,
+    mimeType: getMimeType(path.extname(filename), 'video/mp4'),
+    extraHeaders: {
+      'Cache-Control': `public, max-age=${THUMBNAIL_CACHE_DURATION}`,
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }));
 
 /**
@@ -251,48 +214,15 @@ router.get('/thumbnails/:filename', catchAsync(async (req: Request, res: Respons
     throw new AppError(`Thumbnail too large: ${stat.size} bytes (max: ${MAX_THUMBNAIL_SIZE})`, 413);
   }
   const fileSize = stat.size;
-  const range = req.headers.range;
-  
-  if (range) {
-    const parts = range.replace(/bytes=/, '').split('-');
-    const startStr = parts[0];
-    const endStr = parts[1];
 
-    if (!startStr) {
-      throw new AppError('Invalid range header format', 400);
-    }
-
-    const start = parseInt(startStr, 10);
-    const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
-
-    if (start >= fileSize || end >= fileSize) {
-      throw new AppError('Range not satisfiable', 416);
-    }
-
-    const chunkSize = (end - start) + 1;
-    const file = fs.createReadStream(thumbnailPath, { start, end });
-
-    res.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunkSize,
-      'Content-Type': getMimeType(ext, 'image/jpeg'),
+  streamFileWithRangeSupport(req, res, thumbnailPath, {
+    fileSize,
+    mimeType: getMimeType(ext, 'image/jpeg'),
+    extraHeaders: {
       'Cache-Control': `public, max-age=${THUMBNAIL_CACHE_DURATION}`,
-      'X-Content-Type-Options': 'nosniff'
-    });
-
-    file.pipe(res);
-  } else {
-    res.writeHead(200, {
-      'Content-Length': fileSize,
-      'Accept-Ranges': 'bytes',
-      'Content-Type': getMimeType(ext, 'image/jpeg'),
-      'Cache-Control': `public, max-age=${THUMBNAIL_CACHE_DURATION}`,
-      'X-Content-Type-Options': 'nosniff'
-    });
-
-    fs.createReadStream(thumbnailPath).pipe(res);
-  }
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }));
 
 export { router as apiRouter };
