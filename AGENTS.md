@@ -116,9 +116,9 @@ YouTube download feature under `backend/src/features/youtube/`.
 - **Routes**: create `backend/src/features/<feature>/routes.ts` exposing a `Router`
   (default export). Mount it from `backend/src/app.ts` with
   `app.use('/api/<feature>', featureRouter)` (mirror `app.ts:62`: `app.use('/api/youtube', youtubeRouter)`).
-- **Services**: create feature-specific services as
-  `backend/src/features/<feature>/<Concern>Service.ts`
-  using the camelCase `youTube*` prefix convention
+- **Services**: create feature-specific services and helpers under
+  `backend/src/features/<feature>/`, using descriptive camelCase names and a `Service`
+  suffix for service classes. The YouTube feature uses names such as
   (`youTubeDownloadService.ts`, `youTubeMetadataExtractor.ts`, `youTubeUrlValidator.ts`).
   Wire shared service instances in `backend/src/services/index.ts`.
 - **Types**: create `backend/src/features/<feature>/types.ts` (e.g. `youtube/types.ts`).
@@ -133,8 +133,9 @@ YouTube download feature under `backend/src/features/youtube/`.
   `VideoCard/VideoCard.tsx`, `VideoGrid/VideoGrid.tsx`,
   `VideoPlayer/VideoPlayer.tsx`, `Layout/Layout.tsx`.
 - **Do not** add new flat files like the legacy
-  `frontend/src/components/DownloadQueue.tsx`, `ConnectionStatus.tsx`,
-  `YouTubeDownload.tsx`.
+  `frontend/src/components/ConnectionStatus.tsx`; existing folder components such as
+  `DownloadQueue/DownloadQueue.tsx` and `YouTubeDownload/YouTubeDownload.tsx` are the
+  preferred layout.
 - Small shared UI primitives (shadcn/ui) stay flat in `frontend/src/components/ui/`.
 - **Hooks**: `frontend/src/hooks/use<Feature>.ts` (e.g. `useYouTube.ts`).
 - **Services**: `frontend/src/services/<feature>.ts` (e.g. `services/youtube.ts`).
