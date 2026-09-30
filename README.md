@@ -237,7 +237,7 @@ All matching is case-insensitive. `blockedTags`/`blockedCategories` require an e
 
 ## Requirements
 
-- **Node.js 18+** (for development and yt-dlp JavaScript runtime)
+- **Node.js 20+** (for development and yt-dlp JavaScript runtime)
 - **Make** (for using the Makefile commands)
 - **Docker and Docker Compose** (for containerized deployment)
 - **Python 3** (for serving production frontend)
