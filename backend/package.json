@@ -59,6 +59,7 @@
     "js-yaml": ">=3.15.2 <4.0.0 || >=4.3.2",
     "handlebars": ">=4.7.9",
     "path-to-regexp": "0.1.13",
+    "brace-expansion": ">=5.0.12",
     "qs": "6.16.0",
     "express": {
       "qs": "6.16.0"
