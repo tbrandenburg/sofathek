@@ -14,6 +14,7 @@ process.env.TEMP_DIR = process.env.TEMP_DIR || path.join(testDataDir, 'temp');
 
 // Mock external dependencies globally
 jest.mock('fs/promises', () => ({
+  ...jest.requireActual<typeof import('fs/promises')>('fs/promises'),
   readdir: jest.fn(),
   stat: jest.fn(),
   access: jest.fn(),

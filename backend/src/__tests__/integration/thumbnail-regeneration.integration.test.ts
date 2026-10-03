@@ -11,7 +11,6 @@
 import request from 'supertest';
 import express from 'express';
 import { execFile } from 'node:child_process';
-import * as nodeFs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { promisify } from 'node:util';
@@ -19,6 +18,7 @@ import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 
 const REGEN_TIMEOUT_MS = 30_000;
 const execFileAsync = promisify(execFile);
+const nodeFs = jest.requireActual<typeof import('fs/promises')>('fs/promises');
 
 async function resolveFfmpegBinary(): Promise<string> {
   const { default: ffmpegStatic } = await import('ffmpeg-static');
@@ -90,7 +90,6 @@ describe('Auto-thumbnail-regeneration integration', () => {
     // Reset module registry and remove global mocks so real fs and real ffmpeg are used
     jest.resetModules();
     jest.unmock('fs/promises');
-    jest.unmock('node:fs/promises');
     jest.unmock('ffmpeggy');
 
     // Dynamically import *after* unmocking so modules bind to real fs
