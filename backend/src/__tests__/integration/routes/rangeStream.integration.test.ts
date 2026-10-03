@@ -1,10 +1,11 @@
 import request from 'supertest';
 import express from 'express';
-import * as nodeFileSystem from 'node:fs';
-import * as nodeFs from 'node:fs/promises';
+import * as nodeFileSystem from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+
+const nodeFs = jest.requireActual<typeof import('fs/promises')>('fs/promises');
 
 describe('Range streaming integration (real files)', () => {
   let app: express.Application;
@@ -31,7 +32,6 @@ describe('Range streaming integration (real files)', () => {
     jest.resetModules();
     jest.unmock('fs');
     jest.unmock('fs/promises');
-    jest.unmock('node:fs/promises');
 
     const { apiRouter } = await import('../../../features/video-library/routes');
     const { globalErrorHandler } = await import('../../../middleware/errorHandler');

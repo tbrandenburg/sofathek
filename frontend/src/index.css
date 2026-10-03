@@ -1,7 +1,6 @@
 /* Tailwind CSS base styles */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 /* shadcn/ui CSS Variables for Theme System */
 @layer base {
@@ -127,7 +126,7 @@
   }
 
   .duration-overlay {
-    @apply absolute bottom-2 right-2 bg-black bg-opacity-80 text-white px-1.5 py-0.5 rounded text-xs font-medium;
+    @apply absolute bottom-2 right-2 bg-black/80 text-white px-1.5 py-0.5 rounded text-xs font-medium;
   }
 
   .video-title {
@@ -334,7 +333,7 @@
   }
 
   .modal-backdrop {
-    @apply absolute inset-0 bg-black bg-opacity-80 cursor-pointer;
+    @apply absolute inset-0 bg-black/80 cursor-pointer;
   }
 
   .modal-content {
@@ -342,11 +341,11 @@
   }
 
   .modal-close-button {
-    @apply absolute top-4 right-4 z-10 w-10 h-10 border-0 rounded-full bg-black bg-opacity-70 text-white text-xl cursor-pointer flex items-center justify-center transition-all duration-200;
+    @apply absolute top-4 right-4 z-10 w-10 h-10 border-0 rounded-full bg-black/70 text-white text-xl cursor-pointer flex items-center justify-center transition-all duration-200;
   }
 
   .modal-close-button:hover {
-    @apply bg-black bg-opacity-90 scale-110;
+    @apply bg-black/90 scale-110;
   }
 
   .modal-video-player {
