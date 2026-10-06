@@ -9,6 +9,11 @@ import { HealthStatus } from './health/types';
 
 const router = Router();
 
+// Liveness must stay independent of storage scans and resource-pressure alerts.
+router.get('/live', (_req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store').json({ status: 'alive', service: 'sofathek-backend' });
+});
+
 /**
  * GET /health
  * Enhanced health check endpoint with comprehensive system monitoring

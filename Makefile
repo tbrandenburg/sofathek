@@ -1,7 +1,7 @@
 # Sofathek - Family Media Center
 # Essential development commands
 
-.PHONY: help install build test lint clean dev start stop docker playwright-install playwright-install-ci playwright-test e2e-test e2e-docker clean-ports
+.PHONY: help install build test test-startup lint clean dev start stop docker playwright-install playwright-install-ci playwright-test e2e-test e2e-docker clean-ports
 
 # Port configuration (override via: make dev SOFATHEK_BACKEND_PORT=4000)
 SOFATHEK_BACKEND_PORT ?= 3010
@@ -51,6 +51,9 @@ test: ## Run all tests
 	@cd backend && npm test -- --passWithNoTests
 	@cd frontend && npm test
 
+test-startup: build ## Test real production startup and failure cleanup (requires Python 3)
+	@python3 scripts/test-startup.py
+
 lint: ## Check and fix code quality
 	@echo "🔍 Linting..."
 	@cd backend && npm run lint:fix
@@ -84,25 +87,7 @@ dev: ## Start development servers (backend:$(SOFATHEK_BACKEND_PORT), frontend:$(
 	wait
 
 start: build ## Start production servers
-	@echo "🚀 Starting production servers..."
-	@echo "Backend: http://localhost:$(SOFATHEK_BACKEND_PORT) | Frontend: http://localhost:$(SOFATHEK_FRONTEND_PORT)"
-	@echo "🧹 Cleaning up any existing processes..."
-	@lsof -ti:$(SOFATHEK_BACKEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null; lsof -ti:$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -TERM 2>/dev/null; sleep 0.5; lsof -ti:$(SOFATHEK_BACKEND_PORT),$(SOFATHEK_FRONTEND_PORT) 2>/dev/null | xargs -r kill -KILL 2>/dev/null; pkill -f "PORT=$(SOFATHEK_BACKEND_PORT)\|vite.*--port $(SOFATHEK_FRONTEND_PORT)" 2>/dev/null || true
-	@echo "Starting backend..."
-	@(cd backend && SOFATHEK_BACKEND_PORT=$(SOFATHEK_BACKEND_PORT) npm start) &
-	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:$(SOFATHEK_BACKEND_PORT)/health 30 || (echo "❌ Backend failed to start - check logs" && exit 1)
-	@echo "✅ Backend started successfully"
-	@echo "Starting frontend..."
-	@(cd frontend && SOFATHEK_FRONTEND_PORT=$(SOFATHEK_FRONTEND_PORT) npm run preview -- --port $(SOFATHEK_FRONTEND_PORT) --host) &
-	@sleep 1 && ./scripts/wait-for-it.sh http://localhost:$(SOFATHEK_FRONTEND_PORT) 10 || (echo "❌ Frontend failed to start" && exit 1)
-	@echo "✅ Frontend started successfully"
-	@echo ""
-	@echo "🎉 All services started!"
-	@echo "   Backend: http://localhost:$(SOFATHEK_BACKEND_PORT)"
-	@echo "   Frontend: http://localhost:$(SOFATHEK_FRONTEND_PORT)"
-	@echo ""
-	@echo "Press Ctrl+C to stop all servers"
-	@trap 'kill %1 %2 2>/dev/null; exit 0' INT; wait
+	@SOFATHEK_BACKEND_PORT=$(SOFATHEK_BACKEND_PORT) SOFATHEK_FRONTEND_PORT=$(SOFATHEK_FRONTEND_PORT) bash scripts/start.sh
 
 stop: ## Stop all servers and clean up ports
 	@echo "🛑 Stopping servers..."

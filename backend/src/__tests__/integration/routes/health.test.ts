@@ -37,6 +37,17 @@ describe('Health Route', () => {
   });
 
   describe('GET /', () => {
+    it('keeps liveness available when storage health is critical', async () => {
+      fs.rmSync(path.join(testRootDir, 'videos'), { recursive: true });
+
+      const health = await request(app).get('/').expect(503);
+      expect(health.body.status).toBe('critical');
+
+      const live = await request(app).get('/live').expect(200);
+      expect(live.body).toEqual({ status: 'alive', service: 'sofathek-backend' });
+      expect(live.headers['cache-control']).toBe('no-store');
+    });
+
     it('should return health check response', async () => {
       const response = await request(app)
         .get('/')

@@ -30,10 +30,27 @@ A self-hosted family media center application with Netflix-like interface and br
 make install
 
 # Start development
-make dev         # Backend: http://localhost:3010, Frontend: http://localhost:5183
+make dev         # Backend: http://localhost:3010, Frontend: http://localhost:8010
 
 # Or production build
 make start       # Build and start production servers
+```
+
+Production startup waits for `/health/live` (the backend HTTP listener), independently
+of `/health` (disk, memory, and library diagnostics). A critical resource alert remains
+visible in the UI but does not prevent the frontend from starting. The frontend binds
+to the LAN at `http://<server-ip>:8010`; API and health requests use its same-origin proxy.
+
+On Linux, `make start` uses Bash, curl, lsof, realpath, and setsid to supervise both
+servers in the foreground. Ctrl+C stops their process groups (including downloader
+children); an unexpected server exit or failed startup also cleans up those groups and
+returns an error. Occupied ports are refused without terminating existing services.
+Stop an existing Sofathek instance before starting another. Port overrides are shared
+with the frontend proxy, for example:
+
+```bash
+make start SOFATHEK_BACKEND_PORT=4010 SOFATHEK_FRONTEND_PORT=8011
+make test-startup  # Build and test real startup, degraded health, and cleanup in isolated storage
 ```
 
 ### Using Docker
@@ -50,7 +67,7 @@ docker-compose up -d
 ### Network Access Configuration
 
 By default, the frontend now calls the backend via a **same-origin relative path** (`/api`).
-This allows other devices on your LAN to work when only frontend port `5183` is exposed and API requests are reverse-proxied.
+This allows other devices on your LAN to work when only frontend port `8010` is exposed and API requests are reverse-proxied.
 
 Optional override:
 
@@ -65,7 +82,7 @@ Set `VITE_API_BASE_URL` only when you intentionally want the browser to call a s
 ```bash
 make help        # Show all available commands
 make install     # Install all dependencies
-make dev         # Start development servers (backend:3010, frontend:5183)
+make dev         # Start development servers (backend:3010, frontend:8010)
 make build       # Build frontend and backend
 make start       # Build and start production servers
 make test        # Run all tests
