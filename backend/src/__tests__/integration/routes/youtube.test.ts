@@ -116,6 +116,28 @@ describe('YouTube Routes', () => {
       expect(response.body.message).toContain('gaming-related');
       expect(mockDownloadQueueService.addToQueue).not.toHaveBeenCalled();
     });
+
+    it('fails before queueing when the managed yt-dlp runtime is unavailable', async () => {
+      mockYouTubeDownloadService.validateYouTubeUrl.mockResolvedValue(true);
+      mockYouTubeDownloadService.fetchMetadataAndCheckPolicy.mockImplementation(() => {
+        const { AppError } = require('../../../middleware/errorHandler');
+        return Promise.reject(new AppError(
+          'The pinned yt-dlp executable is missing. Run npm install in the backend.',
+          500,
+          true,
+          'YTDLP_RUNTIME_UNAVAILABLE'
+        ));
+      });
+
+      const response = await request(app)
+        .post('/api/youtube/download')
+        .send({ url: 'https://www.youtube.com/watch?v=test123' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.code).toBe('YTDLP_RUNTIME_UNAVAILABLE');
+      expect(response.body.message).toContain('Run npm install in the backend');
+      expect(mockDownloadQueueService.addToQueue).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /api/youtube/queue', () => {

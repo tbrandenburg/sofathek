@@ -24,8 +24,6 @@ jest.mock('fs/promises', () => ({
   writeFile: (...args: any[]) => mockWriteFile(...args)
 }));
 
-jest.mock('youtube-dl-exec', () => jest.fn());
-
 // Mock sub-services to allow testing thumbnail priority logic
 const mockDownload = jest.fn();
 const mockExtract = jest.fn();

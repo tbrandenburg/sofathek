@@ -1,4 +1,3 @@
-import youtubedl from 'youtube-dl-exec';
 import { getErrorMessage } from '../../utils/error';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../utils/logger';
@@ -6,6 +5,7 @@ import { AppError } from '../../middleware/errorHandler';
 import { YouTubeMetadata } from './types';
 import { validateYtDlpResponse } from '../../utils/validation';
 import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
+import { spawnYtDlp } from './ytDlpRuntime';
 
 export class YouTubeMetadataExtractor {
   async extract(url: string): Promise<YouTubeMetadata> {
@@ -14,18 +14,18 @@ export class YouTubeMetadataExtractor {
     try {
       logger.info('Fetching video metadata', { url });
 
-      const subprocess = youtubedl.exec(url, {
+      const subprocess = spawnYtDlp(url, {
         dumpSingleJson: true,
         skipDownload: true,
         noCheckCertificates: true,
         jsRuntimes: 'node'
       });
 
-      subprocess.stderr?.on('data', (data) => {
+      subprocess.process.stderr.on('data', (data) => {
         stderrOutput += data.toString();
       });
 
-      const processResult = await subprocess;
+      const processResult = await subprocess.done;
       if (!processResult.stdout?.trim()) {
         throw new AppError('yt-dlp returned empty stdout — no JSON metadata received', 500);
       }

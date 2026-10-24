@@ -39,14 +39,17 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
   // Preflight: fetch metadata and enforce content policy before queuing,
   // so blocked videos never enter the queue. Metadata is reused by the
   // queue worker to avoid fetching it twice. If metadata extraction fails
-  // for reasons unrelated to the content policy (e.g. an unreachable or
-  // invalid URL), do not fail the request here - let it be queued and
-  // reported as a failed download, matching prior behavior.
+  // for ordinary URL/network failures, keep the existing queue-and-report
+  // behavior. Runtime failures are fatal here: they cannot recover in the
+  // worker, so do not create a queue item that is guaranteed to fail.
   let metadata: NonNullable<DownloadRequest['metadata']> | undefined;
   try {
     metadata = await youTubeDownloadService.fetchMetadataAndCheckPolicy(url);
   } catch (error) {
     if (error instanceof AppError && error.code === 'VIDEO_BLOCKED_BY_POLICY') {
+      throw error;
+    }
+    if (error instanceof AppError && error.code === 'YTDLP_RUNTIME_UNAVAILABLE') {
       throw error;
     }
     logger.warn('Metadata preflight failed, queuing without preflight metadata', {

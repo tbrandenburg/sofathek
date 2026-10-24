@@ -22,11 +22,6 @@ jest.mock('fs/promises', () => ({
   readFile: jest.fn(),
 }));
 
-jest.mock('youtube-dl-exec', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
-
 jest.mock('ffmpeggy', () => ({
   ffmpeg: jest.fn(),
 }));

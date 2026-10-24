@@ -6,6 +6,7 @@ import * as path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { getYtDlpBinaryPath } from '../../../features/youtube/ytDlpRuntime';
 
 const execFileAsync = promisify(execFile);
 
@@ -13,7 +14,7 @@ const TEST_CONFIG = {
   TEST_VIDEO_URL: process.env.TEST_YOUTUBE_URL || 'https://www.youtube.com/watch?v=m3fqyXZ4k4I',
   INVALID_URL: 'https://example.com/not-youtube',
   POLL_INTERVAL_MS: 5000,
-  DOWNLOAD_TIMEOUT_MS: 90000,
+  DOWNLOAD_TIMEOUT_MS: 180000,
   MAX_RETRIES: 3,
 };
 
@@ -24,7 +25,7 @@ type AppModules = {
 
 async function isYtDlpAvailable(): Promise<boolean> {
   try {
-    await execFileAsync('yt-dlp', ['--version']);
+    await execFileAsync(getYtDlpBinaryPath(), ['--version']);
     return true;
   } catch {
     return false;
@@ -43,8 +44,6 @@ async function retryWithBackoff<T>(
       return await fn();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      console.log(`Attempt ${attempt}/${maxRetries} failed: ${lastError.message}`);
-      
       if (attempt < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, baseDelay * attempt));
       }
@@ -68,7 +67,7 @@ async function createIsolatedApp(): Promise<AppModules> {
   jest.resetModules();
   jest.unmock('fs/promises');
   jest.unmock('node:fs/promises');
-  jest.unmock('youtube-dl-exec');
+  jest.unmock('../../../features/youtube/ytDlpRuntime');
   jest.unmock('ffmpeggy');
 
   const { default: youtubeRouter } = await import('../../../features/youtube/routes');
@@ -120,7 +119,7 @@ describe('Video Download Integration (Real)', () => {
 
     beforeAll(async () => {
       if (!(await isYtDlpAvailable())) {
-        throw new Error('yt-dlp is not available in PATH. Set RUN_REAL_DOWNLOAD_TESTS=true and ensure yt-dlp is installed.');
+        throw new Error('Managed yt-dlp is not available. Run npm install in backend, then set RUN_REAL_DOWNLOAD_TESTS=true.');
       }
 
       const modules = await createIsolatedApp();
@@ -139,31 +138,30 @@ describe('Video Download Integration (Real)', () => {
     });
 
     it('downloads a real YouTube video and writes an mp4 file', async () => {
-      await retryWithBackoff(async () => {
-        const initialFiles = await fs.readdir(videosDir);
+      const realFs = jest.requireActual<typeof import('node:fs/promises')>('node:fs/promises');
+      const initialFiles = await realFs.readdir(videosDir);
 
-        const response = await request(app)
-          .post('/api/youtube/download')
-          .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
-          .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
+      const response = await request(app)
+        .post('/api/youtube/download')
+        .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
+        .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
 
-        expect(response.status).toBe(201);
-        expect(response.body.status).toBe('success');
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe('success');
 
-        const queueItemId = response.body.data?.queueItem?.id as string | undefined;
-        expect(queueItemId).toBeDefined();
+      const queueItemId = response.body.data?.queueItem?.id as string | undefined;
+      expect(queueItemId).toBeDefined();
 
-        const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
-        expect(statusResponse.status).toBe(200);
-        expect(statusResponse.body.data.status).toBe('completed');
+      const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
+      expect(statusResponse.status).toBe(200);
+      expect(statusResponse.body.data.status).toBe('completed');
 
-        const finalFiles = await fs.readdir(videosDir);
-        const initialMp4 = initialFiles.filter((file) => file.endsWith('.mp4'));
-        const finalMp4 = finalFiles.filter((file) => file.endsWith('.mp4'));
+      const finalFiles = await realFs.readdir(videosDir);
+      const initialMp4 = initialFiles.filter((file) => file.endsWith('.mp4'));
+      const finalMp4 = finalFiles.filter((file) => file.endsWith('.mp4'));
 
-        expect(finalMp4.length).toBeGreaterThan(initialMp4.length);
-      });
-    }, TEST_CONFIG.DOWNLOAD_TIMEOUT_MS + 30000);
+      expect(finalMp4.length).toBeGreaterThan(initialMp4.length);
+    }, 240000);
 
     it('accepts any valid HTTP/HTTPS URL', async () => {
       const response = await request(app)
