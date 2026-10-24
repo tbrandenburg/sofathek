@@ -694,8 +694,9 @@ curl http://localhost:5183
 # Check backend logs
 docker compose logs backend | grep -i youtube
 
-# Update yt-dlp in container
-docker compose exec backend pip3 install --upgrade yt-dlp
+# Rebuild the checksum-verified managed yt-dlp runtime from its pin
+docker compose build --no-cache backend
+docker compose up -d backend
 
 # Check disk space
 df -h /opt/sofathek/data

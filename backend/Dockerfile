@@ -1,53 +1,42 @@
-# Multi-stage Dockerfile for Sofathek Backend
-# Pattern: Security-focused with non-root user and minimal footprint
-
-# Builder stage - install dependencies
-FROM node:20-bookworm-slim AS builder
+# Build from the repository root: docker build -f backend/Dockerfile .
+FROM node:24-bookworm-slim AS builder
 WORKDIR /app
+ARG SOFATHEK_YTDLP_VERSION
+ENV SOFATHEK_YTDLP_VERSION=${SOFATHEK_YTDLP_VERSION}
 
-# Copy package files first for better layer caching
-COPY package*.json ./
-COPY scripts ./scripts
+COPY package.json package-lock.json ./
+COPY backend/package.json ./backend/package.json
+COPY frontend/package.json ./frontend/package.json
+# Lifecycle scripts are run explicitly: Docker uses system ffmpeg, not ffmpeg-static.
+RUN npm ci --workspace=backend --include-workspace-root=false --ignore-scripts
+COPY backend/scripts ./backend/scripts
+RUN node backend/scripts/installYtDlp.js
+COPY backend/tsconfig.json ./backend/tsconfig.json
+COPY backend/src ./backend/src
+RUN npm run build --workspace=backend && \
+    npm prune --omit=dev --workspace=backend --include-workspace-root=false --ignore-scripts
 
-# Install dependencies (use install for development, ci for production)
-RUN npm install --omit=dev && npm cache clean --force
-
-# Runtime stage - minimal production image
-FROM node:20-bookworm-slim AS runtime
-
-# Install system dependencies for YouTube processing
-# ffmpeg for thumbnail generation
-# curl for health checks
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg curl ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-
-# Create non-root user for security
-RUN addgroup --system --gid 1001 sofathek && \
+FROM node:24-bookworm-slim AS runtime
+ARG SOFATHEK_YTDLP_VERSION
+ENV NODE_ENV=production SOFATHEK_YTDLP_VERSION=${SOFATHEK_YTDLP_VERSION}
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    addgroup --system --gid 1001 sofathek && \
     adduser --system --uid 1001 --ingroup sofathek sofathek
 
-# Set up application directory
-WORKDIR /app
-
-# Copy dependencies from builder stage
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.runtime ./.runtime
-
-# Copy application files
-COPY . .
-
-# Create required directories and set permissions
-RUN mkdir -p /app/data/videos /app/data/temp /app/logs /app/dist && \
-    chown -R sofathek:sofathek /app
-
-# Switch to non-root user
+WORKDIR /app/backend
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/backend/node_modules ./node_modules
+COPY --from=builder --chmod=644 /app/backend/package.json ./package.json
+COPY --from=builder /app/backend/dist ./dist
+COPY --from=builder /app/backend/.runtime ./.runtime
+RUN ln -s /usr/bin/ffmpeg /app/node_modules/ffmpeg-static/ffmpeg && \
+    mkdir -p /app/data/videos /app/data/temp /app/logs && \
+    ln -s /app/logs ./logs && \
+    chown sofathek:sofathek /app/data/videos /app/data/temp /app/logs
+ENV VIDEOS_DIR=/app/data/videos TEMP_DIR=/app/data/temp
 USER sofathek
-
-# Expose port
 EXPOSE 3010
-
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:3010/health || exit 1
-
-# Start application
-CMD ["npm", "start"]
+    CMD node -e "fetch('http://localhost:' + (process.env.SOFATHEK_BACKEND_PORT || 3010) + '/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"
+CMD ["node", "dist/server.js"]

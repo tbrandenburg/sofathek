@@ -1,4 +1,5 @@
-import { spawn, ChildProcessByStdio } from 'node:child_process';
+import { execFile, spawn, ChildProcessByStdio } from 'node:child_process';
+import { promisify } from 'node:util';
 import { Readable } from 'node:stream';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -19,6 +20,7 @@ export interface YtDlpProcess {
 
 const backendPackage = require('../../../package.json') as { config?: { ytDlpVersion?: string } };
 const configuredYtDlpVersion = backendPackage.config?.ytDlpVersion;
+const execFileAsync = promisify(execFile);
 
 function executableName(platform: NodeJS.Platform): string {
   return platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
@@ -29,7 +31,7 @@ export function getYtDlpBinaryPath(
   version = process.env.SOFATHEK_YTDLP_VERSION || configuredYtDlpVersion
 ): string {
   if (!version || !/^\d{4}\.\d{2}\.\d{2}$/.test(version)) {
-    throw new AppError('The pinned yt-dlp version is not configured in backend/package.json.', 500, true, 'YTDLP_RUNTIME_UNAVAILABLE');
+    throw new AppError('Set backend/package.json config.ytDlpVersion or SOFATHEK_YTDLP_VERSION to a pinned stable yt-dlp release.', 500, true, 'YTDLP_RUNTIME_UNAVAILABLE');
   }
 
   const binaryPath = path.resolve(__dirname, '../../../.runtime/yt-dlp', version, executableName(platform));
@@ -44,6 +46,21 @@ export function getYtDlpBinaryPath(
     );
   }
   return binaryPath;
+}
+
+export async function verifyYtDlpRuntime(binaryPath = getYtDlpBinaryPath()): Promise<void> {
+  const version = process.env.SOFATHEK_YTDLP_VERSION || configuredYtDlpVersion;
+  const unavailable = new AppError(
+    `The pinned yt-dlp ${version} executable is incompatible or reports a different version on ${process.platform}/${process.arch}. Run npm install in the backend to reinstall it, or rebuild the Docker image with the same SOFATHEK_YTDLP_VERSION.`,
+    500, true, 'YTDLP_RUNTIME_UNAVAILABLE'
+  );
+  try {
+    const result = await execFileAsync(binaryPath, ['--version'], { timeout: 120000, windowsHide: true });
+    if (result.stdout.trim() === version) return;
+  } catch {
+    throw unavailable;
+  }
+  throw unavailable;
 }
 
 export function toCliArguments(options: YtDlpOptions): string[] {
