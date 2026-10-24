@@ -18,7 +18,7 @@ export interface YtDlpProcess {
 }
 
 const backendPackage = require('../../../package.json') as { config?: { ytDlpVersion?: string } };
-const ytDlpVersion = backendPackage.config?.ytDlpVersion;
+const configuredYtDlpVersion = backendPackage.config?.ytDlpVersion;
 
 function executableName(platform: NodeJS.Platform): string {
   return platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
@@ -26,9 +26,9 @@ function executableName(platform: NodeJS.Platform): string {
 
 export function getYtDlpBinaryPath(
   platform: NodeJS.Platform = process.platform,
-  version = ytDlpVersion
+  version = process.env.SOFATHEK_YTDLP_VERSION || configuredYtDlpVersion
 ): string {
-  if (!version) {
+  if (!version || !/^\d{4}\.\d{2}\.\d{2}$/.test(version)) {
     throw new AppError('The pinned yt-dlp version is not configured in backend/package.json.', 500, true, 'YTDLP_RUNTIME_UNAVAILABLE');
   }
 

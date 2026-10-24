@@ -18,8 +18,15 @@ describe('yt-dlp runtime', () => {
     ]);
   });
 
-  it('resolves the executable from the pinned app runtime directory', () => {
-    const binaryPath = getYtDlpBinaryPath('darwin');
-    expect(binaryPath).toMatch(/\.runtime[/\\]yt-dlp[/\\]2026\.10\.21[/\\]yt-dlp$/);
+  it('uses the installer version override when resolving the executable', () => {
+    const configuredVersion = process.env.SOFATHEK_YTDLP_VERSION;
+    process.env.SOFATHEK_YTDLP_VERSION = '2026.10.22';
+
+    try {
+      expect(() => getYtDlpBinaryPath('win32')).toThrow('yt-dlp 2026.10.22 executable is missing');
+    } finally {
+      if (configuredVersion === undefined) delete process.env.SOFATHEK_YTDLP_VERSION;
+      else process.env.SOFATHEK_YTDLP_VERSION = configuredVersion;
+    }
   });
 });
