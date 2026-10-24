@@ -146,6 +146,7 @@ backend/backend.log
 backend/logs/
 frontend/dist/
 backend/dist/
+backend/.runtime/
 backend/temp/
 backend/data/temp/
 data/videos/

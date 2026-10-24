@@ -1,9 +1,9 @@
 import { YouTubeMetadataExtractor } from '../../../features/youtube/youTubeMetadataExtractor';
 
-// Mock youtube-dl-exec
-const mockExec = jest.fn();
-jest.mock('youtube-dl-exec', () => ({
-  exec: (...args: any[]) => mockExec(...args)
+// Mock the managed yt-dlp process runner.
+const mockSpawnYtDlp = jest.fn();
+jest.mock('../../../features/youtube/ytDlpRuntime', () => ({
+  spawnYtDlp: (...args: any[]) => mockSpawnYtDlp(...args)
 }));
 
 // Mock validation utility - pass through parsed data
@@ -29,20 +29,18 @@ describe('YouTubeMetadataExtractor', () => {
         uploader: 'Test Channel'
       };
 
-      // youtube-dl-exec.exec() returns process result object with stdout containing JSON
       const mockProcessResult = {
         stdout: JSON.stringify(mockMetadata),
         stderr: '',
         pid: 12345
       };
 
-      const mockSubprocess = Promise.resolve(mockProcessResult);
-      (mockSubprocess as any).stderr = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
+      const mockSubprocess = { process: { stderr: { on: jest.fn() }, stdout: { on: jest.fn() } }, done: Promise.resolve(mockProcessResult) };
+      mockSpawnYtDlp.mockReturnValue(mockSubprocess);
 
       const result = await extractor.extract('https://www.youtube.com/watch?v=test123');
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(mockSpawnYtDlp).toHaveBeenCalledWith(
         'https://www.youtube.com/watch?v=test123',
         expect.objectContaining({
           dumpSingleJson: true,
@@ -64,16 +62,14 @@ describe('YouTubeMetadataExtractor', () => {
         title: 'Test Video'
       };
 
-      // youtube-dl-exec.exec() returns process result object with stdout containing JSON
       const mockProcessResult = {
         stdout: JSON.stringify(mockMetadata),
         stderr: '',
         pid: 12345
       };
 
-      const mockSubprocess = Promise.resolve(mockProcessResult);
-      (mockSubprocess as any).stderr = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
+      const mockSubprocess = { process: { stderr: { on: jest.fn() }, stdout: { on: jest.fn() } }, done: Promise.resolve(mockProcessResult) };
+      mockSpawnYtDlp.mockReturnValue(mockSubprocess);
 
       const result = await extractor.extract('https://www.youtube.com/watch?v=test123');
 
@@ -90,18 +86,16 @@ describe('YouTubeMetadataExtractor', () => {
         pid: 12345
       };
 
-      const mockSubprocess = Promise.resolve(mockProcessResult);
-      (mockSubprocess as any).stderr = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
+      const mockSubprocess = { process: { stderr: { on: jest.fn() }, stdout: { on: jest.fn() } }, done: Promise.resolve(mockProcessResult) };
+      mockSpawnYtDlp.mockReturnValue(mockSubprocess);
 
       await expect(extractor.extract('https://www.youtube.com/watch?v=test'))
         .rejects.toThrow('yt-dlp returned empty stdout');
     });
 
     it('should throw user-friendly error without internal details on extraction failure', async () => {
-      const mockSubprocess = Promise.reject(new Error('Download failed'));
-      (mockSubprocess as any).stderr = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
+      const mockSubprocess = { process: { stderr: { on: jest.fn() }, stdout: { on: jest.fn() } }, done: Promise.reject(new Error('Download failed')) };
+      mockSpawnYtDlp.mockReturnValue(mockSubprocess);
 
       // Should throw a user-friendly error (not the raw internal message)
       await expect(extractor.extract('https://www.youtube.com/watch?v=invalid'))
@@ -112,9 +106,8 @@ describe('YouTubeMetadataExtractor', () => {
       const internalError = new Error(
         'The command spawned as:\n  `/home/user/node_modules/yt-dlp ...` exited with: { code: 1 }\n(stderr: ERROR: Unable to download webpage: HTTP Error 404: Not Found)'
       );
-      const mockSubprocess = Promise.reject(internalError);
-      (mockSubprocess as any).stderr = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
+      const mockSubprocess = { process: { stderr: { on: jest.fn() }, stdout: { on: jest.fn() } }, done: Promise.reject(internalError) };
+      mockSpawnYtDlp.mockReturnValue(mockSubprocess);
 
       await expect(extractor.extract('https://www.youtube.com/watch?v=invalid')).rejects.not.toThrow('node_modules');
     });
@@ -126,16 +119,14 @@ describe('YouTubeMetadataExtractor', () => {
         channel: 'Test Channel'
       };
 
-      // youtube-dl-exec.exec() returns process result object with stdout containing JSON
       const mockProcessResult = {
         stdout: JSON.stringify(mockMetadata),
         stderr: '',
         pid: 12345
       };
 
-      const mockSubprocess = Promise.resolve(mockProcessResult);
-      (mockSubprocess as any).stderr = { on: jest.fn() };
-      mockExec.mockReturnValue(mockSubprocess);
+      const mockSubprocess = { process: { stderr: { on: jest.fn() }, stdout: { on: jest.fn() } }, done: Promise.resolve(mockProcessResult) };
+      mockSpawnYtDlp.mockReturnValue(mockSubprocess);
 
       const result = await extractor.extract('https://www.youtube.com/watch?v=test123');
 

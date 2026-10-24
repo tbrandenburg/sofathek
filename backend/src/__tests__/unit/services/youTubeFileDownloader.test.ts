@@ -6,11 +6,22 @@ jest.mock('fs/promises', () => ({
   readdir: (...args: any[]) => mockReaddir(...args)
 }));
 
-// Mock youtube-dl-exec
-const mockExec = jest.fn();
-jest.mock('youtube-dl-exec', () => ({
-  exec: (...args: any[]) => mockExec(...args)
+// Mock the managed yt-dlp process runner
+const mockSpawnYtDlp = jest.fn();
+jest.mock('../../../features/youtube/ytDlpRuntime', () => ({
+  spawnYtDlp: (...args: any[]) => mockSpawnYtDlp(...args)
 }));
+
+function makeSubprocess(done: Promise<{ stdout: string; stderr: string }> = Promise.resolve({ stdout: '', stderr: '' })) {
+  return {
+    process: {
+      stdout: { on: jest.fn() },
+      stderr: { on: jest.fn() },
+      kill: jest.fn(),
+    },
+    done
+  };
+}
 
 describe('YouTubeFileDownloader', () => {
   let downloader: YouTubeFileDownloader;
@@ -23,18 +34,13 @@ describe('YouTubeFileDownloader', () => {
   describe('download', () => {
     it('should configure yt-dlp with writeThumbnail: true for video pass', async () => {
       const metadata = { id: 'test123', title: 'Test Video' };
-      const mkSub = () => Object.assign(Promise.resolve(), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(() => makeSubprocess());
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
       await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
 
       // First call is the video pass
-      expect(mockExec).toHaveBeenNthCalledWith(
+      expect(mockSpawnYtDlp).toHaveBeenNthCalledWith(
         1,
         expect.any(String),
         expect.objectContaining({ writeThumbnail: true })
@@ -47,24 +53,17 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video'
       };
 
-      const mockSubprocess = () => {
-        const p = Promise.resolve() as any;
-        p.stdout = { on: jest.fn() };
-        p.stderr = { on: jest.fn() };
-        p.kill = jest.fn();
-        return p;
-      };
-      mockExec.mockImplementation(mockSubprocess);
+      mockSpawnYtDlp.mockImplementation(() => makeSubprocess());
 
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4', 'other-file.txt']);
 
       const result = await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
 
       expect(result).toBe('/test/temp/Test_Video-test123.mp4');
-      expect(mockExec).toHaveBeenCalledTimes(2);
+      expect(mockSpawnYtDlp).toHaveBeenCalledTimes(2);
 
       // Pass 1: video + subtitles, no extractAudio
-      expect(mockExec).toHaveBeenNthCalledWith(
+      expect(mockSpawnYtDlp).toHaveBeenNthCalledWith(
         1,
         'https://www.youtube.com/watch?v=test123',
         expect.objectContaining({
@@ -81,7 +80,7 @@ describe('YouTubeFileDownloader', () => {
       );
 
       // Pass 2: audio extraction only
-      expect(mockExec).toHaveBeenNthCalledWith(
+      expect(mockSpawnYtDlp).toHaveBeenNthCalledWith(
         2,
         'https://www.youtube.com/watch?v=test123',
         expect.objectContaining({
@@ -99,12 +98,7 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video'
       };
 
-      const mockSubprocess = Object.assign(Promise.reject(new Error('Download failed')), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      mockExec.mockReturnValue(mockSubprocess);
+      mockSpawnYtDlp.mockReturnValue(makeSubprocess(Promise.reject(new Error('Download failed'))));
 
       // Should throw a user-friendly error (not the raw internal message)
       await expect(downloader.download('https://www.youtube.com/watch?v=test123', metadata))
@@ -119,12 +113,7 @@ describe('YouTubeFileDownloader', () => {
 
       const internalPath = '/home/app/node_modules/yt-dlp/yt_dlp/__main__.py';
       const mockError = new Error(`yt-dlp failed: ${internalPath} --no-warnings`);
-      const mockSubprocess = Object.assign(Promise.reject(mockError), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      mockExec.mockReturnValue(mockSubprocess);
+      mockSpawnYtDlp.mockReturnValue(makeSubprocess(Promise.reject(mockError)));
 
       try {
         await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
@@ -138,12 +127,7 @@ describe('YouTubeFileDownloader', () => {
 
     it('should find and return a .webm file when no .mp4 is available', async () => {
       const metadata = { id: 'test123', title: 'Test Video' };
-      const mkSub = () => Object.assign(Promise.resolve(), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(() => makeSubprocess());
       mockReaddir.mockResolvedValue(['Test_Video-test123.webm']);
 
       const result = await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
@@ -156,12 +140,7 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video'
       };
 
-      const mkSub = () => Object.assign(Promise.resolve(), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(() => makeSubprocess());
 
       mockReaddir.mockResolvedValue(['other-file.txt']); // No matching file
 
@@ -172,21 +151,10 @@ describe('YouTubeFileDownloader', () => {
     it('should return the video path when the standalone MP3 extraction pass fails (e.g. 403 on audio-only format)', async () => {
       const metadata = { id: 'test123', title: 'Test Video' };
 
-      const videoSubprocess = () => Object.assign(Promise.resolve(), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      const failingAudioSubprocess = () => Object.assign(
-        Promise.reject(new Error('unable to download video data: HTTP Error 403: Forbidden')),
-        {
-          stdout: { on: jest.fn() },
-          stderr: { on: jest.fn() },
-          kill: jest.fn(),
-        }
-      );
+      const videoSubprocess = () => makeSubprocess();
+      const failingAudioSubprocess = () => makeSubprocess(Promise.reject(new Error('unable to download video data: HTTP Error 403: Forbidden')));
 
-      mockExec
+      mockSpawnYtDlp
         .mockImplementationOnce(videoSubprocess)
         .mockImplementationOnce(failingAudioSubprocess);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
@@ -196,7 +164,7 @@ describe('YouTubeFileDownloader', () => {
       // The video was already downloaded successfully; a failed standalone
       // MP3 pass must not discard it or throw.
       expect(result).toBe('/test/temp/Test_Video-test123.mp4');
-      expect(mockExec).toHaveBeenCalledTimes(2);
+      expect(mockSpawnYtDlp).toHaveBeenCalledTimes(2);
     });
 
     it('should create safe filenames', async () => {
@@ -205,19 +173,14 @@ describe('YouTubeFileDownloader', () => {
         title: 'Test Video: "Special" Characters/And\\More!'
       };
 
-      const mkSub = () => Object.assign(Promise.resolve(), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(() => makeSubprocess());
 
       // Based on the actual filename sanitization logic: removes <>"/:*?|\ chars, converts spaces to _
       mockReaddir.mockResolvedValue(['Test_Video_Special_CharactersAndMore!-test123.mp4']);
 
       await downloader.download('https://www.youtube.com/watch?v=test123', metadata);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(mockSpawnYtDlp).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
           output: expect.stringContaining('Test_Video_Special_CharactersAndMore!-test123')
@@ -233,17 +196,15 @@ describe('YouTubeFileDownloader', () => {
 
       let videoStdoutHandler: ((data: Buffer) => void) | undefined;
       const mkSub = () => {
-        const p = Promise.resolve() as any;
-        p.stdout = {
+        const subprocess = makeSubprocess();
+        subprocess.process.stdout = {
           on: jest.fn((event, handler) => {
             if (event === 'data') videoStdoutHandler = handler;
           })
         };
-        p.stderr = { on: jest.fn() };
-        p.kill = jest.fn();
-        return p;
+        return subprocess;
       };
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(mkSub);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
       const downloadPromise = downloader.download(
@@ -269,17 +230,15 @@ describe('YouTubeFileDownloader', () => {
 
       const stdoutHandlers: Array<(data: Buffer) => void> = [];
       const mkSub = () => {
-        const p = Promise.resolve() as any;
-        p.stdout = {
+        const subprocess = makeSubprocess();
+        subprocess.process.stdout = {
           on: jest.fn((event, handler) => {
             if (event === 'data') stdoutHandlers.push(handler);
           })
         };
-        p.stderr = { on: jest.fn() };
-        p.kill = jest.fn();
-        return p;
+        return subprocess;
       };
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(mkSub);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
       const downloadPromise = downloader.download(
@@ -299,12 +258,7 @@ describe('YouTubeFileDownloader', () => {
 
     it('should not throw when progressCallback is undefined (backward compatibility)', async () => {
       const metadata = { id: 'test123', title: 'Test Video' };
-      const mkSub = () => Object.assign(Promise.resolve(), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: jest.fn(),
-      });
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(() => makeSubprocess());
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
       await expect(
@@ -318,17 +272,15 @@ describe('YouTubeFileDownloader', () => {
 
       let videoStdoutHandler: ((data: Buffer) => void) | undefined;
       const mkSub = () => {
-        const p = Promise.resolve() as any;
-        p.stdout = {
+        const subprocess = makeSubprocess();
+        subprocess.process.stdout = {
           on: jest.fn((event, handler) => {
             if (event === 'data') videoStdoutHandler = handler;
           })
         };
-        p.stderr = { on: jest.fn() };
-        p.kill = jest.fn();
-        return p;
+        return subprocess;
       };
-      mockExec.mockImplementation(mkSub);
+      mockSpawnYtDlp.mockImplementation(mkSub);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
       const downloadPromise = downloader.download(
@@ -350,12 +302,9 @@ describe('YouTubeFileDownloader', () => {
   describe('cancelDownload', () => {
     it('should send SIGTERM to active subprocess and return true', async () => {
       const mockKill = jest.fn();
-      const subprocess = Object.assign(new Promise<void>(resolve => setTimeout(resolve, 1000)), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: mockKill,
-      });
-      mockExec.mockReturnValue(subprocess);
+      const subprocess = makeSubprocess(new Promise(resolve => setTimeout(() => resolve({ stdout: '', stderr: '' }), 1000)));
+      subprocess.process.kill = mockKill;
+      mockSpawnYtDlp.mockReturnValue(subprocess);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
       // Start the download without awaiting so it stays active
@@ -381,12 +330,9 @@ describe('YouTubeFileDownloader', () => {
 
     it('should return false when called twice for same downloadId', async () => {
       const mockKill = jest.fn();
-      const subprocess = Object.assign(new Promise<void>(resolve => setTimeout(resolve, 1000)), {
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        kill: mockKill,
-      });
-      mockExec.mockReturnValue(subprocess);
+      const subprocess = makeSubprocess(new Promise(resolve => setTimeout(() => resolve({ stdout: '', stderr: '' }), 1000)));
+      subprocess.process.kill = mockKill;
+      mockSpawnYtDlp.mockReturnValue(subprocess);
       mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
 
       const downloadPromise = downloader.download(

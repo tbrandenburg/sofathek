@@ -255,6 +255,7 @@ All matching is case-insensitive. `blockedTags`/`blockedCategories` require an e
 ## Requirements
 
 - **Node.js 20+** (for development and yt-dlp JavaScript runtime)
+- **yt-dlp runtime** is installed automatically by `make install` from the pinned official release and checksum-verified for supported macOS, Windows, and Linux architectures. A system Python installation is not required for video downloads.
 - **Make** (for using the Makefile commands)
 - **Docker and Docker Compose** (for containerized deployment)
 - **Python 3** (for serving production frontend)

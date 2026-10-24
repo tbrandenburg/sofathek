@@ -4,7 +4,7 @@
   "description": "Backend API server for Sofathek family media center",
   "main": "dist/server.js",
   "scripts": {
-    "postinstall": "node scripts/postinstall.js",
+    "postinstall": "node scripts/installYtDlp.js && node scripts/postinstall.js",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -31,7 +31,6 @@
     "readable-stream": "^3.6.2",
     "uuid": "^11.1.1",
     "winston": "^3.17.0",
-    "youtube-dl-exec": "^3.1.3",
     "zod": "^3.22.0"
   },
   "devDependencies": {
@@ -70,6 +69,9 @@
     "superagent": {
       "qs": "6.16.0"
     }
+  },
+  "config": {
+    "ytDlpVersion": "2026.10.21"
   },
   "keywords": [
     "backend",

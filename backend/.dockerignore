@@ -94,9 +94,9 @@ ehthumbs.db
 Thumbs.db
 
 # Development scripts and testing utilities
-scripts/
 dev/
 .claude/
+.runtime/
 
 # Static analysis and linting cache
 .eslintcache

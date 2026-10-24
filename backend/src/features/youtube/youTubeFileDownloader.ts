@@ -1,4 +1,3 @@
-import youtubedl from 'youtube-dl-exec';
 import { getErrorMessage } from '../../utils/error';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -6,12 +5,13 @@ import { logger } from '../../utils/logger';
 import { AppError } from '../../middleware/errorHandler';
 import { YouTubeMetadata } from './types';
 import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
+import { spawnYtDlp } from './ytDlpRuntime';
 
 export type DownloadProgressCallback = (phase: 'video' | 'audio', percent: number) => void;
 
 export class YouTubeFileDownloader {
   private readonly tempDirectory: string;
-  private activeSubprocesses: Map<string, { subprocess: ReturnType<typeof youtubedl.exec>, aborted: boolean }> = new Map();
+  private activeSubprocesses = new Map<string, { subprocess: ReturnType<typeof spawnYtDlp>['process']; aborted: boolean }>();
 
   constructor(tempDirectory: string) {
     this.tempDirectory = tempDirectory;
@@ -37,7 +37,7 @@ export class YouTubeFileDownloader {
       });
 
       // Pass 1: download best H.264 video+audio merged as MP4, plus subtitles
-      const videoSubprocess = youtubedl.exec(url, {
+      const videoSubprocess = spawnYtDlp(url, {
         output: outputTemplate,
         format: 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         mergeOutputFormat: 'mp4',
@@ -53,16 +53,16 @@ export class YouTubeFileDownloader {
         jsRuntimes: 'node'
       });
 
-      const tracker = { subprocess: videoSubprocess, aborted: false };
+      const tracker = { subprocess: videoSubprocess.process, aborted: false };
       if (downloadId) {
         this.activeSubprocesses.set(downloadId, tracker);
       }
 
-      videoSubprocess.stderr?.on('data', (data) => {
+      videoSubprocess.process.stderr.on('data', (data) => {
         stderrOutput += data.toString();
       });
 
-      videoSubprocess.stdout?.on('data', (data) => {
+      videoSubprocess.process.stdout.on('data', (data) => {
         const output = data.toString();
         if (output.includes('[download]')) {
           const percentMatch = output.match(/\[download\]\s+([\d.]+)%/);
@@ -73,7 +73,7 @@ export class YouTubeFileDownloader {
         }
       });
 
-      await videoSubprocess;
+      await videoSubprocess.done;
 
       // Pass 2: extract audio as MP3 (best audio only, no video stream).
       // Best-effort: YouTube can reject audio-only format requests (e.g. 403
@@ -85,7 +85,7 @@ export class YouTubeFileDownloader {
         logger.info('Extracting audio track', { url, videoId: metadata.id });
         let audioStderrOutput = '';
         try {
-          const audioSubprocess = youtubedl.exec(url, {
+          const audioSubprocess = spawnYtDlp(url, {
             output: outputTemplate,
             format: 'bestaudio',
             extractAudio: true,
@@ -98,14 +98,14 @@ export class YouTubeFileDownloader {
           });
 
           if (downloadId) {
-            tracker.subprocess = audioSubprocess;
+            tracker.subprocess = audioSubprocess.process;
           }
 
-          audioSubprocess.stderr?.on('data', (data) => {
+          audioSubprocess.process.stderr.on('data', (data) => {
             audioStderrOutput += data.toString();
           });
 
-          audioSubprocess.stdout?.on('data', (data) => {
+          audioSubprocess.process.stdout.on('data', (data) => {
             const output = data.toString();
             if (output.includes('[download]')) {
               const percentMatch = output.match(/\[download\]\s+([\d.]+)%/);
@@ -115,7 +115,7 @@ export class YouTubeFileDownloader {
             }
           });
 
-          await audioSubprocess;
+          await audioSubprocess.done;
         } catch (error) {
           const stderrMessage = audioStderrOutput.trim() || ((error as any).stderr as string | undefined)?.trim() || '';
           logger.warn('Standalone MP3 extraction failed, continuing with video-only result', {
