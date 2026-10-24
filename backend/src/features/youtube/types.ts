@@ -4,6 +4,8 @@
 export interface DownloadRequest {
   /** Video URL (YouTube, Vimeo, Twitter/X, and 1000+ other sites supported) */
   url: string;
+  /** Maximum video height to download; omitted values use best available. */
+  quality?: VideoQuality;
   /** Optional custom title override */
   title?: string;
   /** Request timestamp */
@@ -224,10 +226,12 @@ export const isPrivateNetworkHost = (hostname: string): boolean => {
 /**
  * YouTube download quality options
  */
-export const YOUTUBE_QUALITY_OPTIONS = [
-  'best[ext=mp4]/best',
-  'best[height<=720]/best',
-  'best[height<=480]/best'
+export const VIDEO_QUALITY_OPTIONS = [
+  'best',
+  '1080p',
+  '720p',
+  '480p',
+  '360p'
 ] as const;
 
-export type YouTubeQualityOption = typeof YOUTUBE_QUALITY_OPTIONS[number];
+export type VideoQuality = typeof VIDEO_QUALITY_OPTIONS[number];

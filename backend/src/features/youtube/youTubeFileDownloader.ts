@@ -3,11 +3,20 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { logger } from '../../utils/logger';
 import { AppError } from '../../middleware/errorHandler';
-import { YouTubeMetadata } from './types';
+import { VideoQuality, YouTubeMetadata } from './types';
 import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
 import { spawnYtDlp } from './ytDlpRuntime';
 
 export type DownloadProgressCallback = (phase: 'video' | 'audio', percent: number) => void;
+
+export function getVideoFormatSelector(quality: VideoQuality): string {
+  if (quality === 'best') {
+    return 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+  }
+
+  const maxHeight = Number.parseInt(quality, 10);
+  return `bestvideo[height<=${maxHeight}]+bestaudio/best[height<=${maxHeight}]`;
+}
 
 export class YouTubeFileDownloader {
   private readonly tempDirectory: string;
@@ -21,7 +30,8 @@ export class YouTubeFileDownloader {
     url: string,
     metadata: YouTubeMetadata,
     downloadId?: string,
-    progressCallback?: DownloadProgressCallback
+    progressCallback?: DownloadProgressCallback,
+    quality: VideoQuality = 'best'
   ): Promise<string> {
     let stderrOutput = '';
 
@@ -39,7 +49,7 @@ export class YouTubeFileDownloader {
       // Pass 1: download best H.264 video+audio merged as MP4, plus subtitles
       const videoSubprocess = spawnYtDlp(url, {
         output: outputTemplate,
-        format: 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        format: getVideoFormatSelector(quality),
         mergeOutputFormat: 'mp4',
         writeThumbnail: true,
         writeSub: true,

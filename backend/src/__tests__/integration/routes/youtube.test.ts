@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import youtubeRouter from '../../../features/youtube/routes';
+import youtubeRouter, { downloadRateLimiter } from '../../../features/youtube/routes';
 import { downloadQueueService, youTubeDownloadService } from '../../../services/index';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
@@ -32,13 +32,15 @@ describe('YouTube Routes', () => {
     app.use(globalErrorHandler);
     
     jest.clearAllMocks();
+    (downloadRateLimiter as any).store.clear();
   });
 
   describe('POST /api/youtube/download', () => {
     it('should successfully add video to download queue', async () => {
       const mockRequest = {
         url: 'https://www.youtube.com/watch?v=test123',
-        title: 'Test Video'
+        title: 'Test Video',
+        quality: '720p' as const
       };
 
       const mockQueueItem = {
@@ -71,6 +73,28 @@ describe('YouTube Routes', () => {
       expect(response.body.data.queueItem.status).toBe('pending');
       expect(mockYouTubeDownloadService.validateYouTubeUrl).toHaveBeenCalledWith(mockRequest.url);
       expect(mockDownloadQueueService.addToQueue).toHaveBeenCalled();
+      expect(mockDownloadQueueService.addToQueue).toHaveBeenCalledWith(expect.objectContaining({ quality: '720p' }));
+    });
+
+    it('defaults omitted quality to best available', async () => {
+      mockYouTubeDownloadService.validateYouTubeUrl.mockResolvedValue(true);
+      mockYouTubeDownloadService.fetchMetadataAndCheckPolicy.mockResolvedValue({ id: 'id', title: 'title' } as any);
+      mockDownloadQueueService.addToQueue.mockResolvedValue({ id: 'queue-123' } as any);
+
+      const response = await request(app).post('/api/youtube/download').send({ url: 'https://example.com/video' });
+
+      expect(response.status).toBe(201);
+      expect(mockDownloadQueueService.addToQueue).toHaveBeenCalledWith(expect.objectContaining({ quality: 'best' }));
+    });
+
+    it('rejects unknown quality values', async () => {
+      const response = await request(app)
+        .post('/api/youtube/download')
+        .send({ url: 'https://example.com/video', quality: '8k' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid video quality');
+      expect(mockDownloadQueueService.addToQueue).not.toHaveBeenCalled();
     });
 
     it('should return 400 if URL is missing', async () => {

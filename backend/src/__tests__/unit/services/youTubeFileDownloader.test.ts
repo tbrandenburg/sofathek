@@ -1,4 +1,4 @@
-import { YouTubeFileDownloader } from '../../../features/youtube/youTubeFileDownloader';
+import { getVideoFormatSelector, YouTubeFileDownloader } from '../../../features/youtube/youTubeFileDownloader';
 
 // Mock fs/promises
 const mockReaddir = jest.fn();
@@ -29,6 +29,19 @@ describe('YouTubeFileDownloader', () => {
   beforeEach(() => {
     downloader = new YouTubeFileDownloader('/test/temp');
     jest.clearAllMocks();
+  });
+
+  it.each([
+    ['1080p', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]'],
+    ['720p', 'bestvideo[height<=720]+bestaudio/best[height<=720]'],
+    ['480p', 'bestvideo[height<=480]+bestaudio/best[height<=480]'],
+    ['360p', 'bestvideo[height<=360]+bestaudio/best[height<=360]'],
+  ] as const)('maps %s to a capped yt-dlp selector', (quality, selector) => {
+    expect(getVideoFormatSelector(quality)).toBe(selector);
+  });
+
+  it('preserves the existing best available selector', () => {
+    expect(getVideoFormatSelector('best')).toBe('bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best');
   });
 
   describe('download', () => {
@@ -90,6 +103,16 @@ describe('YouTubeFileDownloader', () => {
           noPlaylist: true,
         })
       );
+    });
+
+    it('applies the selected cap only to the video pass', async () => {
+      mockSpawnYtDlp.mockImplementation(() => makeSubprocess());
+      mockReaddir.mockResolvedValue(['Test_Video-test123.mp4']);
+
+      await downloader.download('https://example.com/video', { id: 'test123', title: 'Test Video' }, undefined, undefined, '480p');
+
+      expect(mockSpawnYtDlp.mock.calls[0][1]).toEqual(expect.objectContaining({ format: 'bestvideo[height<=480]+bestaudio/best[height<=480]' }));
+      expect(mockSpawnYtDlp.mock.calls[1][1]).toEqual(expect.objectContaining({ format: 'bestaudio', extractAudio: true, audioFormat: 'mp3' }));
     });
 
     it('should handle download failures with user-friendly message', async () => {

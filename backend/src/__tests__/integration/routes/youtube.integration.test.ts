@@ -4,6 +4,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { execFile } from 'child_process';
+import ffmpegPath from 'ffmpeg-static';
 import { promisify } from 'util';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { getYtDlpBinaryPath } from '../../../features/youtube/ytDlpRuntime';
@@ -139,11 +140,9 @@ describe('Video Download Integration (Real)', () => {
 
     it('downloads a real YouTube video and writes an mp4 file', async () => {
       const realFs = jest.requireActual<typeof import('node:fs/promises')>('node:fs/promises');
-      const initialFiles = await realFs.readdir(videosDir);
-
       const response = await request(app)
         .post('/api/youtube/download')
-        .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
+        .send({ url: TEST_CONFIG.TEST_VIDEO_URL, quality: '480p' })
         .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
 
       expect(response.status).toBe(201);
@@ -151,17 +150,28 @@ describe('Video Download Integration (Real)', () => {
 
       const queueItemId = response.body.data?.queueItem?.id as string | undefined;
       expect(queueItemId).toBeDefined();
+      expect(response.body.data?.queueItem?.request?.quality).toBe('480p');
 
       const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
       expect(statusResponse.status).toBe(200);
       expect(statusResponse.body.data.status).toBe('completed');
 
       const finalFiles = await realFs.readdir(videosDir);
-      const initialMp4 = initialFiles.filter((file) => file.endsWith('.mp4'));
       const finalMp4 = finalFiles.filter((file) => file.endsWith('.mp4'));
 
-      expect(finalMp4.length).toBeGreaterThan(initialMp4.length);
-    }, 240000);
+      expect(finalMp4.length).toBeGreaterThan(0);
+      const downloadedMp4 = finalMp4[0];
+      expect(downloadedMp4).toBeDefined();
+      if (!ffmpegPath || !downloadedMp4) {
+        throw new Error('Cannot inspect the downloaded video: ffmpeg or output file is missing');
+      }
+      const probe = await execFileAsync(ffmpegPath, [
+        '-hide_banner', '-i', path.join(videosDir, downloadedMp4), '-frames:v', '1', '-f', 'null', '-'
+      ]);
+      const dimensions = probe.stderr.match(/\b(\d{2,5})x(\d{2,5})\b/);
+      expect(dimensions).not.toBeNull();
+      expect(Number(dimensions?.[2])).toBeLessThanOrEqual(480);
+    }, TEST_CONFIG.DOWNLOAD_TIMEOUT_MS + 30000);
 
     it('accepts any valid HTTP/HTTPS URL', async () => {
       const response = await request(app)

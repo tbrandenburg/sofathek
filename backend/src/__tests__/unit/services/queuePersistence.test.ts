@@ -1,12 +1,14 @@
-import { saveQueue } from '../../../services/queuePersistence';
+import { loadQueue, saveQueue } from '../../../services/queuePersistence';
 import { QueueItem } from '../../../features/youtube/types';
 
 const mockMkdir = jest.fn();
+const mockReadFile = jest.fn();
 const mockWriteFile = jest.fn();
 const mockRename = jest.fn();
 const mockUnlink = jest.fn();
 
 jest.mock('fs/promises', () => ({
+  readFile: (...args: any[]) => mockReadFile(...args),
   mkdir: (...args: any[]) => mockMkdir(...args),
   writeFile: (...args: any[]) => mockWriteFile(...args),
   rename: (...args: any[]) => mockRename(...args),
@@ -31,6 +33,24 @@ describe('saveQueue serialization', () => {
     mockWriteFile.mockResolvedValue(undefined);
     mockRename.mockResolvedValue(undefined);
     mockUnlink.mockResolvedValue(undefined);
+  });
+
+  it('restores quality from persisted requests and supports older requests without it', async () => {
+    mockReadFile.mockResolvedValue(JSON.stringify([
+      {
+        id: 'new', request: { url: 'https://youtu.be/new', quality: '720p', requestId: 'new', requestedAt: '2026-01-01T00:00:00.000Z' },
+        status: 'pending', progress: 0, currentStep: 'Queued', queuedAt: '2026-01-01T00:00:00.000Z'
+      },
+      {
+        id: 'old', request: { url: 'https://youtu.be/old', requestId: 'old', requestedAt: '2026-01-01T00:00:00.000Z' },
+        status: 'pending', progress: 0, currentStep: 'Queued', queuedAt: '2026-01-01T00:00:00.000Z'
+      }
+    ]));
+
+    const queue = await loadQueue('/tmp/q.json');
+
+    expect(queue[0]?.request.quality).toBe('720p');
+    expect(queue[1]?.request.quality).toBeUndefined();
   });
 
   it('should serialize concurrent saves: second write starts only after first completes', async () => {
