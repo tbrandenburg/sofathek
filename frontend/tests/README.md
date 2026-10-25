@@ -14,7 +14,7 @@ This test suite uses three tiers to balance speed and real-world coverage.
 - File: `youtube-download/integration.spec.ts`
 - Purpose: Frontend-backend integration against the live backend API
 - Backend required: Yes (`http://localhost:3010`)
-- External YouTube dependency: No (`YOUTUBE_DL_SKIP_DOWNLOAD=true`)
+- External YouTube dependency: No
 - Best for: API contract, queue behavior, and error propagation to UI
 
 ## 3) Real-world tests

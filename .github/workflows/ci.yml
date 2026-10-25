@@ -13,7 +13,6 @@ concurrency:
 
 env:
   NODE_VERSION: '24.x'
-  YOUTUBE_DL_SKIP_DOWNLOAD: 'true'
   SOFATHEK_BACKEND_PORT: '3010'
   SOFATHEK_FRONTEND_PORT: '8010'
 
@@ -92,10 +91,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Run backend unit tests
+      - name: Run backend suite (external downloads remain opt-in)
         run: |
           cd backend
-          npm run test:unit
+          npm test -- --runInBand
       
       - name: Run frontend unit tests
         run: |
@@ -121,23 +120,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install yt-dlp system binary
-        run: |
-          pip install --upgrade pip
-          pip install yt-dlp
-          which yt-dlp
-          # npm workspaces may hoist youtube-dl-exec to root node_modules instead of
-          # backend/node_modules, and its postinstall script (which normally downloads
-          # its own yt-dlp binary) may not run under `npm ci`'s script restrictions, so
-          # the package's bin/ dir may not exist yet. Find the package dir itself
-          # (not just bin/) and create+symlink into every location found.
-          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec" 2>/dev/null); do
-            mkdir -p "$dir/bin"
-            ln -sf "$(which yt-dlp)" "$dir/bin/yt-dlp"
-            echo "yt-dlp symlinked to $(readlink -f "$dir/bin/yt-dlp")"
-          done
-        timeout-minutes: 5
-        
       - name: Install Playwright chromium-headless-shell (manual)
         run: |
           HEADLESS_DIR="$HOME/.cache/ms-playwright/chromium_headless_shell-1217"
@@ -469,23 +451,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install yt-dlp system binary
-        run: |
-          pip install --upgrade pip
-          pip install yt-dlp
-          which yt-dlp
-          # npm workspaces may hoist youtube-dl-exec to root node_modules instead of
-          # backend/node_modules, and its postinstall script (which normally downloads
-          # its own yt-dlp binary) may not run under `npm ci`'s script restrictions, so
-          # the package's bin/ dir may not exist yet. Find the package dir itself
-          # (not just bin/) and create+symlink into every location found.
-          for dir in $(find . -maxdepth 3 -type d -path "*/node_modules/youtube-dl-exec" 2>/dev/null); do
-            mkdir -p "$dir/bin"
-            ln -sf "$(which yt-dlp)" "$dir/bin/yt-dlp"
-            echo "yt-dlp symlinked to $(readlink -f "$dir/bin/yt-dlp")"
-          done
-        timeout-minutes: 5
-        
       - name: Build for production
         run: make build
         
@@ -562,11 +527,50 @@ jobs:
           sleep 2
           echo "Servers stopped successfully"
 
+  managed-runtime:
+    name: Managed yt-dlp (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install backend and managed runtime from workspace lockfile
+        run: npm ci --workspace=backend --include-workspace-root=true
+        env:
+          HUSKY: '0'
+      - name: Build backend
+        run: npm run build --workspace=backend
+      - name: Installer regression tests and real runtime verification
+        run: npm test --workspace=backend -- --runInBand src/__tests__/unit/features/installYtDlp.test.ts src/__tests__/unit/features/ytDlpRuntime.test.ts src/__tests__/unit/features/ytDlpPlatform.test.ts
+      - name: Verify compiled runtime and idempotent installation
+        run: |
+          node backend/scripts/installYtDlp.js
+          node -e "require('./backend/dist/features/youtube/ytDlpRuntime').verifyYtDlpRuntime().catch(e => { console.error(e); process.exit(1); })"
+
+  docker-smoke:
+    name: Docker backend build and startup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Build and start isolated Compose backend; verify runtime without Python
+        run: npm run test:docker
+
   # Summary job for status checks
   ci-success:
     name: '✅ CI Pipeline Complete'
     runs-on: ubuntu-latest
-    needs: [static-analysis, build-functional, unit-tests, e2e-tests, integration]
+    needs: [static-analysis, build-functional, unit-tests, e2e-tests, integration, managed-runtime, docker-smoke]
     if: success()
     
     steps:

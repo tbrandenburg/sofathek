@@ -8,6 +8,7 @@ import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
 import { spawnYtDlp } from './ytDlpRuntime';
 
 export type DownloadProgressCallback = (phase: 'video' | 'audio', percent: number) => void;
+export const VIDEO_DOWNLOAD_FORMAT = 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
 
 export class YouTubeFileDownloader {
   private readonly tempDirectory: string;
@@ -39,7 +40,7 @@ export class YouTubeFileDownloader {
       // Pass 1: download best H.264 video+audio merged as MP4, plus subtitles
       const videoSubprocess = spawnYtDlp(url, {
         output: outputTemplate,
-        format: 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        format: VIDEO_DOWNLOAD_FORMAT,
         mergeOutputFormat: 'mp4',
         writeThumbnail: true,
         writeSub: true,

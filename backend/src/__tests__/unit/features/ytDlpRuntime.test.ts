@@ -1,6 +1,16 @@
-import { getYtDlpBinaryPath, toCliArguments } from '../../../features/youtube/ytDlpRuntime';
+import { getYtDlpBinaryPath, toCliArguments, verifyYtDlpRuntime } from '../../../features/youtube/ytDlpRuntime';
 
 describe('yt-dlp runtime', () => {
+  it('verifies the actual managed executable against the configured pin', async () => {
+    await expect(verifyYtDlpRuntime()).resolves.toBeUndefined();
+    expect(getYtDlpBinaryPath()).toContain('.runtime');
+  });
+
+  it.each([process.execPath, '/nonexistent/sofathek-yt-dlp'])('rejects an incompatible or missing executable: %s', async (candidate) => {
+    await expect(verifyYtDlpRuntime(candidate)).rejects.toMatchObject({ code: 'YTDLP_RUNTIME_UNAVAILABLE' });
+    await expect(verifyYtDlpRuntime(candidate)).rejects.toThrow('Run npm install');
+  });
+
   it('converts downloader options to safe CLI arguments without a shell', () => {
     expect(toCliArguments({
       dumpSingleJson: true,

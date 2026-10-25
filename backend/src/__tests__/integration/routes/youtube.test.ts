@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import youtubeRouter from '../../../features/youtube/routes';
+import youtubeRouter, { downloadRateLimiter } from '../../../features/youtube/routes';
 import { downloadQueueService, youTubeDownloadService } from '../../../services/index';
 import { globalErrorHandler } from '../../../middleware/errorHandler';
 
@@ -32,6 +32,7 @@ describe('YouTube Routes', () => {
     app.use(globalErrorHandler);
     
     jest.clearAllMocks();
+    downloadRateLimiter.destroy();
   });
 
   describe('POST /api/youtube/download', () => {
@@ -117,12 +118,12 @@ describe('YouTube Routes', () => {
       expect(mockDownloadQueueService.addToQueue).not.toHaveBeenCalled();
     });
 
-    it('fails before queueing when the managed yt-dlp runtime is unavailable', async () => {
+    it.each(['missing', 'incompatible or reports a different version'])('fails before queueing when the managed yt-dlp runtime is %s', async (reason) => {
       mockYouTubeDownloadService.validateYouTubeUrl.mockResolvedValue(true);
       mockYouTubeDownloadService.fetchMetadataAndCheckPolicy.mockImplementation(() => {
         const { AppError } = require('../../../middleware/errorHandler');
         return Promise.reject(new AppError(
-          'The pinned yt-dlp executable is missing. Run npm install in the backend.',
+          `The pinned yt-dlp executable is ${reason}. Run npm install in the backend.`,
           500,
           true,
           'YTDLP_RUNTIME_UNAVAILABLE'

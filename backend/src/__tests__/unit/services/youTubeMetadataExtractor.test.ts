@@ -3,6 +3,7 @@ import { YouTubeMetadataExtractor } from '../../../features/youtube/youTubeMetad
 // Mock the managed yt-dlp process runner.
 const mockSpawnYtDlp = jest.fn();
 jest.mock('../../../features/youtube/ytDlpRuntime', () => ({
+  verifyYtDlpRuntime: jest.fn().mockResolvedValue(undefined),
   spawnYtDlp: (...args: any[]) => mockSpawnYtDlp(...args)
 }));
 
