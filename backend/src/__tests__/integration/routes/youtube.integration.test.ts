@@ -4,12 +4,20 @@ import * as fs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { execFile } from 'child_process';
-import ffmpegPath from 'ffmpeg-static';
 import { promisify } from 'util';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { getYtDlpBinaryPath } from '../../../features/youtube/ytDlpRuntime';
+import { getVideoFormatSelector } from '../../../features/youtube/youTubeFileDownloader';
 
 const execFileAsync = promisify(execFile);
+const previousDirectories = { videos: process.env.VIDEOS_DIR, temp: process.env.TEMP_DIR };
+
+function restoreDirectories(): void {
+  if (previousDirectories.videos === undefined) delete process.env.VIDEOS_DIR;
+  else process.env.VIDEOS_DIR = previousDirectories.videos;
+  if (previousDirectories.temp === undefined) delete process.env.TEMP_DIR;
+  else process.env.TEMP_DIR = previousDirectories.temp;
+}
 
 const TEST_CONFIG = {
   TEST_VIDEO_URL: process.env.TEST_YOUTUBE_URL || 'https://www.youtube.com/watch?v=m3fqyXZ4k4I',
@@ -122,6 +130,7 @@ describe('Video Download Integration (Real)', () => {
       if (!(await isYtDlpAvailable())) {
         throw new Error('Managed yt-dlp is not available. Run npm install in backend, then set RUN_REAL_DOWNLOAD_TESTS=true.');
       }
+      await execFileAsync(process.env.FFPROBE_PATH || 'ffprobe', ['-version'], { timeout: 10000 });
 
       const modules = await createIsolatedApp();
       app = modules.app;
@@ -134,12 +143,24 @@ describe('Video Download Integration (Real)', () => {
         await fs.rm(testRoot, { recursive: true, force: true });
       }
 
-      delete process.env.VIDEOS_DIR;
-      delete process.env.TEMP_DIR;
+      restoreDirectories();
     });
 
     it('downloads a real YouTube video and writes an mp4 file', async () => {
       const realFs = jest.requireActual<typeof import('node:fs/promises')>('node:fs/promises');
+      const initialFiles = await realFs.readdir(videosDir);
+      const selection = await execFileAsync(getYtDlpBinaryPath(), [
+        TEST_CONFIG.TEST_VIDEO_URL, '--dump-single-json', '--skip-download', '--no-playlist',
+        '--js-runtimes', 'node', '--format', getVideoFormatSelector('480p')
+      ], { timeout: 120000, maxBuffer: 16 * 1024 * 1024 });
+      type Format = { format_id: string; vcodec: string; acodec: string; width?: number; height?: number };
+      const source = JSON.parse(selection.stdout) as Format & { formats: Format[]; requested_formats?: Format[] };
+      const selected = source.requested_formats || [source];
+      const expectedVideo = selected.find(format => format.vcodec && format.vcodec !== 'none');
+      const expectedAudio = selected.find(format => format.acodec && format.acodec !== 'none');
+      expect(expectedVideo).toBeDefined();
+      expect(source.formats.some(format => format.format_id === expectedVideo?.format_id)).toBe(true);
+
       const response = await request(app)
         .post('/api/youtube/download')
         .send({ url: TEST_CONFIG.TEST_VIDEO_URL, quality: '480p' })
@@ -159,19 +180,42 @@ describe('Video Download Integration (Real)', () => {
       const finalFiles = await realFs.readdir(videosDir);
       const finalMp4 = finalFiles.filter((file) => file.endsWith('.mp4'));
 
-      expect(finalMp4.length).toBeGreaterThan(0);
-      const downloadedMp4 = finalMp4[0];
-      expect(downloadedMp4).toBeDefined();
-      if (!ffmpegPath || !downloadedMp4) {
-        throw new Error('Cannot inspect the downloaded video: ffmpeg or output file is missing');
+      expect(finalMp4.length).toBeGreaterThan(initialFiles.length);
+      const downloaded = finalMp4.filter(file => !initialFiles.includes(file));
+      expect(downloaded).toHaveLength(1);
+      const probe = await execFileAsync(process.env.FFPROBE_PATH || 'ffprobe', [
+        '-v', 'error', '-show_streams', '-show_format', '-of', 'json', path.join(videosDir, downloaded[0]!)
+      ], { timeout: 30000 });
+      const media = JSON.parse(probe.stdout) as {
+        streams: Array<{ codec_type: string; codec_name: string; width?: number; height?: number }>;
+        format: { duration: string; format_name: string };
+      };
+      const video = media.streams.find(stream => stream.codec_type === 'video');
+      const audio = media.streams.find(stream => stream.codec_type === 'audio');
+      const codecName = (codec: string): string => {
+        const names: Record<string, string> = { avc1: 'h264', av01: 'av1', vp09: 'vp9', mp4a: 'aac', hev1: 'hevc', hvc1: 'hevc' };
+        const prefix = codec.split('.')[0]!;
+        return names[prefix] || prefix;
+      };
+      expect(video).toBeDefined();
+      expect(video?.width).toBeGreaterThan(0);
+      expect(video?.height).toBeGreaterThan(0);
+      expect(video?.height).toBeLessThanOrEqual(480);
+      expect(video?.codec_name).toBe(codecName(expectedVideo!.vcodec));
+      expect(video?.width).toBe(expectedVideo!.width);
+      expect(video?.height).toBe(expectedVideo!.height);
+      expect(Number(media.format.duration)).toBeGreaterThan(0);
+      expect(media.format.format_name.split(',')).toContain('mp4');
+      if (expectedAudio) {
+        expect(audio).toBeDefined();
+        expect(audio?.codec_name).toBe(codecName(expectedAudio.acodec));
       }
-      const probe = await execFileAsync(ffmpegPath, [
-        '-hide_banner', '-i', path.join(videosDir, downloadedMp4), '-frames:v', '1', '-f', 'null', '-'
-      ]);
-      const dimensions = probe.stderr.match(/\b(\d{2,5})x(\d{2,5})\b/);
-      expect(dimensions).not.toBeNull();
-      expect(Number(dimensions?.[2])).toBeLessThanOrEqual(480);
-    }, TEST_CONFIG.DOWNLOAD_TIMEOUT_MS + 30000);
+      process.stdout.write(`Verified downloaded media: ${JSON.stringify({
+        videoCodec: video?.codec_name, audioCodec: audio?.codec_name,
+        width: video?.width, height: video?.height,
+        selectedFormats: selected.map(format => format.format_id), duration: media.format.duration
+      })}\n`);
+    }, 240000);
 
     it('accepts any valid HTTP/HTTPS URL', async () => {
       const response = await request(app)
@@ -214,5 +258,34 @@ describe('Video Download Integration (Real)', () => {
       expect(response.body.data).toHaveProperty('processing');
       expect(response.body.data).toHaveProperty('completed');
     });
+  });
+});
+
+describe('managed runtime preflight (no external network)', () => {
+  let modules: AppModules;
+  const override = process.env.SOFATHEK_YTDLP_VERSION;
+
+  beforeAll(async () => {
+    modules = await createIsolatedApp();
+  });
+
+  afterAll(async () => {
+    await fs.rm(path.dirname(modules.videosDir), { recursive: true, force: true });
+    restoreDirectories();
+    if (override === undefined) delete process.env.SOFATHEK_YTDLP_VERSION;
+    else process.env.SOFATHEK_YTDLP_VERSION = override;
+  });
+
+  it.each(['1900.00.00', '../latest'])('rejects missing or invalid pin %s without queueing', async (version) => {
+    process.env.SOFATHEK_YTDLP_VERSION = version;
+    const response = await request(modules.app).post('/api/youtube/download')
+      .send({ url: TEST_CONFIG.TEST_VIDEO_URL });
+    expect(response.status).toBe(500);
+    expect(response.body.code).toBe('YTDLP_RUNTIME_UNAVAILABLE');
+    expect(response.body.message).toMatch(/npm install|pinned stable/);
+    const queue = await request(modules.app).get('/api/youtube/queue');
+    expect(queue.status).toBe(200);
+    expect(queue.body.data.totalItems).toBe(0);
+    expect(queue.body.data.items).toEqual([]);
   });
 });

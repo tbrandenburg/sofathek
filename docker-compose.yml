@@ -1,32 +1,28 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        SOFATHEK_YTDLP_VERSION: ${SOFATHEK_YTDLP_VERSION:-}
     ports:
       - "${SOFATHEK_BACKEND_PORT:-3010}:${SOFATHEK_BACKEND_PORT:-3010}"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - SOFATHEK_BACKEND_PORT=${SOFATHEK_BACKEND_PORT:-3010}
       - PORT=${SOFATHEK_BACKEND_PORT:-3010}
       - VIDEOS_DIR=/app/data/videos
       - TEMP_DIR=/app/data/temp
     volumes:
-      # Bind mount for development hot reload
-      - ./backend/src:/app/src:ro
-      - ./backend/package.json:/app/package.json:ro
-      - ./backend/tsconfig.json:/app/tsconfig.json:ro
       # Named volumes for data persistence
       - sofathek_videos:/app/data/videos
       - sofathek_temp:/app/data/temp
       - sofathek_logs:/app/logs
-      # Cache node_modules for faster rebuilds
-      - /app/node_modules
     networks:
       - sofathek_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${SOFATHEK_BACKEND_PORT:-3010}/health"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${SOFATHEK_BACKEND_PORT:-3010}/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -34,7 +30,7 @@ services:
 
   # Frontend with Playwright E2E testing support
   frontend:
-    image: mcr.microsoft.com/playwright:v1.58.2-focal
+    image: mcr.microsoft.com/playwright:v1.59.1-noble
     working_dir: /app
     volumes:
       - ./frontend:/app
@@ -52,7 +48,7 @@ services:
 
   # Playwright test runner service
   e2e-tests:
-    image: mcr.microsoft.com/playwright:v1.58.2-focal
+    image: mcr.microsoft.com/playwright:v1.59.1-noble
     working_dir: /app
     volumes:
       - ./frontend:/app

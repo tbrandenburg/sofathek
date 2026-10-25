@@ -138,6 +138,21 @@ npm run validate:skip   # Emergency skip
 
 Additional details: `frontend/tests/README.md`.
 
+The backend real-download suite is opt-in and requires `ffprobe` on `PATH`
+(or `FFPROBE_PATH`). It checks the downloaded streams, codecs and dimensions
+against yt-dlp's current format selection, rather than assuming a fixed YouTube resolution:
+
+```bash
+RUN_REAL_DOWNLOAD_TESTS=true TEST_YOUTUBE_URL='https://www.youtube.com/watch?v=VIDEO_ID' npm run test:real-youtube --workspace=backend -- --runInBand
+```
+
+`npm run test:docker` builds and starts the backend through Compose in an isolated
+project, checks health, the non-root user, production dependencies, ffmpeg and
+managed yt-dlp without system Python, then removes its containers and volumes.
+Windows and macOS installer/runtime smoke checks run in CI.
+Use `npm run test:docker -- --full` to also start and check the Compose frontend
+(requires downloading the Playwright image).
+
 ### **Fix Issues Quickly**:
 ```bash
 npm run lint:fix        # Auto-fix linting issues
@@ -256,6 +271,15 @@ All matching is case-insensitive. `blockedTags`/`blockedCategories` require an e
 
 - **Node.js 20+** (for development and yt-dlp JavaScript runtime)
 - **yt-dlp runtime** is installed automatically by `make install` from the pinned official release and checksum-verified for supported macOS, Windows, and Linux architectures. A system Python installation is not required for video downloads.
+  `SOFATHEK_YTDLP_VERSION` can override the stable release pin (`YYYY.MM.DD`); use
+  the same value during installation and execution. Missing, incompatible or
+  wrong-version executables fail preflight before a download enters the queue.
+  Docker builds compile the backend using the root npm workspace lockfile and
+  include the verified executable. Build from the repository root with
+  `docker build -f backend/Dockerfile .`, or use `docker compose up --build`.
+  To override the Docker pin, set `SOFATHEK_YTDLP_VERSION` when building with
+  Compose (or pass `--build-arg SOFATHEK_YTDLP_VERSION=YYYY.MM.DD` to Docker).
+  Rebuild the image when changing the pin; do not install yt-dlp with pip inside it.
 - **Make** (for using the Makefile commands)
 - **Docker and Docker Compose** (for containerized deployment)
 - **Python 3** (for serving production frontend)

@@ -5,7 +5,7 @@ import { AppError } from '../../middleware/errorHandler';
 import { YouTubeMetadata } from './types';
 import { validateYtDlpResponse } from '../../utils/validation';
 import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
-import { spawnYtDlp } from './ytDlpRuntime';
+import { spawnYtDlp, verifyYtDlpRuntime } from './ytDlpRuntime';
 
 export class YouTubeMetadataExtractor {
   async extract(url: string): Promise<YouTubeMetadata> {
@@ -14,6 +14,7 @@ export class YouTubeMetadataExtractor {
     try {
       logger.info('Fetching video metadata', { url });
 
+      await verifyYtDlpRuntime();
       const subprocess = spawnYtDlp(url, {
         dumpSingleJson: true,
         skipDownload: true,

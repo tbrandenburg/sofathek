@@ -1,0 +1,19 @@
+# Dockerfile-specific ignore rules apply to the repository-root build context.
+**/node_modules
+**/dist
+**/.runtime
+**/data
+**/logs
+**/coverage
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+**/*.log
+**/.env
+**/.env.*
+.git
+.worktrees
+frontend/src
+frontend/tests
+frontend/test-results
+frontend/playwright-report

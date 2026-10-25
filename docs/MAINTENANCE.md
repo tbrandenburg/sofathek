@@ -603,9 +603,8 @@ curl -s http://localhost:3010/health | jq '.storage'
 # Check backend logs for download errors
 docker compose logs backend | grep -i "youtube\|download\|yt-dlp"
 
-# Test yt-dlp manually
-docker compose exec backend yt-dlp --version
-docker compose exec backend yt-dlp "https://www.youtube.com/watch?v=test"
+# Verify the application's pinned managed executable
+docker compose exec backend node -e "require('./dist/features/youtube/ytDlpRuntime').verifyYtDlpRuntime().catch(e => { console.error(e); process.exit(1); })"
 
 # Check temp directory permissions
 ls -la /opt/sofathek/data/temp/
@@ -613,10 +612,10 @@ ls -la /opt/sofathek/data/temp/
 
 **Solutions:**
 
-1. **Update yt-dlp:**
+1. **Reinstall the pinned yt-dlp release (no system Python required):**
    ```bash
-   docker compose exec backend pip3 install --upgrade yt-dlp
-   docker compose restart backend
+    docker compose build --no-cache backend
+    docker compose up -d backend
    ```
 
 2. **Clear download queue:**

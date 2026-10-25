@@ -8,10 +8,11 @@ import { parseYtDlpError } from '../../utils/ytDlpErrorParser';
 import { spawnYtDlp } from './ytDlpRuntime';
 
 export type DownloadProgressCallback = (phase: 'video' | 'audio', percent: number) => void;
+export const VIDEO_DOWNLOAD_FORMAT = 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
 
 export function getVideoFormatSelector(quality: VideoQuality): string {
   if (quality === 'best') {
-    return 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+    return VIDEO_DOWNLOAD_FORMAT;
   }
 
   const maxHeight = Number.parseInt(quality, 10);
