@@ -7,9 +7,21 @@
 export interface DownloadRequest {
   /** Video URL (YouTube, Vimeo, Twitter/X, and 1000+ other sites supported) */
   url: string;
+  /** Maximum video height to download; omitted values use best available. */
+  quality?: VideoQuality;
   /** Optional custom title override */
   title?: string;
 }
+
+export const VIDEO_QUALITY_OPTIONS = [
+  { value: 'best', label: 'Best available' },
+  { value: '1080p', label: '1080p' },
+  { value: '720p', label: '720p' },
+  { value: '480p', label: '480p' },
+  { value: '360p', label: '360p' },
+] as const;
+
+export type VideoQuality = typeof VIDEO_QUALITY_OPTIONS[number]['value'];
 
 /**
  * YouTube video metadata from yt-dlp (frontend view)

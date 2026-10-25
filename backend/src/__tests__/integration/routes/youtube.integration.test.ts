@@ -7,7 +7,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { getYtDlpBinaryPath } from '../../../features/youtube/ytDlpRuntime';
-import { VIDEO_DOWNLOAD_FORMAT } from '../../../features/youtube/youTubeFileDownloader';
+import { getVideoFormatSelector } from '../../../features/youtube/youTubeFileDownloader';
 
 const execFileAsync = promisify(execFile);
 const previousDirectories = { videos: process.env.VIDEOS_DIR, temp: process.env.TEMP_DIR };
@@ -151,7 +151,7 @@ describe('Video Download Integration (Real)', () => {
       const initialFiles = await realFs.readdir(videosDir);
       const selection = await execFileAsync(getYtDlpBinaryPath(), [
         TEST_CONFIG.TEST_VIDEO_URL, '--dump-single-json', '--skip-download', '--no-playlist',
-        '--js-runtimes', 'node', '--format', VIDEO_DOWNLOAD_FORMAT
+        '--js-runtimes', 'node', '--format', getVideoFormatSelector('480p')
       ], { timeout: 120000, maxBuffer: 16 * 1024 * 1024 });
       type Format = { format_id: string; vcodec: string; acodec: string; width?: number; height?: number };
       const source = JSON.parse(selection.stdout) as Format & { formats: Format[]; requested_formats?: Format[] };
@@ -163,7 +163,7 @@ describe('Video Download Integration (Real)', () => {
 
       const response = await request(app)
         .post('/api/youtube/download')
-        .send({ url: TEST_CONFIG.TEST_VIDEO_URL })
+        .send({ url: TEST_CONFIG.TEST_VIDEO_URL, quality: '480p' })
         .timeout(TEST_CONFIG.DOWNLOAD_TIMEOUT_MS);
 
       expect(response.status).toBe(201);
@@ -171,17 +171,17 @@ describe('Video Download Integration (Real)', () => {
 
       const queueItemId = response.body.data?.queueItem?.id as string | undefined;
       expect(queueItemId).toBeDefined();
+      expect(response.body.data?.queueItem?.request?.quality).toBe('480p');
 
       const statusResponse = await waitForDownloadCompletion(app, queueItemId as string);
       expect(statusResponse.status).toBe(200);
       expect(statusResponse.body.data.status).toBe('completed');
 
       const finalFiles = await realFs.readdir(videosDir);
-      const initialMp4 = initialFiles.filter((file) => file.endsWith('.mp4'));
       const finalMp4 = finalFiles.filter((file) => file.endsWith('.mp4'));
 
-      expect(finalMp4.length).toBeGreaterThan(initialMp4.length);
-      const downloaded = finalMp4.filter(file => !initialMp4.includes(file));
+      expect(finalMp4.length).toBeGreaterThan(initialFiles.length);
+      const downloaded = finalMp4.filter(file => !initialFiles.includes(file));
       expect(downloaded).toHaveLength(1);
       const probe = await execFileAsync(process.env.FFPROBE_PATH || 'ffprobe', [
         '-v', 'error', '-show_streams', '-show_format', '-of', 'json', path.join(videosDir, downloaded[0]!)
@@ -200,6 +200,7 @@ describe('Video Download Integration (Real)', () => {
       expect(video).toBeDefined();
       expect(video?.width).toBeGreaterThan(0);
       expect(video?.height).toBeGreaterThan(0);
+      expect(video?.height).toBeLessThanOrEqual(480);
       expect(video?.codec_name).toBe(codecName(expectedVideo!.vcodec));
       expect(video?.width).toBe(expectedVideo!.width);
       expect(video?.height).toBe(expectedVideo!.height);

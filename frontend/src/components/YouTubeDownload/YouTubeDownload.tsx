@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useYouTubeDownload } from '@/hooks/useYouTube';
 import { validateVideoUrl } from '@/services/youtube';
 import { getUserFriendlyErrorMessage } from '@/lib/error';
+import { VIDEO_QUALITY_OPTIONS, VideoQuality } from '@/types/youtube';
 
 interface YouTubeDownloadProps {
   className?: string;
@@ -12,6 +13,7 @@ interface YouTubeDownloadProps {
 
 export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
   const [url, setUrl] = useState('');
+  const [quality, setQuality] = useState<VideoQuality>('best');
   const downloadMutation = useYouTubeDownload();
 
   // Reset error state when URL changes
@@ -36,7 +38,8 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
     }
 
     downloadMutation.mutate({
-      url: url.trim()
+      url: url.trim(),
+      quality
     });
 
     // Clear form on successful submission
@@ -85,6 +88,25 @@ export function YouTubeDownload({ className = '' }: YouTubeDownloadProps) {
                 Please enter a valid video URL
               </p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="video-quality" className="text-sm font-medium">
+              Video quality
+            </label>
+            <select
+              id="video-quality"
+              value={quality}
+              onChange={(e) => setQuality(e.target.value as VideoQuality)}
+              className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={downloadMutation.isPending}
+              data-testid="video-quality-select"
+            >
+              {VIDEO_QUALITY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">Resolution options set a maximum height; availability depends on the video source.</p>
           </div>
 
           {/* Error Alert */}

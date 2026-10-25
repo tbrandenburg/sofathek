@@ -95,7 +95,13 @@ export class YouTubeDownloadService {
         );
       }
 
-      const tempVideoPath = await this.fileDownloader.download(request.url, metadata, subprocessKey, progressCallback);
+      const tempVideoPath = await this.fileDownloader.download(
+        request.url,
+        metadata,
+        subprocessKey,
+        progressCallback,
+        request.quality ?? 'best'
+      );
       logger.info('Video downloaded to temp location', {
         downloadId,
         tempPath: tempVideoPath

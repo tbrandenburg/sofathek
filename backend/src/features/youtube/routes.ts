@@ -4,7 +4,7 @@ import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/error';
 import { catchAsync, AppError } from '../../middleware/errorHandler';
 import { downloadQueueService, youTubeDownloadService } from '../../services/index';
-import { DownloadRequest } from './types';
+import { DownloadRequest, VIDEO_QUALITY_OPTIONS, VideoQuality } from './types';
 import { createRateLimiter, rateLimitMiddleware } from '../../middleware/rateLimiter';
 import { config } from '../../config';
 
@@ -22,10 +22,14 @@ export { downloadRateLimiter };
  * Add video to download queue (supports YouTube, Vimeo, Twitter/X, and 1000+ other sites)
  */
 router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(async (req: Request, res: Response) => {
-  const { url, title } = req.body;
+  const { url, title, quality } = req.body;
   
   if (!url) {
     throw new AppError('Video URL is required', 400);
+  }
+
+  if (quality !== undefined && !(VIDEO_QUALITY_OPTIONS as readonly string[]).includes(quality)) {
+    throw new AppError('Invalid video quality option', 400);
   }
 
   logger.info('Video download request received', { url, title });
@@ -62,6 +66,7 @@ router.post('/download', rateLimitMiddleware(downloadRateLimiter), catchAsync(as
   const downloadRequest: DownloadRequest = {
     url,
     title,
+    quality: (quality as VideoQuality | undefined) ?? 'best',
     requestedAt: new Date(),
     requestId: uuidv4(),
     ...(metadata !== undefined && { metadata })

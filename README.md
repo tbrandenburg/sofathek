@@ -5,7 +5,7 @@ A self-hosted family media center application with Netflix-like interface and br
 ## Features
 
 - **Netflix-like Interface**: Clean, responsive grid layout with dark/light theme toggle
-- **Multi-Site Video Download**: Download videos from YouTube, Vimeo, Twitter/X, and 1000+ other sites via yt-dlp with automatic library integration
+- **Multi-Site Video Download**: Download videos from YouTube, Vimeo, Twitter/X, and 1000+ other sites via yt-dlp with automatic library integration and a quality selector for best available, 1080p, 720p, 480p, or 360p (resolution options cap the maximum height and depend on source availability)
 - **Companion Media Downloads**: yt-dlp now also stores MP3 audio plus EN/DE/SV subtitles (when available), with direct download actions in the player modal
 - **Media Library**: File system-based video discovery with thumbnail generation
 - **Video Streaming**: HTTP range request support for efficient video playback

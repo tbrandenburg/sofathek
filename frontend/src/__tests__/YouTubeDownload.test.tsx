@@ -55,6 +55,9 @@ describe('YouTubeDownload Component', () => {
     expect(screen.getByRole('heading', { name: 'Download Video' })).toBeInTheDocument();
     expect(screen.getByText(/Enter a video URL to download/)).toBeInTheDocument();
     expect(screen.getByLabelText('Video URL')).toBeInTheDocument();
+    expect(screen.getByLabelText('Video quality')).toHaveValue('best');
+    expect(screen.getAllByRole('option')[0]).toHaveTextContent('Best available');
+    expect(screen.getAllByRole('option')).toHaveLength(5);
     expect(screen.getByRole('button', { name: /download video/i })).toBeInTheDocument();
   });
 
@@ -112,9 +115,10 @@ describe('YouTubeDownload Component', () => {
     const testUrl = 'https://www.youtube.com/watch?v=test123abc';
 
     fireEvent.change(input, { target: { value: testUrl } });
+    fireEvent.change(screen.getByLabelText('Video quality'), { target: { value: '720p' } });
     fireEvent.click(submitButton);
 
-    expect(mockMutate).toHaveBeenCalledWith({ url: testUrl });
+    expect(mockMutate).toHaveBeenCalledWith({ url: testUrl, quality: '720p' });
   });
 
   test('should clear form on successful submission', async () => {
