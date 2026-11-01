@@ -10,6 +10,7 @@ import { YouTubeMetadataExtractor } from './youTubeMetadataExtractor';
 import { YouTubeFileDownloader, DownloadProgressCallback } from './youTubeFileDownloader';
 import { AppError } from '../../middleware/errorHandler';
 import { config } from '../../config';
+import * as fsSync from 'fs';
 import { ContentPolicyService } from '../../services/contentPolicyService';
 import type { ThumbnailService } from '../video-library/thumbnailService';
 import type { VideoFileManager } from '../video-library/videoFileManager';
@@ -18,6 +19,7 @@ import type { VideoFileManager } from '../video-library/videoFileManager';
  * Core YouTube download orchestrator using composed services
  */
 export class YouTubeDownloadService {
+  private reservedBytes = 0;
   private readonly urlValidator: YouTubeUrlValidator;
   private readonly metadataExtractor: YouTubeMetadataExtractor;
   private readonly fileDownloader: YouTubeFileDownloader;
@@ -29,7 +31,11 @@ export class YouTubeDownloadService {
     tempDirectory: string,
     fileManager: VideoFileManager,
     thumbnailService: ThumbnailService,
-    contentPolicyService: ContentPolicyService
+    contentPolicyService: ContentPolicyService,
+    private readonly filesystemAvailableBytes: (directory: string) => Promise<number> = async (directory) => {
+      const stats = await fsSync.promises.statfs(directory);
+      return stats.bavail * stats.bsize;
+    }
   ) {
     this.urlValidator = new YouTubeUrlValidator();
     this.metadataExtractor = new YouTubeMetadataExtractor();
@@ -59,6 +65,8 @@ export class YouTubeDownloadService {
     // Use cancelKey as the subprocess identifier when provided so callers
     // can cancel via the same key they pass to cancelDownload()
     const subprocessKey = cancelKey ?? downloadId;
+    let reservation = 0;
+    let downloadMetadata: YouTubeMetadata | undefined;
 
     try {
       logger.info('Starting YouTube video download', {
@@ -74,6 +82,7 @@ export class YouTubeDownloadService {
       await this.fileManager.ensureDirectoriesExist();
 
       const metadata = request.metadata ?? await this.metadataExtractor.extract(request.url);
+      downloadMetadata = metadata;
       logger.info('Retrieved video metadata', {
         downloadId,
         videoId: metadata.id,
@@ -95,6 +104,34 @@ export class YouTubeDownloadService {
         );
       }
 
+      const bitrateEstimate = metadata.duration && metadata.tbr
+        ? metadata.duration * metadata.tbr * 1000 / 8
+        : 0;
+      const knownEstimate = Math.max(metadata.filesizeApprox ?? 0, bitrateEstimate);
+      // yt-dlp's approximate source size can exclude merge/audio overhead. Reserve
+      // a margin; when size is unknown reserve the configured maximum, never zero.
+      reservation = knownEstimate > 0
+        ? Math.ceil(knownEstimate * 1.3)
+        : config.downloadMaxSizeBytes;
+      if (reservation > config.downloadMaxSizeBytes) {
+        throw new AppError(
+          `Estimated download size (${this.formatBytes(reservation)}) exceeds the maximum allowed size of ${this.formatBytes(config.downloadMaxSizeBytes)}`,
+          400
+        );
+      }
+      this.reservedBytes += reservation;
+      const libraryFree = await this.getAvailableBytes(config.videosDir);
+      const tempFree = await this.getAvailableBytes(this.fileDownloader.getTempDirectory());
+      const available = Math.min(libraryFree, tempFree) - (this.reservedBytes - reservation);
+      if (available < reservation) {
+        throw new AppError(
+          `Download rejected: this video requires approximately ${this.formatBytes(reservation)}, but only ${this.formatBytes(Math.max(0, available))} is available. Delete some videos to free up space and try again.`,
+          507,
+          true,
+          'INSUFFICIENT_STORAGE'
+        );
+      }
+
       const tempVideoPath = await this.fileDownloader.download(
         request.url,
         metadata,
@@ -102,6 +139,11 @@ export class YouTubeDownloadService {
         progressCallback,
         request.quality ?? 'best'
       );
+      const finalFileSize = (await fs.stat(tempVideoPath)).size;
+      const [libraryDevice, tempFile] = await Promise.all([fs.stat(config.videosDir), fs.stat(tempVideoPath)]);
+      if (libraryDevice.dev !== tempFile.dev && await this.getAvailableBytes(config.videosDir) < finalFileSize) {
+        throw new AppError('Storage became insufficient during download. Free space and try again.', 507, true, 'INSUFFICIENT_STORAGE');
+      }
       logger.info('Video downloaded to temp location', {
         downloadId,
         tempPath: tempVideoPath
@@ -177,6 +219,16 @@ export class YouTubeDownloadService {
       return result;
 
     } catch (error) {
+      if (downloadMetadata?.id) {
+        try {
+          await this.cleanupFailedDownload(downloadMetadata.id);
+        } catch (cleanupError) {
+          logger.warn('Failed to clean up temporary files after download failure', {
+            videoId: downloadMetadata.id,
+            error: getErrorMessage(cleanupError)
+          });
+        }
+      }
       const errorMessage = getErrorMessage(error);
       const errorCode = error instanceof AppError ? error.code : undefined;
       logger.error('YouTube download failed', {
@@ -195,12 +247,28 @@ export class YouTubeDownloadService {
         completedAt: new Date(),
         startedAt
       };
+    } finally {
+      if (reservation) this.reservedBytes = Math.max(0, this.reservedBytes - reservation);
     }
+  }
+
+  private async getAvailableBytes(directory: string): Promise<number> {
+    return this.filesystemAvailableBytes(directory);
+  }
+
+  private formatBytes(bytes: number): string {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let value = bytes;
+    let index = 0;
+    while (value >= 1024 && index < units.length - 1) { value /= 1024; index++; }
+    return `${value.toFixed(1)} ${units[index]}`;
   }
 
   async cancelDownload(downloadId: string): Promise<void> {
     await this.fileDownloader.cancelDownload(downloadId);
   }
+
+  getReservedBytes(): number { return this.reservedBytes; }
 
   async validateYouTubeUrl(url: string): Promise<boolean> {
     return this.urlValidator.validate(url);

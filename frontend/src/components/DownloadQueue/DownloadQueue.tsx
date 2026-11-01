@@ -147,6 +147,7 @@ export function DownloadQueue({ className = '' }: DownloadQueueProps) {
   const clearQueueMutation = useClearDownloadQueue();
   const queryClient = useQueryClient();
   const previousCompletedIdsRef = useRef<Set<string> | null>(null);
+  const previousStatusesRef = useRef<Map<string, QueueItem['status']> | null>(null);
 
   useEffect(() => {
     const completedIds = new Set(
@@ -157,6 +158,7 @@ export function DownloadQueue({ className = '' }: DownloadQueueProps) {
 
     if (previousCompletedIdsRef.current === null) {
       previousCompletedIdsRef.current = completedIds;
+      previousStatusesRef.current = new Map((queue?.items ?? []).map(item => [item.id, item.status]));
       return;
     }
 
@@ -168,7 +170,14 @@ export function DownloadQueue({ className = '' }: DownloadQueueProps) {
       queryClient.invalidateQueries({ queryKey: ['videos'] });
     }
 
+    const terminalStatuses = new Set(['completed', 'failed', 'cancelled']);
+    const changedToTerminal = (queue?.items ?? []).some(item =>
+      terminalStatuses.has(item.status) && previousStatusesRef.current?.get(item.id) !== item.status
+    );
+    if (changedToTerminal) queryClient.invalidateQueries({ queryKey: ['storage'] });
+
     previousCompletedIdsRef.current = completedIds;
+    previousStatusesRef.current = new Map((queue?.items ?? []).map(item => [item.id, item.status]));
   }, [queue, queryClient]);
 
   const handleClearQueue = () => {

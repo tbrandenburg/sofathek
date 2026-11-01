@@ -6,6 +6,7 @@ import { getVideoThumbnailUrl } from '../../services/api';
 export function VideoCard({ 
   video, 
   onClick, 
+  onDelete,
   showMetadata = true, 
   className = '' 
 }: VideoCardProps) {
@@ -52,6 +53,12 @@ export function VideoCard({
           {video.metadata.title}
         </CardTitle>
       </CardHeader>
+      {onDelete && <div className="px-4 pb-4" onClick={(event) => event.stopPropagation()}>
+        <button type="button" className="text-sm text-red-500 underline" aria-label={`Delete video ${video.metadata.title}`}
+          onClick={() => { if (window.confirm(`Permanently delete “${video.metadata.title}”?`)) onDelete(video); }}>
+          Delete Video
+        </button>
+      </div>}
     </Card>
   );
 }

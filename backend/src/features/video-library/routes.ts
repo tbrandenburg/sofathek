@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../../config';
 import { VideoService } from './videoService';
-import { thumbnailService } from '../../services';
+import { thumbnailService, youTubeDownloadService } from '../../services';
 import { catchAsync, AppError } from '../../middleware/errorHandler';
 import { logger } from '../../utils/logger';
 import { validateVideoFilename, validateImageFilename, validatePathInDirectory, validateDownloadableFilename, getMimeType } from '../../utils/fileValidation';
@@ -16,6 +16,43 @@ const videosDirectory = config.videosDir;
 const videoService = new VideoService(videosDirectory, thumbnailService);
 const MAX_THUMBNAIL_SIZE = config.thumbnailMaxSize;
 const THUMBNAIL_CACHE_DURATION = config.thumbnailCacheDuration;
+
+router.get('/storage', catchAsync(async (_req: Request, res: Response) => {
+  try {
+    const mediaRoot = await fs.promises.realpath(videosDirectory);
+    const [volume, entries] = await Promise.all([
+      fs.promises.statfs(mediaRoot),
+      fs.promises.readdir(mediaRoot, { withFileTypes: true })
+    ]);
+    let occupiedBytes = 0;
+    for (const entry of entries) {
+      if (entry.isFile()) occupiedBytes += (await fs.promises.stat(path.join(mediaRoot, entry.name))).size;
+    }
+    const totalBytes = volume.blocks * volume.bsize;
+    const filesystemFreeBytes = volume.bavail * volume.bsize;
+    const reservedBytes = youTubeDownloadService.getReservedBytes();
+    res.json({ status: 'success', data: { totalBytes, filesystemFreeBytes, occupiedBytes,
+      reservedBytes, downloadableBytes: Math.max(0, filesystemFreeBytes - reservedBytes),
+      percentUsed: totalBytes > 0 ? Math.min(100, occupiedBytes / totalBytes * 100) : 0 } });
+  } catch (error) {
+    logger.warn('Storage information unavailable', { error: error instanceof Error ? error.message : String(error) });
+    res.status(503).json({ status: 'error', message: 'Storage information is unavailable' });
+  }
+}));
+
+router.delete('/videos/:id', catchAsync(async (req: Request, res: Response) => {
+  if (!req.params.id) throw new AppError('Video id is required', 400);
+  try {
+    await videoService.deleteVideo(req.params.id);
+    res.json({ status: 'success', message: 'Video deleted' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to delete video';
+    if (message.includes('not found') || (error as NodeJS.ErrnoException).code === 'ENOENT') throw new AppError(message, 404);
+    if (message.includes('outside') || message.includes('Invalid video id')) throw new AppError(message, 400);
+    if (message.includes('ambiguous')) throw new AppError(message, 409);
+    throw new AppError(`Unable to delete video: ${message}`, 500);
+  }
+}));
 
 /**
  * GET /api/videos

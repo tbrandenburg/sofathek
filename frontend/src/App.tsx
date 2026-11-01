@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Video } from './types';
 import { VideoGrid } from './components/VideoGrid/VideoGrid';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
@@ -7,7 +7,8 @@ import { Layout, ContentContainer, PageHeader } from './components/Layout/Layout
 import { YouTubeDownload } from './components/YouTubeDownload/YouTubeDownload';
 import { DownloadQueue } from './components/DownloadQueue/DownloadQueue';
 import { useVideos } from './hooks/useVideos';
-import { getDownloadFileUrl, sanitizeFilename } from './services/api';
+import { deleteVideo, getDownloadFileUrl, sanitizeFilename } from './services/api';
+import { StorageIndicator } from './components/StorageIndicator/StorageIndicator';
 import { Download, Music2, X } from 'lucide-react';
 
 // Create Query Client outside component to avoid recreation on renders
@@ -26,9 +27,25 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const queryClient = useQueryClient();
   const { data: videosResult, isLoading, error } = useVideos();
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [libraryMessage, setLibraryMessage] = useState('');
+
+  const handleVideoDelete = async (video: Video) => {
+    try {
+      await deleteVideo(video.id);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['videos'] }),
+        queryClient.invalidateQueries({ queryKey: ['storage'] })
+      ]);
+      if (selectedVideo?.id === video.id) handleClosePlayer();
+      setLibraryMessage(`Deleted “${video.metadata.title}”.`);
+    } catch (deleteError) {
+      setLibraryMessage(deleteError instanceof Error ? deleteError.message : 'Unable to delete video.');
+    }
+  };
 
   const videos = videosResult?.videos ?? [];
 
@@ -63,6 +80,8 @@ function App() {
           title="Video Library" 
           subtitle={`${videos.length} videos available`}
         />
+        <StorageIndicator />
+        {libraryMessage && <p role="status" className="mb-4 text-sm">{libraryMessage}</p>}
         
         {/* YouTube Download Section */}
         <div className="mb-8 space-y-6">
@@ -75,6 +94,7 @@ function App() {
           isLoading={isLoading}
           error={error?.message || null}
           onVideoSelect={handleVideoSelect}
+          onVideoDelete={handleVideoDelete}
           className="main-video-grid"
         />
       </ContentContainer>

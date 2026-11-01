@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { VideoGrid } from '../components/VideoGrid/VideoGrid';
 import { getGridColsClass } from '../lib/utils';
 import { Video } from '../types';
@@ -131,6 +131,49 @@ describe('VideoGrid Component', () => {
 
     expect(screen.getByText('ChannelA')).toBeDefined();
     expect(screen.getByText('ChannelB')).toBeDefined();
+  });
+
+  test('collapses channel groups above ten videos and toggles them accessibly', () => {
+    const videos = Array.from({ length: 11 }, (_, index) => ({
+      id: `large-${index}`,
+      file: { name: `large-${index}.mp4`, size: 1, path: `/videos/${index}.mp4`, extension: 'mp4', lastModified: new Date() },
+      metadata: { title: `Large video ${index}`, channel: 'Large Channel', channelId: 'UC123' },
+      viewCount: 0
+    } satisfies Video));
+    render(<VideoGrid videos={videos} />);
+    const group = screen.getByRole('button', { name: /Large Channel \(11 videos\)/ });
+    expect(group.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByText('Large video 0')).toBeNull();
+    fireEvent.click(group);
+    expect(group.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByText('Large video 0')).toBeDefined();
+    fireEvent.click(group);
+    expect(group.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  test('keeps ten channel videos visible', () => {
+    const videos = Array.from({ length: 10 }, (_, index) => ({
+      id: `small-${index}`,
+      file: { name: `small-${index}.mp4`, size: 1, path: `/videos/${index}.mp4`, extension: 'mp4', lastModified: new Date() },
+      metadata: { title: `Small video ${index}`, channel: 'Small Channel' },
+      viewCount: 0
+    } satisfies Video));
+    render(<VideoGrid videos={videos} />);
+    expect(screen.getByText('Small video 0')).toBeDefined();
+    expect(screen.queryByRole('button', { name: /Small Channel \(10 videos\)/ })).toBeNull();
+  });
+
+  test('asks for confirmation and invokes the delete action only when confirmed', () => {
+    const onDelete = vi.fn();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<VideoGrid videos={mockVideos.slice(0, 1)} onVideoDelete={onDelete} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete video Video 1' }));
+    expect(confirm).toHaveBeenCalled();
+    expect(onDelete).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete video Video 1' }));
+    expect(onDelete).toHaveBeenCalledWith(mockVideos[0]);
+    confirm.mockRestore();
   });
 
   test('should place videos without channel under "Other"', () => {

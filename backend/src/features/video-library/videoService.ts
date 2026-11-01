@@ -238,8 +238,37 @@ export class VideoService {
       ...(thumbnail && { thumbnail }),
       ...(audio && { audio }),
       ...(transcripts.length > 0 && { transcripts }),
-      ...(channel && { channel })
+      ...(channel && { channel }),
+      ...(infoSidecar?.channelId && { channelId: infoSidecar.channelId })
     };
+  }
+
+  async deleteVideo(id: string): Promise<void> {
+    if (!id || path.basename(id) !== id || id.includes('\\')) throw new Error('Invalid video id');
+
+    const root = await fs.realpath(this.videosDirectory);
+    const files = await fs.readdir(root);
+    const matches = files.filter(name => this.isVideoFile(name) && path.basename(name, path.extname(name)) === id);
+    if (matches.length === 0) throw new Error(`Video with id '${id}' not found`);
+    if (matches.length > 1) throw new Error(`Video id '${id}' is ambiguous`);
+    const filename = matches[0]!;
+    const videoPath = await fs.realpath(path.join(root, filename));
+    if (path.dirname(videoPath) !== root) throw new Error('Video path is outside the media directory');
+
+    const stem = path.basename(filename, path.extname(filename));
+    const companions = new Set([
+      filename, `${stem}.info.json`, `${stem}.webp`, `${stem}.jpg`, `${stem}.jpeg`,
+      `${stem}.png`, `${stem}.mp3`, `${stem}.m4a`, `${stem}.srt`, `${stem}.vtt`
+    ]);
+    const deletionOrder = files.filter(name => name !== filename).concat(filename);
+    for (const name of deletionOrder) {
+      const isSubtitle = name.startsWith(`${stem}.`) && ['.srt', '.vtt'].includes(path.extname(name).toLowerCase());
+      if (!companions.has(name) && !isSubtitle) continue;
+      const candidate = path.join(root, name);
+      const stat = await fs.lstat(candidate);
+      if (stat.isFile()) await fs.unlink(candidate);
+    }
+    this.thumbnailCache.clear();
   }
 
   private async readInfoSidecar(videoPath: string): Promise<VideoInfoFile | null> {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { VideoGridProps } from '../../types';
 import { VideoCard } from '../VideoCard/VideoCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,8 +13,10 @@ export function VideoGrid({
   isLoading = false, 
   error = null, 
   onVideoSelect, 
+  onVideoDelete,
   className = '' 
 }: VideoGridProps) {
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   
   if (isLoading) {
     return (
@@ -75,22 +77,23 @@ export function VideoGrid({
 
   // Group videos by channel; videos without channel go into a separate "uncategorised" bucket
   // Using a Map + separate array avoids sentinel-string collision if a real channel is named "Other"
-  const channelMap = new Map<string, typeof videos>();
+  const channelMap = new Map<string, { label: string; videos: typeof videos }>();
   const uncategorised: typeof videos = [];
 
   for (const video of videos) {
     const ch = video.metadata.channel?.trim();
     if (ch) {
-      const bucket = channelMap.get(ch) ?? [];
-      bucket.push(video);
-      channelMap.set(ch, bucket);
+      const key = video.metadata.channelId?.trim() || `name:${ch}`;
+      const bucket = channelMap.get(key) ?? { label: ch, videos: [] };
+      bucket.videos.push(video);
+      channelMap.set(key, bucket);
     } else {
       uncategorised.push(video);
     }
   }
 
   // Sort named channels alphabetically; "Other" bucket always last
-  const sortedChannels = Array.from(channelMap.keys()).sort((a, b) => a.localeCompare(b));
+  const sortedChannels = Array.from(channelMap.keys()).sort((a, b) => channelMap.get(a)!.label.localeCompare(channelMap.get(b)!.label));
   const groupCount = sortedChannels.length + (uncategorised.length > 0 ? 1 : 0);
   // Only show section headers when there is more than one group
   const showHeaders = groupCount > 1;
@@ -98,8 +101,15 @@ export function VideoGrid({
 
   const renderGroup = (key: string, label: string, group: typeof videos) => (
     <div key={key} className="video-channel-group">
-      {showHeaders && <h3 className="video-channel-title">{label}</h3>}
-      <div
+      {group.length > 10 ? (
+        <button type="button" className="video-channel-title" aria-expanded={expanded.has(key)} onClick={() => setExpanded(current => {
+          const next = new Set(current);
+          if (next.has(key)) next.delete(key);
+          else next.add(key);
+          return next;
+        })}>{expanded.has(key) ? '▼' : '▶'} {label} ({group.length} videos)</button>
+      ) : showHeaders && <h3 className="video-channel-title">{label}</h3>}
+      {(group.length <= 10 || expanded.has(key)) && <div
         className={`video-grid ${getGridColsClass(group.length)}`}
         style={
           {
@@ -112,16 +122,17 @@ export function VideoGrid({
             key={video.id}
             video={video}
             onClick={onVideoSelect}
+            onDelete={onVideoDelete}
             showMetadata={true}
           />
         ))}
-      </div>
+      </div>}
     </div>
   );
 
   return (
     <div className={`video-grid-container ${className}`}>
-      {sortedChannels.map((ch) => renderGroup(ch, ch, channelMap.get(ch)!))}
+      {sortedChannels.map((ch) => renderGroup(ch, channelMap.get(ch)!.label, channelMap.get(ch)!.videos))}
       {uncategorised.length > 0 && renderGroup('__other__', 'Other', uncategorised)}
     </div>
   );

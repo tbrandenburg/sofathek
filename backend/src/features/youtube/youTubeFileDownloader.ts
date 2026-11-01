@@ -27,6 +27,8 @@ export class YouTubeFileDownloader {
     this.tempDirectory = tempDirectory;
   }
 
+  getTempDirectory(): string { return this.tempDirectory; }
+
   async download(
     url: string,
     metadata: YouTubeMetadata,
