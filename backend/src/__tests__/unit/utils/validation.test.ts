@@ -1,6 +1,12 @@
-import { validateYtDlpResponse } from '../../../utils/validation';
+import { FsStatsSchema, validateYtDlpResponse } from '../../../utils/validation';
 
 describe('validation', () => {
+  it('accepts filesystem stat predicate functions and rejects non-functions', () => {
+    const stats = { size: 10, mtime: new Date(), isDirectory: () => false, isFile: () => true };
+    expect(FsStatsSchema.safeParse(stats).success).toBe(true);
+    expect(FsStatsSchema.safeParse({ ...stats, isFile: true }).success).toBe(false);
+  });
+
   describe('validateYtDlpResponse', () => {
     it('should validate correct yt-dlp response', () => {
       const validResponse = {
