@@ -1,230 +1,85 @@
+# Hand-maintained Dagu counterpart of .made/workflows.yml (wf_mmozh3te_a0828).
+description: Continuous Issue Resolution
+type: graph
+schedule: "0 * * * *"
+
 params:
-- name: project_dir
-  type: string
-  default: /home/tom/workspace/ai/made/workspace/sofathek
+  - name: project_dir
+    type: string
+    default: ..
 working_dir: ${params.project_dir}
+
+harness:
+  provider: opencode
+  agent: build
+
 retry_policy:
   limit: 0
-  interval_sec: 1
+
 steps:
-- id: step_01_bash
-  name: '01: bash: gh issue list --limit 1 --state open | grep -q . || return 42'
-  description: 'Source flowsh step 1; literal source follows:
+  - id: check_open_issues
+    run: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      issues="$(gh issue list --limit 1 --state open)"
+      # Keep GitHub errors distinct from an empty issue list; stop before agent calls.
+      test -n "$issues" || exit 42
 
-    gh issue list --limit 1 --state open | grep -q . || return 42'
-  run: '#!/usr/bin/env bash
+  - id: prepare_main
+    depends: [check_open_issues]
+    # Preserves the source workflow's destructive cleanup. Use a dedicated checkout.
+    run: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      git restore --staged . 2>/dev/null && git restore . && git switch main &&
+        git pull --rebase --autostash
 
-    set -euo pipefail
+  - id: fix_issue
+    depends: [prepare_main]
+    action: harness.run
+    with:
+      prompt: >-
+        Follow the instructions in @.opencode/commands/prp-issue-fix.md for the
+        latest open issue on Github and take its investigation comment as the implementation
+        plan, but also check if there is already a linked PR to continue.
 
-    bash -euo pipefail <(printf ''%b'' ''\0147\0150\0040\0151\0163\0163\0165\0145\0040\0154\0151\0163\0164\0040\0055\0055\0154\0151\0155\0151\0164\0040\0061\0040\0055\0055\0163\0164\0141\0164\0145\0040\0157\0160\0145\0156\0040\0174\0040\0147\0162\0145\0160\0040\0055\0161\0040\0056\0040\0174\0174\0040\0162\0145\0164\0165\0162\0156\0040\0064\0062'')
+  - id: commit_push
+    depends: [fix_issue]
+    action: harness.run
+    with:
+      prompt: Follow the instructions in @.opencode/commands/commit-push.md
 
-    '
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-- id: step_02_bash
-  name: '02: bash: git restore --staged . 2>/dev/null && git restore . && git switch
-    main …'
-  description: 'Source flowsh step 2; literal source follows:
+  - id: resolve_ci_errors
+    depends: [commit_push]
+    action: harness.run
+    with:
+      prompt: >-
+        Get the latest open Github issue and its linked PR: Only the PR shows
+        merge issues follow the instructions in @.opencode/commands/resolve-ci-errors.md
 
-    git restore --staged . 2>/dev/null && git restore . && git switch main && git
-    pull --rebase --autostash'
-  run: '#!/usr/bin/env bash
+  - id: review_pr
+    depends: [resolve_ci_errors]
+    action: harness.run
+    with:
+      prompt: >-
+        Get the latest open Github issue and its linked PR: Follow the instructions
+        in @.opencode/commands/prp-review.md for the linked PR
 
-    set -euo pipefail
+  - id: merge_and_notify
+    depends: [review_pr]
+    action: harness.run
+    with:
+      prompt: >-
+        Get the latest open Github issue and its linked PR: Raise new Github
+        issues (and check against present ones) with `gh` CLI if the PR review comments
+        came up with high or critical priority findings, failing CI or merge blockers.
+        Then, try to merge it. If any PR was processed, send a telegram message on the
+        outcome.
 
-    bash -euo pipefail <(printf ''%b'' ''\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0055\0055\0163\0164\0141\0147\0145\0144\0040\0056\0040\0062\0076\0057\0144\0145\0166\0057\0156\0165\0154\0154\0040\0046\0046\0040\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0056\0040\0046\0046\0040\0147\0151\0164\0040\0163\0167\0151\0164\0143\0150\0040\0155\0141\0151\0156\0040\0046\0046\0040\0147\0151\0164\0040\0160\0165\0154\0154\0040\0055\0055\0162\0145\0142\0141\0163\0145\0040\0055\0055\0141\0165\0164\0157\0163\0164\0141\0163\0150'')
-
-    '
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-  depends:
-  - step_01_bash
-- id: step_03_agent
-  name: '03: agent: Follow the instructions in @.opencode/commands/prp-issue-fix.md
-    for the…'
-  description: 'Source flowsh step 3; literal source follows:
-
-    Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest
-    open issue on Github and take its investigation comment as the implementation
-    plan, but also check if there is already a linked PR to continue.'
-  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0106\\\
-    0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\0145\\0040\\0151\\0156\\0163\\\
-    0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\0163\\0040\\0151\\0156\\0040\\\
-    0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\0144\\0145\\0057\\0143\\0157\\\
-    0155\\0155\\0141\\0156\\0144\\0163\\0057\\0160\\0162\\0160\\0055\\0151\\0163\\\
-    0163\\0165\\0145\\0055\\0146\\0151\\0170\\0056\\0155\\0144\\0040\\0146\\0157\\\
-    0162\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\0040\\\
-    0157\\0160\\0145\\0156\\0040\\0151\\0163\\0163\\0165\\0145\\0040\\0157\\0156\\\
-    0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\0141\\0156\\0144\\0040\\0164\\\
-    0141\\0153\\0145\\0040\\0151\\0164\\0163\\0040\\0151\\0156\\0166\\0145\\0163\\\
-    0164\\0151\\0147\\0141\\0164\\0151\\0157\\0156\\0040\\0143\\0157\\0155\\0155\\\
-    0145\\0156\\0164\\0040\\0141\\0163\\0040\\0164\\0150\\0145\\0040\\0151\\0155\\\
-    0160\\0154\\0145\\0155\\0145\\0156\\0164\\0141\\0164\\0151\\0157\\0156\\0040\\\
-    0160\\0154\\0141\\0156\\0054\\0040\\0142\\0165\\0164\\0040\\0141\\0154\\0163\\\
-    0157\\0040\\0143\\0150\\0145\\0143\\0153\\0040\\0151\\0146\\0040\\0164\\0150\\\
-    0145\\0162\\0145\\0040\\0151\\0163\\0040\\0141\\0154\\0162\\0145\\0141\\0144\\\
-    0171\\0040\\0141\\0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\\
-    0040\\0164\\0157\\0040\\0143\\0157\\0156\\0164\\0151\\0156\\0165\\0145\\0056'\n\
-    \  printf '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\n\
-    agent=\"$(\n  printf '%b' '\\0142\\0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n\
-    )\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\nexec opencode run --agent \"$agent\"\
-    \ -- \"$prompt\"\n"
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-  depends:
-  - step_02_bash
-- id: step_04_agent
-  name: '04: agent: Follow the instructions in @.opencode/commands/commit-push.md'
-  description: 'Source flowsh step 4; literal source follows:
-
-    Follow the instructions in @.opencode/commands/commit-push.md'
-  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0106\\\
-    0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\0145\\0040\\0151\\0156\\0163\\\
-    0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\0163\\0040\\0151\\0156\\0040\\\
-    0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\0144\\0145\\0057\\0143\\0157\\\
-    0155\\0155\\0141\\0156\\0144\\0163\\0057\\0143\\0157\\0155\\0155\\0151\\0164\\\
-    0055\\0160\\0165\\0163\\0150\\0056\\0155\\0144'\n  printf '%s' FLOWSH_PROMPT_END\n\
-    )\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\nagent=\"$(\n  printf '%b' '\\0142\\\
-    0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n)\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\
-    \nexec opencode run --agent \"$agent\" -- \"$prompt\"\n"
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-  depends:
-  - step_03_agent
-- id: step_05_agent
-  name: '05: agent: Get the latest open Github issue and its linked PR: Only the PR
-    shows m…'
-  description: 'Source flowsh step 5; literal source follows:
-
-    Get the latest open Github issue and its linked PR: Only the PR shows merge issues
-    follow the instructions in @.opencode/commands/resolve-ci-errors.md'
-  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0107\\\
-    0145\\0164\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\\
-    0040\\0157\\0160\\0145\\0156\\0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\\
-    0151\\0163\\0163\\0165\\0145\\0040\\0141\\0156\\0144\\0040\\0151\\0164\\0163\\\
-    0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\0072\\0040\\0117\\\
-    0156\\0154\\0171\\0040\\0164\\0150\\0145\\0040\\0120\\0122\\0040\\0163\\0150\\\
-    0157\\0167\\0163\\0040\\0155\\0145\\0162\\0147\\0145\\0040\\0151\\0163\\0163\\\
-    0165\\0145\\0163\\0040\\0146\\0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\\
-    0145\\0040\\0151\\0156\\0163\\0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\\
-    0163\\0040\\0151\\0156\\0040\\0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\\
-    0144\\0145\\0057\\0143\\0157\\0155\\0155\\0141\\0156\\0144\\0163\\0057\\0162\\\
-    0145\\0163\\0157\\0154\\0166\\0145\\0055\\0143\\0151\\0055\\0145\\0162\\0162\\\
-    0157\\0162\\0163\\0056\\0155\\0144'\n  printf '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"\
-    ${prompt%FLOWSH_PROMPT_END}\"\nagent=\"$(\n  printf '%b' '\\0142\\0165\\0151\\\
-    0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n)\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\
-    \nexec opencode run --agent \"$agent\" -- \"$prompt\"\n"
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-  depends:
-  - step_04_agent
-- id: step_06_agent
-  name: '06: agent: Get the latest open Github issue and its linked PR: Follow the
-    instruct…'
-  description: 'Source flowsh step 6; literal source follows:
-
-    Get the latest open Github issue and its linked PR: Follow the instructions in
-    @.opencode/commands/prp-review.md for the linked PR'
-  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0107\\\
-    0145\\0164\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\\
-    0040\\0157\\0160\\0145\\0156\\0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\\
-    0151\\0163\\0163\\0165\\0145\\0040\\0141\\0156\\0144\\0040\\0151\\0164\\0163\\\
-    0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\0072\\0040\\0106\\\
-    0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\0145\\0040\\0151\\0156\\0163\\\
-    0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\0163\\0040\\0151\\0156\\0040\\\
-    0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\0144\\0145\\0057\\0143\\0157\\\
-    0155\\0155\\0141\\0156\\0144\\0163\\0057\\0160\\0162\\0160\\0055\\0162\\0145\\\
-    0166\\0151\\0145\\0167\\0056\\0155\\0144\\0040\\0146\\0157\\0162\\0040\\0164\\\
-    0150\\0145\\0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122'\n  printf\
-    \ '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\nagent=\"\
-    $(\n  printf '%b' '\\0142\\0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n\
-    )\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\nexec opencode run --agent \"$agent\"\
-    \ -- \"$prompt\"\n"
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-  depends:
-  - step_05_agent
-- id: step_07_agent
-  name: '07: agent: Get the latest open Github issue and its linked PR: Raise new
-    Github is…'
-  description: 'Source flowsh step 7; literal source follows:
-
-    Get the latest open Github issue and its linked PR: Raise new Github issues (and
-    check against present ones) with `gh` CLI if the PR review comments came up with
-    high or critical priority findings, failing CI or merge blockers. Then, try to
-    merge it. If any PR was processed, send a telegram message on the outcome.'
-  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0107\\\
-    0145\\0164\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\\
-    0040\\0157\\0160\\0145\\0156\\0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\\
-    0151\\0163\\0163\\0165\\0145\\0040\\0141\\0156\\0144\\0040\\0151\\0164\\0163\\\
-    0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\0072\\0040\\0122\\\
-    0141\\0151\\0163\\0145\\0040\\0156\\0145\\0167\\0040\\0107\\0151\\0164\\0150\\\
-    0165\\0142\\0040\\0151\\0163\\0163\\0165\\0145\\0163\\0040\\0050\\0141\\0156\\\
-    0144\\0040\\0143\\0150\\0145\\0143\\0153\\0040\\0141\\0147\\0141\\0151\\0156\\\
-    0163\\0164\\0040\\0160\\0162\\0145\\0163\\0145\\0156\\0164\\0040\\0157\\0156\\\
-    0145\\0163\\0051\\0040\\0167\\0151\\0164\\0150\\0040\\0140\\0147\\0150\\0140\\\
-    0040\\0103\\0114\\0111\\0040\\0151\\0146\\0040\\0164\\0150\\0145\\0040\\0120\\\
-    0122\\0040\\0162\\0145\\0166\\0151\\0145\\0167\\0040\\0143\\0157\\0155\\0155\\\
-    0145\\0156\\0164\\0163\\0040\\0143\\0141\\0155\\0145\\0040\\0165\\0160\\0040\\\
-    0167\\0151\\0164\\0150\\0040\\0150\\0151\\0147\\0150\\0040\\0157\\0162\\0040\\\
-    0143\\0162\\0151\\0164\\0151\\0143\\0141\\0154\\0040\\0160\\0162\\0151\\0157\\\
-    0162\\0151\\0164\\0171\\0040\\0146\\0151\\0156\\0144\\0151\\0156\\0147\\0163\\\
-    0054\\0040\\0146\\0141\\0151\\0154\\0151\\0156\\0147\\0040\\0103\\0111\\0040\\\
-    0157\\0162\\0040\\0155\\0145\\0162\\0147\\0145\\0040\\0142\\0154\\0157\\0143\\\
-    0153\\0145\\0162\\0163\\0056\\0040\\0124\\0150\\0145\\0156\\0054\\0040\\0164\\\
-    0162\\0171\\0040\\0164\\0157\\0040\\0155\\0145\\0162\\0147\\0145\\0040\\0151\\\
-    0164\\0056\\0040\\0111\\0146\\0040\\0141\\0156\\0171\\0040\\0120\\0122\\0040\\\
-    0167\\0141\\0163\\0040\\0160\\0162\\0157\\0143\\0145\\0163\\0163\\0145\\0144\\\
-    0054\\0040\\0163\\0145\\0156\\0144\\0040\\0141\\0040\\0164\\0145\\0154\\0145\\\
-    0147\\0162\\0141\\0155\\0040\\0155\\0145\\0163\\0163\\0141\\0147\\0145\\0040\\\
-    0157\\0156\\0040\\0164\\0150\\0145\\0040\\0157\\0165\\0164\\0143\\0157\\0155\\\
-    0145\\0056'\n  printf '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\
-    \nagent=\"$(\n  printf '%b' '\\0142\\0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n\
-    )\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\nexec opencode run --agent \"$agent\"\
-    \ -- \"$prompt\"\n"
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-  depends:
-  - step_06_agent
-- id: step_08_bash
-  name: '08: bash: git restore --staged . 2>/dev/null && git restore . && git switch
-    main …'
-  description: 'Source flowsh step 8; literal source follows:
-
-    git restore --staged . 2>/dev/null && git restore . && git switch main && git
-    pull --rebase --autostash'
-  run: '#!/usr/bin/env bash
-
-    set -euo pipefail
-
-    bash -euo pipefail <(printf ''%b'' ''\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0055\0055\0163\0164\0141\0147\0145\0144\0040\0056\0040\0062\0076\0057\0144\0145\0166\0057\0156\0165\0154\0154\0040\0046\0046\0040\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0056\0040\0046\0046\0040\0147\0151\0164\0040\0163\0167\0151\0164\0143\0150\0040\0155\0141\0151\0156\0040\0046\0046\0040\0147\0151\0164\0040\0160\0165\0154\0154\0040\0055\0055\0162\0145\0142\0141\0163\0145\0040\0055\0055\0141\0165\0164\0157\0163\0164\0141\0163\0150'')
-
-    '
-  retry_policy:
-    limit: 0
-    interval_sec: 1
-  continue_on:
-    failure: false
-  depends:
-  - step_07_agent
+  - id: restore_main
+    depends: [merge_and_notify]
+    run: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      git restore --staged . 2>/dev/null && git restore . && git switch main &&
+        git pull --rebase --autostash
