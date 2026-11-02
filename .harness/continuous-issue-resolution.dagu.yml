@@ -1,75 +1,230 @@
 params:
 - name: project_dir
   type: string
-  default: ..
-- name: harness_args_b64
-  type: string
-  default: W10=
+  default: /home/tom/workspace/ai/made/workspace/sofathek
 working_dir: ${params.project_dir}
+retry_policy:
+  limit: 0
+  interval_sec: 1
 steps:
-- id: decode_payload
-  action: js.run
-  with:
-    input:
-      args: ${params.harness_args_b64}
-    script: "const scriptEncoded = 'IyEvdXNyL2Jpbi9lbnYgYmFzaApzZXQgLWV1byBwaXBlZmFpbAp1bWFzayAwNzcKClNDUklQVF9OQU1FPSdtbW96aDN0ZV9hMDgyOC5zaCcKV09SS0ZMT1dfTkFNRT0iJHtTQ1JJUFRfTkFNRSUuc2h9IgpXT1JLRkxPV19TTFVHPSQocHJpbnRmICclcycgIiRXT1JLRkxPV19OQU1FIiBcCiAgfCB0ciAnWzp1cHBlcjpdJyAnWzpsb3dlcjpdJyBcCiAgfCBzZWQgLUUgJ3MvW15hLXowLTktXSsvLS9nOyBzL14tKy8vOyBzLy0rJC8vOyBzLy0rLy0vZycpCkxPR19USU1FU1RBTVA9IiQoZGF0ZSAtdSArJyVZJW0lZFQlSCVNJVNaJykiCkxPR19CQVNFTkFNRT0iZmxvd3NoLSR7V09SS0ZMT1dfU0xVR30tJHtMT0dfVElNRVNUQU1QfS0kJC5sb2ciCgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIEFyZ3VtZW50IGhhbmRsaW5nCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCkRSWV9SVU49ZmFsc2UKaWYgW1sgJCMgLWVxIDEgJiYgIiQxIiA9PSAiLS1kcnktcnVuIiBdXTsgdGhlbgogIERSWV9SVU49dHJ1ZQplbGlmIFtbICQjIC1ndCAwIF1dOyB0aGVuCiAgcHJpbnRmICJVc2FnZTogJXMgWy0tZHJ5LXJ1bl1cbiIgIiQwIiA+JjIKICBleGl0IDIKZmkKCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgcmVmdXNlX3N5bWxpbmtfcGF0aCgpIC0ga2VlcCBnZW5lcmF0ZWQgbG9ncyBpbnNpZGUgcGxhaW4gcmVsYXRpdmUgcGF0aHMKIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KcmVmdXNlX3N5bWxpbmtfcGF0aCgpIHsKICBsb2NhbCB0YXJnZXQ9IiQxIgoKICBpZiBbWyAteiAiJHRhcmdldCIgXV07IHRoZW4KICAgIHByaW50ZiAiRVJST1I6IExvZyBkaXJlY3RvcnkgbXVzdCBub3QgYmUgZW1wdHlcbiIgPiYyCiAgICByZXR1cm4gMQogIGZpCiAgaWYgW1sgIiR0YXJnZXQiID09IC8qIF1dOyB0aGVuCiAgICBwcmludGYgIkVSUk9SOiBMb2cgZGlyZWN0b3J5IG11c3QgYmUgcmVsYXRpdmU6ICVzXG4iICIkdGFyZ2V0IiA+JjIKICAgIHJldHVybiAxCiAgZmkKCiAgbG9jYWwgY3VycmVudD0KICBsb2NhbCBwYXJ0CiAgSUZTPS8gcmVhZCAtciAtYSBwYXRoX3BhcnRzIDw8PCAiJHRhcmdldCIKICBmb3IgcGFydCBpbiAiJHtwYXRoX3BhcnRzW0BdfSI7IGRvCiAgICBpZiBbWyAteiAiJHBhcnQiIHx8ICIkcGFydCIgPT0gIi4iIF1dOyB0aGVuCiAgICAgIGNvbnRpbnVlCiAgICBmaQogICAgaWYgW1sgIiRwYXJ0IiA9PSAiLi4iIF1dOyB0aGVuCiAgICAgIHByaW50ZiAnJXM6ICVzXG4nICJFUlJPUjogTG9nIGRpcmVjdG9yeSBtdXN0IG5vdCBjb250YWluIC4uIHBhdGggc2VnbWVudHMiICIkdGFyZ2V0IiA+JjIKICAgICAgcmV0dXJuIDEKICAgIGZpCiAgICBjdXJyZW50PSIke2N1cnJlbnQ6KyR7Y3VycmVudH0vfSR7cGFydH0iCiAgICBpZiBbWyAtTCAiJGN1cnJlbnQiIF1dOyB0aGVuCiAgICAgIHByaW50ZiAiRVJST1I6IFJlZnVzaW5nIHRvIHdyaXRlIGxvZ3MgdGhyb3VnaCBzeW1saW5rZWQgcGF0aDogJXNcbiIgIiRjdXJyZW50IiA+JjIKICAgICAgcmV0dXJuIDEKICAgIGZpCiAgZG9uZQp9CgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIExvZyBmaWxlIHNldHVwIC0gbG9jYWwgYnkgZGVmYXVsdCwgb3ZlcnJpZGUgd2l0aCBGTE9XU0hfTE9HX0RJUgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpMT0dfRElSPSIke0ZMT1dTSF9MT0dfRElSOi0uZmxvd3NoL2xvZ3N9IgpMT0dfRklMRT0KaWYgW1sgIiREUllfUlVOIiA9PSBmYWxzZSBdXTsgdGhlbgogIHJlZnVzZV9zeW1saW5rX3BhdGggIiRMT0dfRElSIiB8fCBleGl0IDEKICBpZiBbWyAtZSAiJExPR19ESVIiICYmICEgLWQgIiRMT0dfRElSIiBdXTsgdGhlbgogICAgcHJpbnRmICJFUlJPUjogTG9nIHBhdGggZXhpc3RzIGJ1dCBpcyBub3QgYSBkaXJlY3Rvcnk6ICVzXG4iICIkTE9HX0RJUiIgPiYyCiAgICBleGl0IDEKICBmaQogIGlmICEgbWtkaXIgLXAgIiRMT0dfRElSIjsgdGhlbgogICAgcHJpbnRmICJFUlJPUjogQ2Fubm90IGNyZWF0ZSBsb2cgZGlyZWN0b3J5OiAlc1xuIiAiJExPR19ESVIiID4mMgogICAgZXhpdCAxCiAgZmkKICByZWZ1c2Vfc3ltbGlua19wYXRoICIkTE9HX0RJUiIgfHwgZXhpdCAxCiAgaWYgW1sgISAtZCAiJExPR19ESVIiIF1dOyB0aGVuCiAgICBwcmludGYgIkVSUk9SOiBMb2cgcGF0aCBleGlzdHMgYnV0IGlzIG5vdCBhIGRpcmVjdG9yeTogJXNcbiIgIiRMT0dfRElSIiA+JjIKICAgIGV4aXQgMQogIGZpCiAgaWYgISBjaG1vZCA3MDAgIiRMT0dfRElSIjsgdGhlbgogICAgcHJpbnRmICJFUlJPUjogQ2Fubm90IHNldCBsb2cgZGlyZWN0b3J5IHBlcm1pc3Npb25zOiAlc1xuIiAiJExPR19ESVIiID4mMgogICAgZXhpdCAxCiAgZmkKICBMT0dfRklMRT0iJHtMT0dfRElSfS8ke0xPR19CQVNFTkFNRX0iCiAgaWYgISA6ID4gIiRMT0dfRklMRSI7IHRoZW4KICAgIHByaW50ZiAiRVJST1I6IENhbm5vdCBjcmVhdGUgbG9nIGZpbGU6ICVzXG4iICIkTE9HX0ZJTEUiID4mMgogICAgZXhpdCAxCiAgZmkKICBpZiAhIGNobW9kIDYwMCAiJExPR19GSUxFIjsgdGhlbgogICAgcHJpbnRmICJFUlJPUjogQ2Fubm90IHNldCBsb2cgZmlsZSBwZXJtaXNzaW9uczogJXNcbiIgIiRMT0dfRklMRSIgPiYyCiAgICBleGl0IDEKICBmaQpmaQoKIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIyBsb2coKSAtIElTTy04NjAxIFVUQyB0aW1lc3RhbXBzLCBJTkZPL0VSUk9SLCBzdGRlcnIgKyBsb2cgZmlsZQojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpsb2coKSB7CiAgbG9jYWwgbGV2ZWw9IiQxIjsgc2hpZnQKICBsb2NhbCBtZXNzYWdlCiAgbWVzc2FnZT0iJChkYXRlIC11ICsnJVktJW0tJWRUJUg6JU06JVNaJykgWyR7bGV2ZWx9XSAkKiIKICBwcmludGYgJyVzXG4nICIkbWVzc2FnZSIgPiYyCiAgaWYgW1sgLW4gIiRMT0dfRklMRSIgXV07IHRoZW4KICAgIGlmICEgcHJpbnRmICclc1xuJyAiJG1lc3NhZ2UiID4+ICIkTE9HX0ZJTEUiOyB0aGVuCiAgICAgIHByaW50ZiAiRVJST1I6IENhbm5vdCB3cml0ZSBsb2cgZmlsZTogJXNcbiIgIiRMT0dfRklMRSIgPiYyCiAgICAgIGV4aXQgMQogICAgZmkKICBmaQp9CgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIGNhdGNoKCkgLSBjZW50cmFsaXplZCBzdGVwIGZhaWx1cmUgaG9vawojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpjYXRjaCgpIHsKICBsb2NhbCBzdGVwX25hbWU9IiQxIgogIGxvY2FsIGV4aXRfY29kZT0iJDIiCiAgbG9jYWwgc3RlcF90eXBlPSIkezM6LX0iCiAgbG9jYWwgaGludD0iIgogIGlmIFtbICIkc3RlcF90eXBlIiA9PSAidmFycyIgJiYgIiRleGl0X2NvZGUiID09ICIxMjciIF1dOyB0aGVuCiAgICBoaW50PSIg4oCUIHZhcnMgdmFsdWVzIGFyZSBzaGVsbCBjb21tYW5kcywgbm90IGxpdGVyYWwgc3RyaW5nczsgY2hlY2sgd29ya2Zsb3cgZGVmaW5pdGlvbiIKICBmaQogIGxvZyBFUlJPUiAiU3RlcCBmYWlsZWQ6ICR7c3RlcF9uYW1lfSBbJHtzdGVwX3R5cGV9XSAoZXhpdD0ke2V4aXRfY29kZX0pJHtoaW50fSIKfQoKIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIyBydW5fc3RlcCgpIC0gZHJ5LXJ1biBhbmQgZmFpbHVyZSBoYW5kbGluZzsgc3RyZWFtcyBvdXRwdXQgdmlhIHRlZQojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpydW5fc3RlcCgpIHsKICBsb2NhbCBzdGVwX25hbWU9IiQxIgogIGxvY2FsIHN0ZXBfdHlwZT0iJHsyOi19IgoKICBpZiBbWyAiJERSWV9SVU4iID09IHRydWUgXV07IHRoZW4KICAgIGxvZyBJTkZPICJbRFJZLVJVTl0gd291bGQgcnVuOiAke3N0ZXBfbmFtZX0gWyR7c3RlcF90eXBlfV0iCiAgICByZXR1cm4gMAogIGZpCgogIGxvZyBJTkZPICJSdW5uaW5nIHN0ZXA6ICR7c3RlcF9uYW1lfSBbJHtzdGVwX3R5cGV9XSIKCiAgc2V0ICtlCiAgaWYgKCA6ID4+ICIkTE9HX0ZJTEUiICkgMj4vZGV2L251bGw7IHRoZW4KICAgICIkc3RlcF9uYW1lIiA+ID4odGVlIC1hICIkTE9HX0ZJTEUiKSAyPiA+KHRlZSAtYSAiJExPR19GSUxFIiA+JjIpCiAgICBsb2NhbCBzdGF0dXM9JD8KICBlbHNlCiAgICAiJHN0ZXBfbmFtZSIKICAgIGxvY2FsIHN0YXR1cz0kPwogIGZpCiAgc2V0IC1lCgogIGlmIFtbICRzdGF0dXMgLW5lIDAgXV07IHRoZW4KICAgIGNhdGNoICIkc3RlcF9uYW1lIiAiJHN0YXR1cyIgIiRzdGVwX3R5cGUiCiAgZmkKICByZXR1cm4gIiRzdGF0dXMiCn0KCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgcnVuX3N0YXRlZnVsX3N0ZXAoKSAtIGRyeS1ydW4gYW5kIGZhaWx1cmUgaGFuZGxpbmcgd2l0aG91dCBzdWJzaGVsbHMKIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KcnVuX3N0YXRlZnVsX3N0ZXAoKSB7CiAgbG9jYWwgc3RlcF9uYW1lPSIkMSIKICBsb2NhbCBzdGVwX3R5cGU9IiR7MjotfSIKCiAgaWYgW1sgIiREUllfUlVOIiA9PSB0cnVlIF1dOyB0aGVuCiAgICBsb2cgSU5GTyAiW0RSWS1SVU5dIHdvdWxkIHJ1bjogJHtzdGVwX25hbWV9IFske3N0ZXBfdHlwZX1dIgogICAgcmV0dXJuIDAKICBmaQoKICBsb2cgSU5GTyAiUnVubmluZyBzdGVwOiAke3N0ZXBfbmFtZX0gWyR7c3RlcF90eXBlfV0iCgogIHNldCArZQogICIkc3RlcF9uYW1lIgogIGxvY2FsIHN0YXR1cz0kPwogIHNldCAtZQoKICBpZiBbWyAkc3RhdHVzIC1uZSAwIF1dOyB0aGVuCiAgICBjYXRjaCAiJHN0ZXBfbmFtZSIgIiRzdGF0dXMiICIkc3RlcF90eXBlIgogIGZpCiAgcmV0dXJuICIkc3RhdHVzIgp9CgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIHJ1bl9hZ2VudCgpIC0gcHJvbXB0IGhhbmRsaW5nIGFuZCBDTEkgaW52b2NhdGlvbgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpydW5fYWdlbnQoKSB7CiAgbG9jYWwgcHJvbXB0PSIkMSIKICBsb2NhbCBhZ2VudD0iJHsyOi19IgogIGxvY2FsIG1vZGVsPSIkezM6LX0iCiAgbG9jYWwgY29tbWFuZD0iJHs0Oi19IgogIGxvY2FsIGNhcHR1cmU9IiR7NTotfSIKICBsb2NhbCBkYW5nZXJvdXNseV9za2lwX3Blcm1pc3Npb25zPSIkezY6LWZhbHNlfSIKCiAgbG9jYWwgY21kPShvcGVuY29kZSBydW4gLS1mb3JtYXQganNvbikKICBpZiBbWyAtbiAiJGFnZW50IiBdXTsgdGhlbgogICAgY21kKz0oLS1hZ2VudCAiJGFnZW50IikKICBmaQogIGlmIFtbIC1uICIkbW9kZWwiIF1dOyB0aGVuCiAgICBjbWQrPSgtLW1vZGVsICIkbW9kZWwiKQogIGZpCiAgaWYgW1sgLW4gIiRjb21tYW5kIiBdXTsgdGhlbgogICAgY21kKz0oLS1jb21tYW5kICIkY29tbWFuZCIpCiAgZmkKICBpZiBbWyAiJGRhbmdlcm91c2x5X3NraXBfcGVybWlzc2lvbnMiID09IHRydWUgXV07IHRoZW4KICAgIGNtZCs9KC0tZGFuZ2Vyb3VzbHktc2tpcC1wZXJtaXNzaW9ucykKICBmaQoKICBpZiBbWyAiJERSWV9SVU4iID09IHRydWUgXV07IHRoZW4KICAgIGxvZyBJTkZPICJbRFJZLVJVTl0gd291bGQgcnVuOiAkKHByaW50ZiAnJXEgJyAiJHtjbWRbQF19IikgKHdpdGggcHJvbXB0KSIKICAgIHJldHVybiAwCiAgZmkKCiAgaWYgISBjb21tYW5kIC12IG9wZW5jb2RlID4vZGV2L251bGwgMj4mMTsgdGhlbgogICAgbG9nIEVSUk9SICJvcGVuY29kZSBDTEkgbm90IGZvdW5kIGluIFBBVEgiCiAgICByZXR1cm4gMTI3CiAgZmkKCiAgaWYgW1sgLW4gIiRjYXB0dXJlIiBdXTsgdGhlbgogICAgaWYgISBjb21tYW5kIC12IGpxID4vZGV2L251bGwgMj4mMTsgdGhlbgogICAgICBsb2cgRVJST1IgImpxIG5vdCBmb3VuZCBpbiBQQVRIIChyZXF1aXJlZCB0byBleHRyYWN0IGNhcHR1cmVkIGFnZW50IG91dHB1dCkiCiAgICAgIHJldHVybiAxMjcKICAgIGZpCiAgICBsb2NhbCBvdXRwdXQKICAgIGxvY2FsIHN0YXR1cz0wCiAgICBsb2NhbCBhbnN3ZXIKICAgIG91dHB1dD0iJCgiJHtjbWRbQF19IiAtLSAiJHByb21wdCIpIgogICAgc3RhdHVzPSQ/CiAgICBwcmludGYgJyVzXG4nICIkb3V0cHV0IgogICAgYW5zd2VyPSIkKHByaW50ZiAnJXNcbicgIiRvdXRwdXQiIFwKICAgICAgfCBqcSAtciAnc2VsZWN0KC50eXBlPT0idGV4dCIpIHwgLnBhcnQudGV4dCcgfCB0YWlsIC0xKSIKICAgIHByaW50ZiAtdiAiJGNhcHR1cmUiICclcycgIiRhbnN3ZXIiCiAgICBleHBvcnQgIiRjYXB0dXJlIgogICAgcmV0dXJuICIkc3RhdHVzIgogIGVsc2UKICAgICIke2NtZFtAXX0iIC0tICIkcHJvbXB0IgogIGZpCn0KCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgU3RhcnRpbmcgd29ya2Zsb3c6IENvbnRpbnVvdXMgSXNzdWUgUmVzb2x1dGlvbgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpsb2cgSU5GTyAnU3RhcnRpbmcgd29ya2Zsb3c6IENvbnRpbnVvdXMgSXNzdWUgUmVzb2x1dGlvbicKCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgU3RlcCAxIChiYXNoKTogZ2ggaXNzdWUgbGlzdCAtLWxpbWl0IDEgLS1zdGF0ZSBvcGVuIHwgZ3JlcCAtcSAuIHx8IHJldHVybiA0MgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpzdGVwXzEoKSB7CiAgYmFzaCAtZXVvIHBpcGVmYWlsIDw8J0JBU0hfRU9GJwpnaCBpc3N1ZSBsaXN0IC0tbGltaXQgMSAtLXN0YXRlIG9wZW4gfCBncmVwIC1xIC4gfHwgcmV0dXJuIDQyCkJBU0hfRU9GCn0KcnVuX3N0ZXAgc3RlcF8xIGJhc2gKCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgU3RlcCAyIChiYXNoKTogZ2l0IHJlc3RvcmUgLS1zdGFnZWQgLiAyPi9kZXYvbnVsbCAmJiBnaXQgcmVzdG9yZSAuICYmIGdpdCBzd2l0Y2ggbWFpbiAmJiBnaXQgcC4uLgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpzdGVwXzIoKSB7CiAgYmFzaCAtZXVvIHBpcGVmYWlsIDw8J0JBU0hfRU9GJwpnaXQgcmVzdG9yZSAtLXN0YWdlZCAuIDI+L2Rldi9udWxsICYmIGdpdCByZXN0b3JlIC4gJiYgZ2l0IHN3aXRjaCBtYWluICYmIGdpdCBwdWxsIC0tcmViYXNlIC0tYXV0b3N0YXNoCkJBU0hfRU9GCn0KcnVuX3N0ZXAgc3RlcF8yIGJhc2gKCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgU3RlcCAzIChhZ2VudCk6IEZvbGxvdyB0aGUgaW5zdHJ1Y3Rpb25zIGluIEAub3BlbmNvZGUvY29tbWFuZHMvcHJwLWlzc3VlLWZpeC5tZCBmb3IgdGhlIGxhdGVzdCAuLi4KIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0Kc3RlcF8zKCkgewogIGxvY2FsIHByb21wdAogIHByb21wdD0kKGNhdCA8PCdQUk9NUFRfRU9GJwpGb2xsb3cgdGhlIGluc3RydWN0aW9ucyBpbiBALm9wZW5jb2RlL2NvbW1hbmRzL3BycC1pc3N1ZS1maXgubWQgZm9yIHRoZSBsYXRlc3Qgb3BlbiBpc3N1ZSBvbiBHaXRodWIgYW5kIHRha2UgaXRzIGludmVzdGlnYXRpb24gY29tbWVudCBhcyB0aGUgaW1wbGVtZW50YXRpb24gcGxhbiwgYnV0IGFsc28gY2hlY2sgaWYgdGhlcmUgaXMgYWxyZWFkeSBhIGxpbmtlZCBQUiB0byBjb250aW51ZS4KUFJPTVBUX0VPRgogICkKICBsb2NhbCBhZ2VudD0nYnVpbGQnCiAgbG9jYWwgbW9kZWw9JycKICBsb2NhbCBjb21tYW5kPScnCiAgbG9jYWwgY2FwdHVyZT0nJwogIGxvY2FsIGRhbmdlcm91c2x5X3NraXBfcGVybWlzc2lvbnM9ZmFsc2UKICBydW5fYWdlbnQgIiRwcm9tcHQiICIkYWdlbnQiICIkbW9kZWwiICIkY29tbWFuZCIgIiRjYXB0dXJlIiAiJGRhbmdlcm91c2x5X3NraXBfcGVybWlzc2lvbnMiCn0KcnVuX3N0ZXAgc3RlcF8zIGFnZW50CgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIFN0ZXAgNCAoYWdlbnQpOiBGb2xsb3cgdGhlIGluc3RydWN0aW9ucyBpbiBALm9wZW5jb2RlL2NvbW1hbmRzL2NvbW1pdC1wdXNoLm1kCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCnN0ZXBfNCgpIHsKICBsb2NhbCBwcm9tcHQKICBwcm9tcHQ9JChjYXQgPDwnUFJPTVBUX0VPRicKRm9sbG93IHRoZSBpbnN0cnVjdGlvbnMgaW4gQC5vcGVuY29kZS9jb21tYW5kcy9jb21taXQtcHVzaC5tZApQUk9NUFRfRU9GCiAgKQogIGxvY2FsIGFnZW50PSdidWlsZCcKICBsb2NhbCBtb2RlbD0nJwogIGxvY2FsIGNvbW1hbmQ9JycKICBsb2NhbCBjYXB0dXJlPScnCiAgbG9jYWwgZGFuZ2Vyb3VzbHlfc2tpcF9wZXJtaXNzaW9ucz1mYWxzZQogIHJ1bl9hZ2VudCAiJHByb21wdCIgIiRhZ2VudCIgIiRtb2RlbCIgIiRjb21tYW5kIiAiJGNhcHR1cmUiICIkZGFuZ2Vyb3VzbHlfc2tpcF9wZXJtaXNzaW9ucyIKfQpydW5fc3RlcCBzdGVwXzQgYWdlbnQKCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgU3RlcCA1IChhZ2VudCk6IEdldCB0aGUgbGF0ZXN0IG9wZW4gR2l0aHViIGlzc3VlIGFuZCBpdHMgbGlua2VkIFBSOiBPbmx5IHRoZSBQUiBzaG93cyBtZXJnZSBpc3MuLi4KIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0Kc3RlcF81KCkgewogIGxvY2FsIHByb21wdAogIHByb21wdD0kKGNhdCA8PCdQUk9NUFRfRU9GJwpHZXQgdGhlIGxhdGVzdCBvcGVuIEdpdGh1YiBpc3N1ZSBhbmQgaXRzIGxpbmtlZCBQUjogT25seSB0aGUgUFIgc2hvd3MgbWVyZ2UgaXNzdWVzIGZvbGxvdyB0aGUgaW5zdHJ1Y3Rpb25zIGluIEAub3BlbmNvZGUvY29tbWFuZHMvcmVzb2x2ZS1jaS1lcnJvcnMubWQKUFJPTVBUX0VPRgogICkKICBsb2NhbCBhZ2VudD0nYnVpbGQnCiAgbG9jYWwgbW9kZWw9JycKICBsb2NhbCBjb21tYW5kPScnCiAgbG9jYWwgY2FwdHVyZT0nJwogIGxvY2FsIGRhbmdlcm91c2x5X3NraXBfcGVybWlzc2lvbnM9ZmFsc2UKICBydW5fYWdlbnQgIiRwcm9tcHQiICIkYWdlbnQiICIkbW9kZWwiICIkY29tbWFuZCIgIiRjYXB0dXJlIiAiJGRhbmdlcm91c2x5X3NraXBfcGVybWlzc2lvbnMiCn0KcnVuX3N0ZXAgc3RlcF81IGFnZW50CgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIFN0ZXAgNiAoYWdlbnQpOiBHZXQgdGhlIGxhdGVzdCBvcGVuIEdpdGh1YiBpc3N1ZSBhbmQgaXRzIGxpbmtlZCBQUjogRm9sbG93IHRoZSBpbnN0cnVjdGlvbnMgaW4gLi4uCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCnN0ZXBfNigpIHsKICBsb2NhbCBwcm9tcHQKICBwcm9tcHQ9JChjYXQgPDwnUFJPTVBUX0VPRicKR2V0IHRoZSBsYXRlc3Qgb3BlbiBHaXRodWIgaXNzdWUgYW5kIGl0cyBsaW5rZWQgUFI6IEZvbGxvdyB0aGUgaW5zdHJ1Y3Rpb25zIGluIEAub3BlbmNvZGUvY29tbWFuZHMvcHJwLXJldmlldy5tZCBmb3IgdGhlIGxpbmtlZCBQUgpQUk9NUFRfRU9GCiAgKQogIGxvY2FsIGFnZW50PSdidWlsZCcKICBsb2NhbCBtb2RlbD0nJwogIGxvY2FsIGNvbW1hbmQ9JycKICBsb2NhbCBjYXB0dXJlPScnCiAgbG9jYWwgZGFuZ2Vyb3VzbHlfc2tpcF9wZXJtaXNzaW9ucz1mYWxzZQogIHJ1bl9hZ2VudCAiJHByb21wdCIgIiRhZ2VudCIgIiRtb2RlbCIgIiRjb21tYW5kIiAiJGNhcHR1cmUiICIkZGFuZ2Vyb3VzbHlfc2tpcF9wZXJtaXNzaW9ucyIKfQpydW5fc3RlcCBzdGVwXzYgYWdlbnQKCiMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgU3RlcCA3IChhZ2VudCk6IEdldCB0aGUgbGF0ZXN0IG9wZW4gR2l0aHViIGlzc3VlIGFuZCBpdHMgbGlua2VkIFBSOiBSYWlzZSBuZXcgR2l0aHViIGlzc3VlcyAoYW4uLi4KIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0Kc3RlcF83KCkgewogIGxvY2FsIHByb21wdAogIHByb21wdD0kKGNhdCA8PCdQUk9NUFRfRU9GJwpHZXQgdGhlIGxhdGVzdCBvcGVuIEdpdGh1YiBpc3N1ZSBhbmQgaXRzIGxpbmtlZCBQUjogUmFpc2UgbmV3IEdpdGh1YiBpc3N1ZXMgKGFuZCBjaGVjayBhZ2FpbnN0IHByZXNlbnQgb25lcykgd2l0aCBgZ2hgIENMSSBpZiB0aGUgUFIgcmV2aWV3IGNvbW1lbnRzIGNhbWUgdXAgd2l0aCBoaWdoIG9yIGNyaXRpY2FsIHByaW9yaXR5IGZpbmRpbmdzLCBmYWlsaW5nIENJIG9yIG1lcmdlIGJsb2NrZXJzLiBUaGVuLCB0cnkgdG8gbWVyZ2UgaXQuIElmIGFueSBQUiB3YXMgcHJvY2Vzc2VkLCBzZW5kIGEgdGVsZWdyYW0gbWVzc2FnZSBvbiB0aGUgb3V0Y29tZS4KUFJPTVBUX0VPRgogICkKICBsb2NhbCBhZ2VudD0nYnVpbGQnCiAgbG9jYWwgbW9kZWw9JycKICBsb2NhbCBjb21tYW5kPScnCiAgbG9jYWwgY2FwdHVyZT0nJwogIGxvY2FsIGRhbmdlcm91c2x5X3NraXBfcGVybWlzc2lvbnM9ZmFsc2UKICBydW5fYWdlbnQgIiRwcm9tcHQiICIkYWdlbnQiICIkbW9kZWwiICIkY29tbWFuZCIgIiRjYXB0dXJlIiAiJGRhbmdlcm91c2x5X3NraXBfcGVybWlzc2lvbnMiCn0KcnVuX3N0ZXAgc3RlcF83IGFnZW50CgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIFN0ZXAgOCAoYmFzaCk6IGdpdCByZXN0b3JlIC0tc3RhZ2VkIC4gMj4vZGV2L251bGwgJiYgZ2l0IHJlc3RvcmUgLiAmJiBnaXQgc3dpdGNoIG1haW4gJiYgZ2l0IHAuLi4KIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0Kc3RlcF84KCkgewogIGJhc2ggLWV1byBwaXBlZmFpbCA8PCdCQVNIX0VPRicKZ2l0IHJlc3RvcmUgLS1zdGFnZWQgLiAyPi9kZXYvbnVsbCAmJiBnaXQgcmVzdG9yZSAuICYmIGdpdCBzd2l0Y2ggbWFpbiAmJiBnaXQgcHVsbCAtLXJlYmFzZSAtLWF1dG9zdGFzaApCQVNIX0VPRgp9CnJ1bl9zdGVwIHN0ZXBfOCBiYXNoCgojIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQojIFdvcmtmbG93IGZpbmlzaGVkOiBDb250aW51b3VzIElzc3VlIFJlc29sdXRpb24KIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KbG9nIElORk8gJ1dvcmtmbG93IGZpbmlzaGVkOiBDb250aW51b3VzIElzc3VlIFJlc29sdXRpb24nCgo=';\n\
-      function decodeBase64(value) {\n  const pattern = new RegExp(\n    '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'\n\
-      \  );\n  if (value.length % 4 !== 0 || !pattern.test(value)) {\n    throw new\
-      \ Error('Invalid base64 payload');\n  }\n  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';\n\
-      \  let buffer = 0;\n  let bits = 0;\n  let percent = '';\n  for (const char\
-      \ of value) {\n    if (char === '=') break;\n    buffer = (buffer << 6) | alphabet.indexOf(char);\n\
-      \    bits += 6;\n    if (bits >= 8) {\n      bits -= 8;\n      percent += '%'\
-      \ + ((buffer >> bits) & 255).toString(16).padStart(2, '0');\n    }\n  }\n  if\
-      \ (bits && (buffer & ((1 << bits) - 1)) !== 0) throw new Error('Invalid base64\
-      \ payload');\n  try {\n    return decodeURIComponent(percent);\n  } catch (error)\
-      \ {\n    throw new Error('Invalid UTF-8 payload');\n  }\n}\nfunction toOctal(value)\
-      \ {\n  // Keep shell and Dagu syntax out of the interpolated file.write content.\n\
-      \  const encoded = encodeURIComponent(value);\n  let result = '';\n  for (let\
-      \ index = 0; index < encoded.length; index += 1) {\n    let byte;\n    if (encoded[index]\
-      \ === '%') {\n      byte = parseInt(encoded.slice(index + 1, index + 3), 16);\n\
-      \      index += 2;\n    } else {\n      byte = encoded.charCodeAt(index);\n\
-      \    }\n    result += '\\\\' + byte.toString(8).padStart(3, '0');\n  }\n  return\
-      \ result;\n}\nconst script = decodeBase64(scriptEncoded);\nconst args = JSON.parse(decodeBase64(input.args));\n\
-      if (!Array.isArray(args)) {\n  throw new Error('harness_args_b64 must encode\
-      \ an array of strings without NUL');\n}\nif (args.some((item) =>\n  typeof item\
-      \ !== 'string' || item.includes('\\0')\n)) {\n  throw new Error('harness_args_b64\
-      \ must encode an array of strings without NUL');\n}\nreturn {\n  script: toOctal(script),\n\
-      \  argv: toOctal(args.length ? args.join('\\0') + '\\0' : '')\n};\n"
-  output:
-    payload:
-      from: stdout
-      decode: json
-- id: write_harness
+- id: step_01_bash
+  name: '01: bash: gh issue list --limit 1 --state open | grep -q . || return 42'
+  description: 'Source flowsh step 1; literal source follows:
+
+    gh issue list --limit 1 --state open | grep -q . || return 42'
+  run: '#!/usr/bin/env bash
+
+    set -euo pipefail
+
+    bash -euo pipefail <(printf ''%b'' ''\0147\0150\0040\0151\0163\0163\0165\0145\0040\0154\0151\0163\0164\0040\0055\0055\0154\0151\0155\0151\0164\0040\0061\0040\0055\0055\0163\0164\0141\0164\0145\0040\0157\0160\0145\0156\0040\0174\0040\0147\0162\0145\0160\0040\0055\0161\0040\0056\0040\0174\0174\0040\0162\0145\0164\0165\0162\0156\0040\0064\0062'')
+
+    '
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
+- id: step_02_bash
+  name: '02: bash: git restore --staged . 2>/dev/null && git restore . && git switch
+    main …'
+  description: 'Source flowsh step 2; literal source follows:
+
+    git restore --staged . 2>/dev/null && git restore . && git switch main && git
+    pull --rebase --autostash'
+  run: '#!/usr/bin/env bash
+
+    set -euo pipefail
+
+    bash -euo pipefail <(printf ''%b'' ''\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0055\0055\0163\0164\0141\0147\0145\0144\0040\0056\0040\0062\0076\0057\0144\0145\0166\0057\0156\0165\0154\0154\0040\0046\0046\0040\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0056\0040\0046\0046\0040\0147\0151\0164\0040\0163\0167\0151\0164\0143\0150\0040\0155\0141\0151\0156\0040\0046\0046\0040\0147\0151\0164\0040\0160\0165\0154\0154\0040\0055\0055\0162\0145\0142\0141\0163\0145\0040\0055\0055\0141\0165\0164\0157\0163\0164\0141\0163\0150'')
+
+    '
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
   depends:
-  - decode_payload
-  action: file.write
-  with:
-    path: ${context.paths.work_dir}/harness.sh
-    content: ${decode_payload.output.payload.script}
-    mode: '0700'
-    overwrite: true
-- id: write_argv
+  - step_01_bash
+- id: step_03_agent
+  name: '03: agent: Follow the instructions in @.opencode/commands/prp-issue-fix.md
+    for the…'
+  description: 'Source flowsh step 3; literal source follows:
+
+    Follow the instructions in @.opencode/commands/prp-issue-fix.md for the latest
+    open issue on Github and take its investigation comment as the implementation
+    plan, but also check if there is already a linked PR to continue.'
+  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0106\\\
+    0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\0145\\0040\\0151\\0156\\0163\\\
+    0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\0163\\0040\\0151\\0156\\0040\\\
+    0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\0144\\0145\\0057\\0143\\0157\\\
+    0155\\0155\\0141\\0156\\0144\\0163\\0057\\0160\\0162\\0160\\0055\\0151\\0163\\\
+    0163\\0165\\0145\\0055\\0146\\0151\\0170\\0056\\0155\\0144\\0040\\0146\\0157\\\
+    0162\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\0040\\\
+    0157\\0160\\0145\\0156\\0040\\0151\\0163\\0163\\0165\\0145\\0040\\0157\\0156\\\
+    0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\0141\\0156\\0144\\0040\\0164\\\
+    0141\\0153\\0145\\0040\\0151\\0164\\0163\\0040\\0151\\0156\\0166\\0145\\0163\\\
+    0164\\0151\\0147\\0141\\0164\\0151\\0157\\0156\\0040\\0143\\0157\\0155\\0155\\\
+    0145\\0156\\0164\\0040\\0141\\0163\\0040\\0164\\0150\\0145\\0040\\0151\\0155\\\
+    0160\\0154\\0145\\0155\\0145\\0156\\0164\\0141\\0164\\0151\\0157\\0156\\0040\\\
+    0160\\0154\\0141\\0156\\0054\\0040\\0142\\0165\\0164\\0040\\0141\\0154\\0163\\\
+    0157\\0040\\0143\\0150\\0145\\0143\\0153\\0040\\0151\\0146\\0040\\0164\\0150\\\
+    0145\\0162\\0145\\0040\\0151\\0163\\0040\\0141\\0154\\0162\\0145\\0141\\0144\\\
+    0171\\0040\\0141\\0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\\
+    0040\\0164\\0157\\0040\\0143\\0157\\0156\\0164\\0151\\0156\\0165\\0145\\0056'\n\
+    \  printf '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\n\
+    agent=\"$(\n  printf '%b' '\\0142\\0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n\
+    )\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\nexec opencode run --agent \"$agent\"\
+    \ -- \"$prompt\"\n"
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
   depends:
-  - decode_payload
-  action: file.write
-  with:
-    path: ${context.paths.work_dir}/argv.bin
-    content: ${decode_payload.output.payload.argv}
-    mode: '0600'
-    overwrite: true
-- id: execute_harness
+  - step_02_bash
+- id: step_04_agent
+  name: '04: agent: Follow the instructions in @.opencode/commands/commit-push.md'
+  description: 'Source flowsh step 4; literal source follows:
+
+    Follow the instructions in @.opencode/commands/commit-push.md'
+  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0106\\\
+    0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\0145\\0040\\0151\\0156\\0163\\\
+    0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\0163\\0040\\0151\\0156\\0040\\\
+    0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\0144\\0145\\0057\\0143\\0157\\\
+    0155\\0155\\0141\\0156\\0144\\0163\\0057\\0143\\0157\\0155\\0155\\0151\\0164\\\
+    0055\\0160\\0165\\0163\\0150\\0056\\0155\\0144'\n  printf '%s' FLOWSH_PROMPT_END\n\
+    )\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\nagent=\"$(\n  printf '%b' '\\0142\\\
+    0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n)\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\
+    \nexec opencode run --agent \"$agent\" -- \"$prompt\"\n"
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
   depends:
-  - write_harness
-  - write_argv
-  env:
-    ARGV_PATH: ${context.paths.work_dir}/argv.bin
-    HARNESS_PATH: ${context.paths.work_dir}/harness.sh
-  run: "#!/usr/bin/env bash\nset -euo pipefail\nset --\ndecode_octal() {\n  local\
-    \ encoded_path=\"$1\"\n  local decoded_path=\"$2\"\n  local encoded\n  encoded=\"\
-    $(<\"$encoded_path\")\"\n  printf '%b' \"$encoded\" > \"$decoded_path\"\n}\ndecode_octal\
-    \ \"${env.HARNESS_PATH}\" \"${env.HARNESS_PATH}.decoded\"\nchmod 700 \"${env.HARNESS_PATH}.decoded\"\
-    \nmv -f -- \"${env.HARNESS_PATH}.decoded\" \"${env.HARNESS_PATH}\"\ndecode_octal\
-    \ \"${env.ARGV_PATH}\" \"${env.ARGV_PATH}.decoded\"\nchmod 600 \"${env.ARGV_PATH}.decoded\"\
-    \nmv -f -- \"${env.ARGV_PATH}.decoded\" \"${env.ARGV_PATH}\"\nwhile IFS= read\
-    \ -r -d '' argument; do\n  set -- \"$@\" \"$argument\"\ndone < \"${env.ARGV_PATH}\"\
-    \nexec bash -- \"${env.HARNESS_PATH}\" \"$@\"\n"
+  - step_03_agent
+- id: step_05_agent
+  name: '05: agent: Get the latest open Github issue and its linked PR: Only the PR
+    shows m…'
+  description: 'Source flowsh step 5; literal source follows:
+
+    Get the latest open Github issue and its linked PR: Only the PR shows merge issues
+    follow the instructions in @.opencode/commands/resolve-ci-errors.md'
+  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0107\\\
+    0145\\0164\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\\
+    0040\\0157\\0160\\0145\\0156\\0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\\
+    0151\\0163\\0163\\0165\\0145\\0040\\0141\\0156\\0144\\0040\\0151\\0164\\0163\\\
+    0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\0072\\0040\\0117\\\
+    0156\\0154\\0171\\0040\\0164\\0150\\0145\\0040\\0120\\0122\\0040\\0163\\0150\\\
+    0157\\0167\\0163\\0040\\0155\\0145\\0162\\0147\\0145\\0040\\0151\\0163\\0163\\\
+    0165\\0145\\0163\\0040\\0146\\0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\\
+    0145\\0040\\0151\\0156\\0163\\0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\\
+    0163\\0040\\0151\\0156\\0040\\0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\\
+    0144\\0145\\0057\\0143\\0157\\0155\\0155\\0141\\0156\\0144\\0163\\0057\\0162\\\
+    0145\\0163\\0157\\0154\\0166\\0145\\0055\\0143\\0151\\0055\\0145\\0162\\0162\\\
+    0157\\0162\\0163\\0056\\0155\\0144'\n  printf '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"\
+    ${prompt%FLOWSH_PROMPT_END}\"\nagent=\"$(\n  printf '%b' '\\0142\\0165\\0151\\\
+    0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n)\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\
+    \nexec opencode run --agent \"$agent\" -- \"$prompt\"\n"
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
+  depends:
+  - step_04_agent
+- id: step_06_agent
+  name: '06: agent: Get the latest open Github issue and its linked PR: Follow the
+    instruct…'
+  description: 'Source flowsh step 6; literal source follows:
+
+    Get the latest open Github issue and its linked PR: Follow the instructions in
+    @.opencode/commands/prp-review.md for the linked PR'
+  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0107\\\
+    0145\\0164\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\\
+    0040\\0157\\0160\\0145\\0156\\0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\\
+    0151\\0163\\0163\\0165\\0145\\0040\\0141\\0156\\0144\\0040\\0151\\0164\\0163\\\
+    0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\0072\\0040\\0106\\\
+    0157\\0154\\0154\\0157\\0167\\0040\\0164\\0150\\0145\\0040\\0151\\0156\\0163\\\
+    0164\\0162\\0165\\0143\\0164\\0151\\0157\\0156\\0163\\0040\\0151\\0156\\0040\\\
+    0100\\0056\\0157\\0160\\0145\\0156\\0143\\0157\\0144\\0145\\0057\\0143\\0157\\\
+    0155\\0155\\0141\\0156\\0144\\0163\\0057\\0160\\0162\\0160\\0055\\0162\\0145\\\
+    0166\\0151\\0145\\0167\\0056\\0155\\0144\\0040\\0146\\0157\\0162\\0040\\0164\\\
+    0150\\0145\\0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122'\n  printf\
+    \ '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\nagent=\"\
+    $(\n  printf '%b' '\\0142\\0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n\
+    )\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\nexec opencode run --agent \"$agent\"\
+    \ -- \"$prompt\"\n"
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
+  depends:
+  - step_05_agent
+- id: step_07_agent
+  name: '07: agent: Get the latest open Github issue and its linked PR: Raise new
+    Github is…'
+  description: 'Source flowsh step 7; literal source follows:
+
+    Get the latest open Github issue and its linked PR: Raise new Github issues (and
+    check against present ones) with `gh` CLI if the PR review comments came up with
+    high or critical priority findings, failing CI or merge blockers. Then, try to
+    merge it. If any PR was processed, send a telegram message on the outcome.'
+  run: "#!/usr/bin/env bash\nset -euo pipefail\nprompt=\"$(\n  printf '%b' '\\0107\\\
+    0145\\0164\\0040\\0164\\0150\\0145\\0040\\0154\\0141\\0164\\0145\\0163\\0164\\\
+    0040\\0157\\0160\\0145\\0156\\0040\\0107\\0151\\0164\\0150\\0165\\0142\\0040\\\
+    0151\\0163\\0163\\0165\\0145\\0040\\0141\\0156\\0144\\0040\\0151\\0164\\0163\\\
+    0040\\0154\\0151\\0156\\0153\\0145\\0144\\0040\\0120\\0122\\0072\\0040\\0122\\\
+    0141\\0151\\0163\\0145\\0040\\0156\\0145\\0167\\0040\\0107\\0151\\0164\\0150\\\
+    0165\\0142\\0040\\0151\\0163\\0163\\0165\\0145\\0163\\0040\\0050\\0141\\0156\\\
+    0144\\0040\\0143\\0150\\0145\\0143\\0153\\0040\\0141\\0147\\0141\\0151\\0156\\\
+    0163\\0164\\0040\\0160\\0162\\0145\\0163\\0145\\0156\\0164\\0040\\0157\\0156\\\
+    0145\\0163\\0051\\0040\\0167\\0151\\0164\\0150\\0040\\0140\\0147\\0150\\0140\\\
+    0040\\0103\\0114\\0111\\0040\\0151\\0146\\0040\\0164\\0150\\0145\\0040\\0120\\\
+    0122\\0040\\0162\\0145\\0166\\0151\\0145\\0167\\0040\\0143\\0157\\0155\\0155\\\
+    0145\\0156\\0164\\0163\\0040\\0143\\0141\\0155\\0145\\0040\\0165\\0160\\0040\\\
+    0167\\0151\\0164\\0150\\0040\\0150\\0151\\0147\\0150\\0040\\0157\\0162\\0040\\\
+    0143\\0162\\0151\\0164\\0151\\0143\\0141\\0154\\0040\\0160\\0162\\0151\\0157\\\
+    0162\\0151\\0164\\0171\\0040\\0146\\0151\\0156\\0144\\0151\\0156\\0147\\0163\\\
+    0054\\0040\\0146\\0141\\0151\\0154\\0151\\0156\\0147\\0040\\0103\\0111\\0040\\\
+    0157\\0162\\0040\\0155\\0145\\0162\\0147\\0145\\0040\\0142\\0154\\0157\\0143\\\
+    0153\\0145\\0162\\0163\\0056\\0040\\0124\\0150\\0145\\0156\\0054\\0040\\0164\\\
+    0162\\0171\\0040\\0164\\0157\\0040\\0155\\0145\\0162\\0147\\0145\\0040\\0151\\\
+    0164\\0056\\0040\\0111\\0146\\0040\\0141\\0156\\0171\\0040\\0120\\0122\\0040\\\
+    0167\\0141\\0163\\0040\\0160\\0162\\0157\\0143\\0145\\0163\\0163\\0145\\0144\\\
+    0054\\0040\\0163\\0145\\0156\\0144\\0040\\0141\\0040\\0164\\0145\\0154\\0145\\\
+    0147\\0162\\0141\\0155\\0040\\0155\\0145\\0163\\0163\\0141\\0147\\0145\\0040\\\
+    0157\\0156\\0040\\0164\\0150\\0145\\0040\\0157\\0165\\0164\\0143\\0157\\0155\\\
+    0145\\0056'\n  printf '%s' FLOWSH_PROMPT_END\n)\"\nprompt=\"${prompt%FLOWSH_PROMPT_END}\"\
+    \nagent=\"$(\n  printf '%b' '\\0142\\0165\\0151\\0154\\0144'\n  printf '%s' FLOWSH_AGENT_END\n\
+    )\"\nagent=\"${agent%FLOWSH_AGENT_END}\"\nexec opencode run --agent \"$agent\"\
+    \ -- \"$prompt\"\n"
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
+  depends:
+  - step_06_agent
+- id: step_08_bash
+  name: '08: bash: git restore --staged . 2>/dev/null && git restore . && git switch
+    main …'
+  description: 'Source flowsh step 8; literal source follows:
+
+    git restore --staged . 2>/dev/null && git restore . && git switch main && git
+    pull --rebase --autostash'
+  run: '#!/usr/bin/env bash
+
+    set -euo pipefail
+
+    bash -euo pipefail <(printf ''%b'' ''\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0055\0055\0163\0164\0141\0147\0145\0144\0040\0056\0040\0062\0076\0057\0144\0145\0166\0057\0156\0165\0154\0154\0040\0046\0046\0040\0147\0151\0164\0040\0162\0145\0163\0164\0157\0162\0145\0040\0056\0040\0046\0046\0040\0147\0151\0164\0040\0163\0167\0151\0164\0143\0150\0040\0155\0141\0151\0156\0040\0046\0046\0040\0147\0151\0164\0040\0160\0165\0154\0154\0040\0055\0055\0162\0145\0142\0141\0163\0145\0040\0055\0055\0141\0165\0164\0157\0163\0164\0141\0163\0150'')
+
+    '
+  retry_policy:
+    limit: 0
+    interval_sec: 1
+  continue_on:
+    failure: false
+  depends:
+  - step_07_agent
