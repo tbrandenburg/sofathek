@@ -114,6 +114,49 @@ make build       # Verify build works
 make start       # Or use make docker
 ```
 
+### Continuous Issue Resolution (Dagu)
+
+[.harness/continuous-issue-resolution.dagu.yml](/.harness/continuous-issue-resolution.dagu.yml)
+is a hand-maintained, native Dagu counterpart of the eight steps in
+[.made/workflows.yml](/.made/workflows.yml). It uses readable shell blocks and
+`action: harness.run` with shared `provider: opencode` / `agent: build` defaults,
+not encoded shell payloads. Keep both definitions in sync; regenerating the
+flowsh shell script does not maintain this DAG.
+
+The DAG preserves the source's hourly schedule, five prompts, sequential order,
+and fail-fast behavior without retries. Its default `project_dir: ..` resolves
+relative to the DAG file, so it targets the repository root without a machine-specific
+path. Override it with `-- project_dir=/path/to/dedicated/checkout` when needed.
+For spaces, preserve quotes for Dagu's parameter parser:
+`-- 'project_dir="/path/to/dedicated checkout"'`.
+The issue guard uses `exit 42` instead of the source's invalid top-level `return 42`
+and propagates GitHub CLI errors separately from an empty issue list.
+
+Validate and simulate without inference or executing workflow commands (Dagu 2.25.1):
+
+```bash
+dagu validate .harness/continuous-issue-resolution.dagu.yml
+dagu dry .harness/continuous-issue-resolution.dagu.yml
+# Source-parity, dry-run non-execution, path override, and invalid-config checks:
+uv run --no-project --with pyyaml python scripts/test-issue-resolution-dag.py
+```
+
+Dry-run success verifies the definition and simulated sequence, not GitHub access,
+OpenCode authentication, directory existence, shell exit paths, or agent outcomes.
+The regression checks isolate Dagu's files in temporary storage and install CLI
+tripwires that fail if a dry-run invokes `opencode`, `gh`, or `git`.
+
+**Do not run or install this scheduled DAG in a checkout with uncommitted work.**
+Steps 2 and 8 intentionally preserve the source's `git restore` cleanup, which
+discards tracked changes. A real run also permits commits, pushes, merges, and
+notifications. Do not schedule both the flowsh and Dagu versions simultaneously.
+
+Dagu's [OpenCode harness documentation](https://github.com/dagucloud/dagu/blob/main/skills/dagu/references/harnesses.md#managed-opencode-sessions)
+describes automatic managed sessions on supported servers/workers and CLI fallback
+for direct CLI execution. Each step has its own conversation by default, matching
+the source's separate agent calls; no model or permission bypass is added here.
+This fixed pipeline does not need `type: agent` (LLM-selected step ordering).
+
 ## 🛡️ Code Validation
 
 Sofathek includes **automatic pre-push validation** to ensure code quality:
