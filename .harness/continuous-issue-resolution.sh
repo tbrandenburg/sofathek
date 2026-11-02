@@ -360,4 +360,3 @@ run_step step_8 bash
 # Workflow finished: Continuous Issue Resolution
 # ---------------------------------------------------------------------------
 log INFO 'Workflow finished: Continuous Issue Resolution'
-
