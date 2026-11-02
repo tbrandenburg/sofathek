@@ -129,12 +129,8 @@ tasks: fix the issue, commit/push, resolve blockers, review, and merge/notify. T
 intentionally omit the command files' detailed procedures, templates, and archiving
 requirements. Each agent is instructed not to create report files, task ledgers, or
 workflow-tracking artifacts; findings and verification evidence belong in its response
-or GitHub comments. The command-body sync utility was removed so it cannot restore
-the discarded procedures. Edit these concise prompts directly in the DAG.
+or GitHub comments. Edit these concise prompts directly in the DAG.
 
-Regression checks cover the step structure, concise task descriptions, and the explicit
-no-report-file instruction in each agent prompt. This checks instructions, not whether
-an agent will comply at runtime.
 The default `project_dir: ..` resolves
 relative to the DAG file, so it targets the repository root without a machine-specific
 path. Override it with `-- project_dir=/path/to/dedicated/checkout` when needed.
@@ -148,14 +144,10 @@ Validate and simulate without inference or executing workflow commands (Dagu 2.2
 ```bash
 dagu validate .harness/continuous-issue-resolution.dagu.yml
 dagu dry .harness/continuous-issue-resolution.dagu.yml
-# Source-parity, dry-run non-execution, path override, and invalid-config checks:
-uv run --no-project --with pyyaml python scripts/test-issue-resolution-dag.py
 ```
 
 Dry-run success verifies the definition and simulated sequence, not GitHub access,
 OpenCode authentication, directory existence, shell exit paths, or agent outcomes.
-The regression checks isolate Dagu's files in temporary storage and install CLI
-tripwires that fail if a dry-run invokes `opencode`, `gh`, or `git`.
 
 **Do not run or install this scheduled DAG in a checkout with uncommitted work.**
 Steps 2 and 8 intentionally preserve the source's `git restore` cleanup, which
