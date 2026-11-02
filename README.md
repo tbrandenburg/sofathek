@@ -123,8 +123,19 @@ is a hand-maintained, native Dagu counterpart of the eight steps in
 not encoded shell payloads. Keep both definitions in sync; regenerating the
 flowsh shell script does not maintain this DAG.
 
-The DAG preserves the source's hourly schedule, five prompts, sequential order,
-and fail-fast behavior without retries. Its default `project_dir: ..` resolves
+The DAG preserves the source's hourly schedule, five agent calls, sequential order,
+and fail-fast behavior without retries. Four prompts embed the complete Markdown
+bodies of the referenced files in `.opencode/commands/` as literal YAML blocks,
+excluding command metadata and trimming trailing whitespace. Their original
+issue/PR-specific directions remain above the embedded bodies; the merge/notification
+prompt stays unchanged. After editing a referenced command, refresh the snapshots:
+
+```bash
+uv run --no-project --with pyyaml python scripts/sync-issue-resolution-prompts.py
+```
+
+The regression checks reject drift between embedded instructions and command files.
+The default `project_dir: ..` resolves
 relative to the DAG file, so it targets the repository root without a machine-specific
 path. Override it with `-- project_dir=/path/to/dedicated/checkout` when needed.
 For spaces, preserve quotes for Dagu's parameter parser:

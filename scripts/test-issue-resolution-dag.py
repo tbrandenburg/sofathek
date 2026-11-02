@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import re
+import runpy
 import shlex
 import shutil
 import subprocess
@@ -81,7 +82,8 @@ class IssueResolutionDagTests(unittest.TestCase):
                 self.assertEqual(step.get("depends", []), IDS[index - 1:index] if index else [])
                 if source["type"] == "agent":
                     self.assertEqual(step["action"], "harness.run")
-                    self.assertEqual(step["with"]["prompt"], source["prompt"])
+                    if "@.opencode/commands/" not in source["prompt"]:
+                        self.assertEqual(step["with"]["prompt"], source["prompt"])
                     self.assertEqual(source["agent"], self.dag["harness"]["agent"])
                     self.assertNotIn("run", step)
                     continue
@@ -94,6 +96,46 @@ class IssueResolutionDagTests(unittest.TestCase):
         self.assertIn('test -n "$issues" || exit 42', guard)
         self.assertNotIn("return 42", guard)
         self.assertNotRegex(DAG.read_text(), r"\\[0-7]{3}|base64|printf '%b'")
+
+    def test_command_bodies_are_embedded_without_drift(self) -> None:
+        commands = {
+            "fix_issue": "prp-issue-fix.md",
+            "commit_push": "commit-push.md",
+            "resolve_ci_errors": "resolve-ci-errors.md",
+            "review_pr": "prp-review.md",
+        }
+        embedded = [step for step in self.dag["steps"] if step["id"] in commands]
+        self.assertEqual(len(embedded), 4)
+        for step in embedded:
+            with self.subTest(step=step["id"]):
+                text = (ROOT / ".opencode/commands" / commands[step["id"]]).read_text()
+                # Command frontmatter is metadata, not agent instructions.
+                content = text.split("---\n", 2)[2] if text.startswith("---\n") else text
+                expected = "\n".join(line.rstrip() for line in content.splitlines()).strip()
+                context, separator, body = step["with"]["prompt"].partition("\n\n")
+                self.assertEqual(separator, "\n\n")
+                self.assertEqual(body, expected)
+                source = self.source["steps"][IDS.index(step["id"])]["prompt"]
+                context_source = re.sub(
+                    r"[Ff]ollow the instructions in @\.opencode/commands/[\w-]+\.md",
+                    "Use the embedded instructions below", source,
+                )
+                self.assertEqual(context, context_source)
+                self.assertNotIn("@.opencode/commands/", step["with"]["prompt"])
+
+    def test_sync_rejects_missing_command_without_modifying_dag(self) -> None:
+        for directory in ("scripts", ".made", ".harness"):
+            (self.sandbox / directory).mkdir()
+        script = self.sandbox / "scripts/sync-issue-resolution-prompts.py"
+        shutil.copyfile(ROOT / "scripts/sync-issue-resolution-prompts.py", script)
+        shutil.copyfile(ROOT / ".made/workflows.yml", self.sandbox / ".made/workflows.yml")
+        target = self.sandbox / ".harness/continuous-issue-resolution.dagu.yml"
+        shutil.copyfile(DAG, target)
+        before = target.read_bytes()
+        with self.assertRaises(FileNotFoundError) as failure:
+            runpy.run_path(str(script), run_name="__main__")
+        self.assertTrue(str(failure.exception.filename).endswith("prp-issue-fix.md"))
+        self.assertEqual(target.read_bytes(), before)
 
     def test_validate_and_default_dry_run(self) -> None:
         validation = self.invoke("validate", str(DAG))
