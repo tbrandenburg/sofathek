@@ -17,6 +17,9 @@ jest.mock('fs', () => ({
     access: jest.fn(),
     mkdir: jest.fn(),
     stat: jest.fn(),
+    realpath: jest.fn(),
+    lstat: jest.fn(),
+    unlink: jest.fn(),
     readFile: jest.fn()
   },
   // Sync APIs used by config.ts's startup directory validation
@@ -147,6 +150,28 @@ describe('VideoService', () => {
         { language: 'de', file: 'sample.de.srt' },
         { language: 'en', file: 'sample.en.srt' }
       ]);
+    });
+  });
+
+  describe('deleteVideo', () => {
+    it('deletes only the selected video and its matching companions', async () => {
+      mockFs.readdir.mockResolvedValue(['clip.mp4', 'clip.info.json', 'clip.en.srt', 'clip.jpg', 'other.mp4'] as any);
+      mockFs.realpath.mockImplementation(async (filePath) => String(filePath).endsWith('/clip.mp4')
+        ? '/test/videos/clip.mp4' : '/test/videos');
+      mockFs.lstat.mockResolvedValue({ isFile: () => true } as any);
+      mockFs.unlink.mockResolvedValue(undefined);
+
+      await videoService.deleteVideo('clip');
+
+      expect(mockFs.unlink.mock.calls.map(([file]) => path.basename(String(file))).sort()).toEqual([
+        'clip.en.srt', 'clip.info.json', 'clip.jpg', 'clip.mp4'
+      ]);
+      expect(mockFs.unlink).not.toHaveBeenCalledWith(expect.stringContaining('other.mp4'));
+    });
+
+    it('rejects path traversal identifiers before touching the filesystem', async () => {
+      await expect(videoService.deleteVideo('../outside')).rejects.toThrow('Invalid video id');
+      expect(mockFs.readdir).not.toHaveBeenCalled();
     });
   });
 

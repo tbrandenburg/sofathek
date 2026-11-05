@@ -68,8 +68,8 @@ export function validateYtDlpResponse(raw: unknown): YtDlpResponse {
 export const FsStatsSchema = z.object({
   size: z.number(),
   mtime: z.date(),
-  isDirectory: z.function({ output: z.boolean() }),
-  isFile: z.function({ output: z.boolean() }),
+  isDirectory: z.custom<() => boolean>((value) => typeof value === 'function'),
+  isFile: z.custom<() => boolean>((value) => typeof value === 'function'),
 });
 
 export type FsStats = z.infer<typeof FsStatsSchema>;

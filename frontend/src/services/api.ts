@@ -87,6 +87,29 @@ export async function getVideoById(id: string): Promise<Video> {
   return response.data;
 }
 
+export interface StorageInfo {
+  totalBytes: number;
+  filesystemFreeBytes: number;
+  reservedBytes: number;
+  downloadableBytes: number;
+  occupiedBytes: number;
+  percentUsed: number;
+}
+
+export async function getStorageInfo(): Promise<StorageInfo> {
+  const response = await apiFetch<StorageInfo>('/storage');
+  if (response.status !== 'success' || !response.data) throw new ApiError('Storage information is unavailable');
+  return response.data;
+}
+
+export async function deleteVideo(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new ApiError(payload.message || `Unable to delete video (${response.status})`, response.status, response);
+  }
+}
+
 /**
  * Get video streaming URL for HTML5 video player
  * Returns the streaming endpoint that supports HTTP Range requests

@@ -3,6 +3,7 @@ import { YouTubeDownloadService } from '../../../features/youtube/youTubeDownloa
 // Pin config values to avoid test flakiness from environment variables
 jest.mock('../../../config', () => ({
   config: {
+    videosDir: '/test/videos',
     downloadMaxSizeBytes: 5 * 1024 * 1024 * 1024 // 5GB
   }
 }));
@@ -14,6 +15,7 @@ const mockAccess = jest.fn();
 const mockMkdir = jest.fn();
 const mockUnlink = jest.fn();
 const mockWriteFile = jest.fn();
+const mockStat = jest.fn();
 
 jest.mock('fs/promises', () => ({
   readdir: (...args: any[]) => mockReaddir(...args),
@@ -21,7 +23,8 @@ jest.mock('fs/promises', () => ({
   access: (...args: any[]) => mockAccess(...args),
   mkdir: (...args: any[]) => mockMkdir(...args),
   unlink: (...args: any[]) => mockUnlink(...args),
-  writeFile: (...args: any[]) => mockWriteFile(...args)
+  writeFile: (...args: any[]) => mockWriteFile(...args),
+  stat: (...args: any[]) => mockStat(...args)
 }));
 
 // Mock sub-services to allow testing thumbnail priority logic
@@ -34,6 +37,7 @@ const mockEnsureDirectories = jest.fn();
 jest.mock('../../../features/youtube/youTubeFileDownloader', () => ({
   YouTubeFileDownloader: jest.fn().mockImplementation(() => ({
     download: mockDownload,
+    getTempDirectory: () => '/test/temp',
     cancelDownload: jest.fn()
   }))
 }));
@@ -78,9 +82,10 @@ describe('YouTubeDownloadService', () => {
   let service: YouTubeDownloadService;
 
   beforeEach(() => {
-    service = new YouTubeDownloadService('/test/temp', mockVideoFileManager, mockThumbnailService, mockContentPolicyService);
+    service = new YouTubeDownloadService('/test/temp', mockVideoFileManager, mockThumbnailService, mockContentPolicyService, async () => 100 * 1024 ** 3);
     jest.clearAllMocks();
     mockPolicyEvaluate.mockReturnValue(null);
+    mockStat.mockResolvedValue({ size: 100 });
   });
 
   describe('validateYouTubeUrl', () => {
@@ -109,6 +114,22 @@ describe('YouTubeDownloadService', () => {
       expect(await service.validateYouTubeUrl('')).toBe(false);
       expect(await service.validateYouTubeUrl('invalid-url')).toBe(false);
     });
+  });
+
+  it('rejects a download before invoking yt-dlp when the destination has no free space', async () => {
+    service = new YouTubeDownloadService('/test/temp', mockVideoFileManager, mockThumbnailService, mockContentPolicyService, async () => 0);
+    mockValidate.mockResolvedValue(true);
+    mockExtract.mockResolvedValue({ id: 'full-disk', title: 'Full Disk' });
+    mockDownload.mockClear();
+
+    const result = await service.downloadVideo({
+      url: 'https://example.com/video', requestedAt: new Date(), requestId: 'no-space'
+    });
+
+    expect(result.status).toBe('error');
+    expect(result.errorCode).toBe('INSUFFICIENT_STORAGE');
+    expect(result.error).toContain('Delete some videos');
+    expect(mockDownload).not.toHaveBeenCalled();
   });
 
   describe('cleanupFailedDownload', () => {

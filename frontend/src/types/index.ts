@@ -40,6 +40,7 @@ export interface VideoMetadata {
   transcripts?: TranscriptFile[];
   /** Channel/uploader name from .info.json sidecar (if available) */
   channel?: string;
+  channelId?: string;
 }
 
 export interface TranscriptFile {
@@ -121,6 +122,7 @@ export interface VideoGridProps {
   error?: string | null;
   /** Callback when video is selected */
   onVideoSelect?: (video: Video) => void;
+  onVideoDelete?: (video: Video) => void;
   /** CSS class name for styling */
   className?: string;
 }
@@ -133,6 +135,7 @@ export interface VideoCardProps {
   video: Video;
   /** Callback when card is clicked */
   onClick?: (video: Video) => void;
+  onDelete?: (video: Video) => void;
   /** Show metadata like duration, file size */
   showMetadata?: boolean;
   /** CSS class name for styling */

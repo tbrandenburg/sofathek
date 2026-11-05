@@ -12,6 +12,9 @@ A self-hosted family media center application with Netflix-like interface and br
 - **Minimal Video UI**: Grid cards and player view show only the video title and thumbnail/video content (no extra metadata clutter)
 - **Usage Statistics**: Simple view count tracking stored in JSON files
 - **Admin Interface**: Video download management (URL input, queue control, clear queue action), delete videos, storage usage
+- **Storage Capacity**: Live filesystem capacity, Sofathek media usage, and free space for downloads
+- **Channel Organization**: Channels with more than 10 videos are collapsed into accessible expandable groups
+- **Safe Video Deletion**: Delete a library video and its associated media sidecars after confirmation
 - **Mobile-Responsive**: Optimized for all screen sizes
 
 ## Tech Stack
@@ -239,6 +242,13 @@ sofathek/
 ```
 
 ## Video Storage Setup
+
+The library displays media bytes stored in `VIDEOS_DIR`, filesystem capacity and filesystem free
+space. Capacity and free space come from the filesystem that contains the configured video
+directory. Download preflight reserves a conservative estimate (or the configured
+`DOWNLOAD_MAX_SIZE_BYTES` when yt-dlp cannot provide one) so queued concurrent work cannot
+claim the same free space. yt-dlp may still produce a different final size; Sofathek checks the
+destination again before moving the completed file and cleans up failed temporary downloads.
 
 ### Development
 

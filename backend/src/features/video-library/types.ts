@@ -41,6 +41,8 @@ export interface VideoMetadata {
   transcripts?: TranscriptFile[];
   /** Channel/uploader name from .info.json sidecar (if available) */
   channel?: string;
+  /** Stable YouTube channel identifier when available */
+  channelId?: string;
 }
 
 /**

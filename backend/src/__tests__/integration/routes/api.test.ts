@@ -31,7 +31,9 @@ jest.mock('fs', () => ({
   promises: {
     readdir: jest.fn(),
     stat: jest.fn(),
-    access: jest.fn()
+    access: jest.fn(),
+    realpath: jest.fn(),
+    statfs: jest.fn()
   },
   existsSync: jest.fn(),
   statSync: jest.fn(),
@@ -60,6 +62,8 @@ describe('API Routes', () => {
       isDirectory: () => false
     } as any);
     mockFsPromises.access.mockResolvedValue(undefined);
+    mockFsPromises.realpath.mockResolvedValue(mockVideosDir);
+    mockFsPromises.statfs.mockResolvedValue({ blocks: 100, bsize: 1024, bavail: 40 } as any);
     mockFs.existsSync.mockReturnValue(true);
     mockFs.statSync.mockReturnValue({
       size: 1000000,
@@ -76,6 +80,24 @@ describe('API Routes', () => {
   });
 
   describe('GET /api/videos', () => {
+    it('reports capacity and media usage from the configured media filesystem', async () => {
+      mockFsPromises.readdir.mockResolvedValue([{ name: 'media.mp4', isFile: () => true }] as any);
+      mockFsPromises.stat.mockResolvedValue({ size: 2048 } as any);
+
+      const response = await request(app).get('/api/storage').expect(200);
+
+      expect(mockFsPromises.realpath).toHaveBeenCalledWith(mockVideosDir);
+      expect(mockFsPromises.statfs).toHaveBeenCalledWith(mockVideosDir);
+      expect(response.body.data).toEqual({
+        totalBytes: 102400,
+        filesystemFreeBytes: 40960,
+        occupiedBytes: 2048,
+        reservedBytes: 0,
+        downloadableBytes: 40960,
+        percentUsed: 2
+      });
+    });
+
     it('should return stream URLs instead of absolute paths in video list', async () => {
       mockFsPromises.readdir.mockResolvedValue(['test-video.mp4'] as any);
       mockFsPromises.stat.mockResolvedValue({
